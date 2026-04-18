@@ -27,41 +27,110 @@ logger = logging.getLogger("worker")
 
 
 def create_and_post(pillar=None):
-    """Generate content + image and post to LinkedIn with full intelligence."""
+    """
+    Post to LinkedIn — QUEUE-FIRST strategy.
+
+    1. If the content queue has posts, pop the next one and post it.
+    2. If the queue is empty, generate a fresh intelligent post on the fly.
+
+    This means "Generate Week" on the dashboard pre-loads the queue,
+    and the scheduler faithfully posts that pre-approved content.
+    """
     try:
-        linkedin = LinkedInAPI()
-        analytics = AnalyticsEngine(linkedin)
-        top_posts = analytics.get_top_posts(5, 30)
-
-        # Load full context for intelligent generation
-        from content_engine import load_full_context
-        context = load_full_context()
-
-        logger.info(f"Generating intelligent post for pillar: {pillar}")
-        post_data = generate_post(
-            pillar=pillar,
-            optimize_from=top_posts,
-            existing_queue=context["existing_queue"],
-            post_history=context["post_history"],
-            analytics_data=context["analytics_data"],
-            comment_insights=context["comment_insights"],
-        )
-        post_text = post_data["text"]
-
-        # Generate image
-        image_path = ""
-        image_prompt = post_data.get("image_prompt", "")
-        if image_prompt:
-            image_path = generate_post_image(image_prompt, post_data.get("pillar", ""))
-
-        # Post to LinkedIn
+        import json
         from pathlib import Path
+
+        linkedin = LinkedInAPI()
+        post_data = None
+        source = "queue"
+
+        # ── Step 1: Try to post from queue ──
+        queue = []
+        if CONTENT_QUEUE_FILE.exists():
+            try:
+                with open(CONTENT_QUEUE_FILE) as f:
+                    queue = json.load(f)
+            except (json.JSONDecodeError, IOError):
+                queue = []
+
+        if queue:
+            # Pop the first post from the queue
+            post_data = queue.pop(0)
+
+            # Save the remaining queue
+            with open(CONTENT_QUEUE_FILE, "w") as f:
+                json.dump(queue, f, indent=2)
+
+            logger.info(f"Posting from queue ({len(queue)} remaining): {post_data.get('pillar', '?')}")
+        else:
+            # ── Step 2: Queue empty — generate fresh content ──
+            source = "generated"
+            analytics = AnalyticsEngine(linkedin)
+            top_posts = analytics.get_top_posts(5, 30)
+
+            from content_engine import load_full_context
+            context = load_full_context()
+
+            logger.info(f"Queue empty — generating fresh intelligent post for pillar: {pillar}")
+            post_data = generate_post(
+                pillar=pillar,
+                optimize_from=top_posts,
+                existing_queue=context["existing_queue"],
+                post_history=context["post_history"],
+                analytics_data=context["analytics_data"],
+                comment_insights=context["comment_insights"],
+            )
+
+        # ── Step 3: Generate image if needed and not already present ──
+        post_text = post_data["text"]
+        image_path = post_data.get("image_path", "")
+        image_prompt = post_data.get("image_prompt", "")
+
+        if not image_path and image_prompt:
+            try:
+                image_path = generate_post_image(image_prompt, post_data.get("pillar", ""))
+            except Exception as img_err:
+                logger.warning(f"Image generation failed, posting text-only: {img_err}")
+                image_path = ""
+
+        # ── Step 4: Post to LinkedIn ──
         if image_path and Path(image_path).exists():
             result = linkedin.create_image_post(post_text, image_path)
         else:
             result = linkedin.create_text_post(post_text)
 
-        logger.info(f"Post published: {result.get('id')}")
+        post_id = result.get("id", "unknown")
+        logger.info(f"Post published ({source}): {post_id} | Pillar: {post_data.get('pillar', '?')}")
+
+        # ── Step 5: Save to post history for future intelligence ──
+        from config import POST_HISTORY_FILE
+        history = []
+        if POST_HISTORY_FILE.exists():
+            try:
+                with open(POST_HISTORY_FILE) as f:
+                    history = json.load(f)
+            except (json.JSONDecodeError, IOError):
+                history = []
+
+        post_record = {
+            "id": post_id,
+            "text": post_text,
+            "pillar": post_data.get("pillar"),
+            "hook": post_data.get("hook"),
+            "template_used": post_data.get("template_used"),
+            "hashtags": post_data.get("hashtags"),
+            "image_path": image_path,
+            "image_prompt": image_prompt,
+            "estimated_engagement": post_data.get("estimated_engagement"),
+            "source": source,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        history.append(post_record)
+        with open(POST_HISTORY_FILE, "w") as f:
+            json.dump(history, f, indent=2, default=str)
+
+        logger.info(f"Post saved to history. Total posts: {len(history)}")
+
     except Exception as e:
         logger.error(f"Failed to create and post: {e}")
 

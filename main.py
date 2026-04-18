@@ -185,7 +185,7 @@ def run_analytics():
 
 
 def post_from_queue():
-    """Post the next item from the content queue."""
+    """Post the next item from the content queue and save to history."""
     if not CONTENT_QUEUE_FILE.exists():
         logger.warning("No content queue found. Run 'generate' first.")
         return None
@@ -214,8 +214,35 @@ def post_from_queue():
     else:
         result = linkedin.create_text_post(post_text)
 
-    logger.info(f"Posted from queue: {result.get('id')}")
+    post_id = result.get("id", "unknown")
+    logger.info(f"Posted from queue: {post_id}")
     logger.info(f"Remaining in queue: {len(queue)}")
+
+    # Save to post history so the intelligence layer knows about it
+    history = []
+    if POST_HISTORY_FILE.exists():
+        try:
+            with open(POST_HISTORY_FILE) as f:
+                history = json.load(f)
+        except (json.JSONDecodeError, IOError):
+            history = []
+
+    post_record = {
+        "id": post_id,
+        "text": post_text,
+        "pillar": post_data.get("pillar"),
+        "hook": post_data.get("hook"),
+        "template_used": post_data.get("template_used"),
+        "hashtags": post_data.get("hashtags"),
+        "image_path": image_path,
+        "estimated_engagement": post_data.get("estimated_engagement"),
+        "source": "queue",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    history.append(post_record)
+    with open(POST_HISTORY_FILE, "w") as f:
+        json.dump(history, f, indent=2, default=str)
+
     return result
 
 
