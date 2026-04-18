@@ -20,6 +20,11 @@ from config import (
 app = Flask(__name__)
 app.secret_key = os.getenv("DASHBOARD_SECRET", "gopipways-linkedin-agent-2026")
 
+# ─── Background Task Tracking ──────────────────────────────
+# Simple in-memory task tracker for long-running operations
+_background_tasks = {}  # task_id -> {status, message, result}
+_task_lock = threading.Lock()
+
 # ─── Utility ────────────────────────────────────────────────
 
 def load_json(path, default=None):
@@ -344,26 +349,135 @@ DASHBOARD_HTML = """
   </div>
 </div>
 
-<div id="toast" style="display:none; position:fixed; bottom:20px; right:20px; background:var(--accent2); color:white; padding:12px 24px; border-radius:8px; font-weight:600; z-index:999;"></div>
+<!-- Status Banner for background tasks -->
+<div id="status-banner" style="display:none; position:fixed; top:0; left:0; right:0; background:var(--accent); color:white; padding:12px 24px; text-align:center; font-weight:600; z-index:1000; font-size:0.9rem;">
+  <span id="status-text">Processing...</span>
+  <div style="margin-top:6px; height:3px; background:rgba(255,255,255,0.3); border-radius:2px; overflow:hidden;">
+    <div id="status-bar" style="height:100%; background:white; border-radius:2px; width:0%; transition:width 0.5s;"></div>
+  </div>
+</div>
+
+<div id="toast" style="display:none; position:fixed; bottom:20px; right:20px; background:var(--accent2); color:white; padding:16px 28px; border-radius:12px; font-weight:600; z-index:999; max-width:400px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); font-size:0.95rem;"></div>
 
 <script>
-async function apiCall(endpoint) {
+let pollInterval = null;
+
+function showToast(message, success) {
   const toast = document.getElementById('toast');
-  toast.textContent = 'Processing...';
+  toast.textContent = message;
   toast.style.display = 'block';
-  toast.style.background = 'var(--accent)';
-  try {
-    const resp = await fetch(endpoint, { method: 'POST' });
-    const data = await resp.json();
-    toast.textContent = data.message || 'Done!';
-    toast.style.background = data.success ? '#10b981' : '#ef4444';
-    setTimeout(() => location.reload(), 2000);
-  } catch(e) {
-    toast.textContent = 'Error: ' + e.message;
-    toast.style.background = '#ef4444';
-  }
-  setTimeout(() => toast.style.display = 'none', 3000);
+  toast.style.background = success ? '#10b981' : '#ef4444';
+  setTimeout(() => { toast.style.display = 'none'; }, 5000);
 }
+
+function showBanner(message) {
+  const banner = document.getElementById('status-banner');
+  document.getElementById('status-text').textContent = message;
+  banner.style.display = 'block';
+}
+
+function hideBanner() {
+  document.getElementById('status-banner').style.display = 'none';
+}
+
+function animateProgress(percent) {
+  document.getElementById('status-bar').style.width = percent + '%';
+}
+
+async function apiCall(endpoint) {
+  const banner = document.getElementById('status-banner');
+  const labels = {
+    '/api/generate': 'Generating weekly content with AI (this takes ~30-60 seconds)...',
+    '/api/post-now': 'Publishing post to LinkedIn...',
+    '/api/check-comments': 'Checking for new comments...',
+    '/api/analytics': 'Running analytics...'
+  };
+
+  showBanner(labels[endpoint] || 'Processing...');
+  animateProgress(10);
+
+  try {
+    // For generate, use background task approach
+    if (endpoint === '/api/generate') {
+      animateProgress(20);
+      const resp = await fetch(endpoint, { method: 'POST' });
+      const data = await resp.json();
+
+      if (data.task_id) {
+        // Poll for task completion
+        animateProgress(30);
+        pollInterval = setInterval(async () => {
+          try {
+            const statusResp = await fetch('/api/task-status/' + data.task_id);
+            const statusData = await statusResp.json();
+
+            if (statusData.status === 'completed') {
+              clearInterval(pollInterval);
+              animateProgress(100);
+              showToast(statusData.message || 'Content generated!', true);
+              setTimeout(() => { hideBanner(); location.reload(); }, 1500);
+            } else if (statusData.status === 'failed') {
+              clearInterval(pollInterval);
+              animateProgress(0);
+              hideBanner();
+              showToast('Error: ' + (statusData.message || 'Generation failed'), false);
+            } else {
+              // Still running - animate progress
+              const currentWidth = parseInt(document.getElementById('status-bar').style.width) || 30;
+              animateProgress(Math.min(currentWidth + 5, 90));
+              document.getElementById('status-text').textContent = statusData.message || 'Generating...';
+            }
+          } catch(e) {
+            // Keep polling on network errors
+          }
+        }, 3000);
+      } else {
+        // Immediate response (not background)
+        animateProgress(100);
+        hideBanner();
+        showToast(data.message || 'Done!', data.success);
+        if (data.success) setTimeout(() => location.reload(), 2000);
+      }
+    } else {
+      // Regular API calls
+      animateProgress(50);
+      const resp = await fetch(endpoint, { method: 'POST' });
+      const data = await resp.json();
+      animateProgress(100);
+      hideBanner();
+      showToast(data.message || 'Done!', data.success);
+      if (data.success) setTimeout(() => location.reload(), 2000);
+    }
+  } catch(e) {
+    hideBanner();
+    showToast('Error: ' + e.message, false);
+  }
+}
+
+// Check for running tasks on page load
+(async function() {
+  try {
+    const resp = await fetch('/api/task-status/current');
+    const data = await resp.json();
+    if (data.status === 'running') {
+      showBanner(data.message || 'Background task running...');
+      animateProgress(50);
+      // Start polling
+      pollInterval = setInterval(async () => {
+        const statusResp = await fetch('/api/task-status/current');
+        const statusData = await statusResp.json();
+        if (statusData.status !== 'running') {
+          clearInterval(pollInterval);
+          hideBanner();
+          if (statusData.status === 'completed') {
+            showToast(statusData.message || 'Task completed!', true);
+            setTimeout(() => location.reload(), 1500);
+          }
+        }
+      }, 3000);
+    }
+  } catch(e) {}
+})();
 </script>
 </body>
 </html>
@@ -412,33 +526,93 @@ def dashboard():
 
 @app.route("/api/generate", methods=["POST"])
 def api_generate():
-    try:
-        from content_engine import generate_weekly_content
-        from analytics_engine import AnalyticsEngine
-        analytics = AnalyticsEngine()
-        top_posts = analytics.get_top_posts(5, 30)
-        posts = generate_weekly_content(optimize_from=top_posts)
+    """Generate weekly content in a background thread to avoid HTTP timeout."""
+    import uuid
+    task_id = str(uuid.uuid4())[:8]
 
-        # Generate images
-        from image_generator import generate_post_image
-        for post in posts:
-            prompt = post.get("image_prompt", "")
-            if prompt:
-                path = generate_post_image(prompt, post.get("pillar", ""))
-                post["image_path"] = path
+    def _run_generate(tid):
+        with _task_lock:
+            _background_tasks[tid] = {"status": "running", "message": "Starting content generation..."}
+            _background_tasks["current"] = _background_tasks[tid]
 
-        save_json(CONTENT_QUEUE_FILE, posts)
-        return jsonify({"success": True, "message": f"Generated {len(posts)} posts with images"})
-    except Exception as e:
-        return jsonify({"success": False, "message": str(e)})
+        try:
+            from content_engine import generate_weekly_content
+            from analytics_engine import AnalyticsEngine
+
+            with _task_lock:
+                _background_tasks[tid]["message"] = "Analyzing past performance..."
+
+            analytics = AnalyticsEngine()
+            top_posts = analytics.get_top_posts(5, 30)
+
+            with _task_lock:
+                _background_tasks[tid]["message"] = "Generating posts with Claude AI (6 posts)..."
+
+            posts = generate_weekly_content(optimize_from=top_posts)
+
+            # Skip image generation if OPENAI_API_KEY is not set properly
+            from config import OPENAI_API_KEY
+            if OPENAI_API_KEY and not OPENAI_API_KEY.startswith("sk-your"):
+                with _task_lock:
+                    _background_tasks[tid]["message"] = "Generating images with DALL-E..."
+                from image_generator import generate_post_image
+                for post in posts:
+                    prompt = post.get("image_prompt", "")
+                    if prompt:
+                        path = generate_post_image(prompt, post.get("pillar", ""))
+                        post["image_path"] = path
+
+            save_json(CONTENT_QUEUE_FILE, posts)
+
+            with _task_lock:
+                _background_tasks[tid] = {
+                    "status": "completed",
+                    "message": f"Generated {len(posts)} posts successfully!",
+                }
+                _background_tasks["current"] = _background_tasks[tid]
+        except Exception as e:
+            with _task_lock:
+                _background_tasks[tid] = {
+                    "status": "failed",
+                    "message": str(e),
+                }
+                _background_tasks["current"] = _background_tasks[tid]
+
+    thread = threading.Thread(target=_run_generate, args=(task_id,), daemon=True)
+    thread.start()
+
+    return jsonify({
+        "success": True,
+        "task_id": task_id,
+        "message": "Content generation started in background...",
+    })
+
+
+@app.route("/api/task-status/<task_id>")
+def api_task_status(task_id):
+    """Check status of a background task."""
+    with _task_lock:
+        task = _background_tasks.get(task_id, {"status": "not_found", "message": "No task found"})
+    return jsonify(task)
 
 
 @app.route("/api/post-now", methods=["POST"])
 def api_post_now():
     try:
-        from main import create_and_post
-        result = create_and_post()
-        return jsonify({"success": True, "message": f"Posted! ID: {result.get('id', 'unknown')}"})
+        # Check if queue has content first
+        queue = load_json(CONTENT_QUEUE_FILE, [])
+        if not queue:
+            return jsonify({
+                "success": False,
+                "message": "Content queue is empty! Click 'Generate Week' first to create posts."
+            })
+
+        from main import post_from_queue
+        result = post_from_queue()
+        if result:
+            return jsonify({"success": True, "message": f"Posted to LinkedIn! ID: {result.get('id', 'unknown')}"})
+        else:
+            return jsonify({"success": False, "message": "Queue empty — click 'Generate Week' first"})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
 
@@ -446,10 +620,16 @@ def api_post_now():
 @app.route("/api/check-comments", methods=["POST"])
 def api_check_comments():
     try:
+        history = load_json(POST_HISTORY_FILE, [])
+        if not history:
+            return jsonify({
+                "success": True,
+                "message": "No published posts yet — publish a post first, then check for comments."
+            })
         from comment_manager import CommentManager
         manager = CommentManager()
         manager.monitor_and_reply()
-        return jsonify({"success": True, "message": "Comments checked and replies sent"})
+        return jsonify({"success": True, "message": "Comments checked and replies sent!"})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
 
@@ -457,6 +637,12 @@ def api_check_comments():
 @app.route("/api/analytics", methods=["POST"])
 def api_analytics():
     try:
+        history = load_json(POST_HISTORY_FILE, [])
+        if not history:
+            return jsonify({
+                "success": True,
+                "message": "No posts to analyze yet. Publish some posts first, then run analytics!"
+            })
         from analytics_engine import AnalyticsEngine
         engine = AnalyticsEngine()
         report = engine.generate_weekly_report()
