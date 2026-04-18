@@ -96,45 +96,57 @@ def generate_batch_images(posts: list) -> list:
 
 
 def _enhance_prompt(base_prompt: str, pillar: str) -> str:
-    """Enhance the image prompt with consistent branding and LinkedIn optimization."""
+    """Enhance the image prompt for photorealistic editorial photography."""
     style_guide = IMAGE_SETTINGS["default_theme"]
 
     pillar_styles = {
         "Personal Story & Behind-the-Scenes": (
-            "Warm, personal atmosphere. African professional in a modern office or "
-            "training environment. Inspirational and authentic feel."
+            "Photorealistic. Warm, natural lighting like golden hour. "
+            "Real African professional in a modern office, co-working space, or classroom. "
+            "Candid, documentary-style photography. Shot on Canon EOS R5, 85mm f/1.4 lens. "
+            "Shallow depth of field. Authentic and human."
         ),
         "Forex Education": (
-            "Clean trading charts, candlestick patterns, or financial data visualization. "
-            "Educational and informative mood. Modern, sleek design."
+            "Photorealistic. Close-up or medium shot of a real person studying trading screens. "
+            "Multiple monitors showing candlestick charts. Focused, concentrated expression. "
+            "Modern desk setup. Dramatic but natural lighting from screen glow and desk lamp. "
+            "Shot on Sony A7IV, 35mm lens. Professional workspace feel."
         ),
         "AI in Trading": (
-            "Futuristic technology meets finance. AI neural networks, data streams, "
-            "or human-AI collaboration imagery. Blue and gold tones."
+            "Photorealistic. Modern tech workspace with clean minimalist design. "
+            "Laptop or dual monitors with data visualizations. African professional interacting with technology. "
+            "Cool blue ambient lighting mixed with warm accents. "
+            "Shot on Fuji X-T5, cinematic color grading. Tech-forward but human."
         ),
         "African Markets & Financial Literacy": (
-            "African cityscape, mobile phones showing trading apps, or diverse African "
-            "professionals. Empowerment and opportunity themes."
+            "Photorealistic. Vibrant African city scene — Lagos, Nairobi, or Accra skyline. "
+            "Young African professionals using smartphones or laptops in modern settings. "
+            "Natural daylight, bustling but professional energy. "
+            "Street-level or rooftop perspective. Documentary photography style."
         ),
         "Community & Interactive": (
-            "People connecting, collaboration, group discussion. Diverse faces, "
-            "community feel. Vibrant and engaging."
+            "Photorealistic. Group of diverse African professionals in a collaborative setting. "
+            "Workshop, seminar, or co-working space. Animated discussion, natural body language. "
+            "Overhead fluorescent + window light mix. Candid group photography. "
+            "Wide angle, environmental portrait style."
         ),
         "Industry Commentary": (
-            "Global financial markets, world map with trading connections, "
-            "or market analysis scenes. Authoritative and insightful."
+            "Photorealistic. Financial district or trading floor atmosphere. "
+            "Large screens showing market data, professional environment. "
+            "Serious, analytical mood. Cool color palette with sharp details. "
+            "Shot from low angle for authority feel. News/editorial photography style."
         ),
     }
 
-    pillar_style = pillar_styles.get(pillar, "Professional financial theme.")
+    pillar_style = pillar_styles.get(pillar, "Photorealistic editorial photography of a professional setting.")
 
     enhanced = (
         f"{base_prompt}. "
-        f"Style: {style_guide} "
-        f"Mood: {pillar_style} "
-        f"IMPORTANT: No text, words, letters, numbers, or watermarks in the image. "
-        f"Clean, high-resolution, suitable for a professional LinkedIn post. "
-        f"16:9 aspect ratio composition preferred."
+        f"Photography style: {pillar_style} "
+        f"{style_guide} "
+        f"CRITICAL: This must look like a REAL PHOTOGRAPH taken by a professional photographer. "
+        f"Absolutely NO text, words, letters, numbers, logos, or watermarks anywhere in the image. "
+        f"No artificial-looking elements. No clip art. No illustrations. Pure photorealism."
     )
 
     return enhanced

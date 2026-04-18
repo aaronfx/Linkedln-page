@@ -89,13 +89,14 @@ TIMEZONE = "Africa/Lagos"  # WAT
 # ─── Image Generation Settings ──────────────────────────────
 IMAGE_SETTINGS = {
     "model": "dall-e-3",
-    "size": "1024x1024",
-    "quality": "standard",
-    "style": "vivid",
+    "size": "1792x1024",  # 16:9 landscape for LinkedIn feed
+    "quality": "hd",       # HD for photorealistic quality
+    "style": "natural",    # Natural style for photorealism (not "vivid")
     "default_theme": (
-        "Professional, clean, modern financial/trading aesthetic. "
-        "African-inspired color palette (gold, deep green, navy blue). "
-        "No text overlays. Suitable for LinkedIn."
+        "Photorealistic editorial photography. Natural lighting. "
+        "Real-world settings and real people. No text, words, logos, or watermarks. "
+        "Professional, authentic, documentary style. "
+        "Shot on a professional camera with shallow depth of field."
     ),
 }
 
