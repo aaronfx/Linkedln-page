@@ -293,6 +293,8 @@ DASHBOARD_HTML = """
           <div class="text">{{ post.get('text', post.get('hook', 'No preview')) }}</div>
           <button class="expand-btn">Click to expand full post</button>
           {% if post.get('image_path') %}
+            {% set img_name = post.get('image_path', '').split('/')[-1].split('\\\\')[-1] %}
+            <img src="/images/{{ img_name }}" alt="Post image" class="post-image" onerror="this.style.display='none'">
             <div class="image-badge">Image attached</div>
           {% else %}
             <div class="no-image">No image</div>
@@ -738,6 +740,14 @@ def api_history():
 def api_comments():
     comments = load_json(COMMENT_LOG_FILE, [])
     return jsonify(comments)
+
+
+@app.route("/images/<path:filename>")
+def serve_image(filename):
+    """Serve generated images from IMAGES_DIR."""
+    from flask import send_from_directory
+    from config import IMAGES_DIR
+    return send_from_directory(str(IMAGES_DIR), filename)
 
 
 @app.route("/health")
