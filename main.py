@@ -56,19 +56,27 @@ logger = logging.getLogger("main")
 # ─── Core Functions ─────────────────────────────────────────
 
 def create_and_post(pillar: str = None, topic_hint: str = None):
-    """Generate content + image and post to LinkedIn."""
+    """Generate content + image and post to LinkedIn with full intelligence."""
     linkedin = LinkedInAPI()
     analytics = AnalyticsEngine(linkedin)
 
     # Get top posts for optimization
     top_posts = analytics.get_top_posts(5, 30)
 
-    # Step 1: Generate post content with Claude
-    logger.info("Generating post content with Claude...")
+    # Load full context for intelligent generation
+    from content_engine import load_full_context
+    context = load_full_context()
+
+    # Step 1: Generate post content with Claude (fully context-aware)
+    logger.info("Generating intelligent post content with Claude...")
     post_data = generate_post(
         pillar=pillar,
         topic_hint=topic_hint,
         optimize_from=top_posts,
+        existing_queue=context["existing_queue"],
+        post_history=context["post_history"],
+        analytics_data=context["analytics_data"],
+        comment_insights=context["comment_insights"],
     )
 
     post_text = post_data["text"]
@@ -109,12 +117,11 @@ def create_and_post(pillar: str = None, topic_hint: str = None):
 
 
 def generate_content_only():
-    """Generate a week of content without posting (for review)."""
-    analytics = AnalyticsEngine()
-    top_posts = analytics.get_top_posts(5, 30)
-
-    logger.info("Generating weekly content...")
-    posts = generate_weekly_content(optimize_from=top_posts)
+    """Generate a week of content without posting (for review). Fully intelligent."""
+    logger.info("Generating intelligent weekly content...")
+    # generate_weekly_content now loads ALL context internally
+    # (queue, history, analytics, comments) for duplicate-free, optimized content
+    posts = generate_weekly_content()
 
     # Also generate images for all posts
     logger.info("Generating images for all posts...")
@@ -127,11 +134,7 @@ def generate_content_only():
             )
             post["image_path"] = image_path
 
-    # Save to queue
-    with open(CONTENT_QUEUE_FILE, "w") as f:
-        json.dump(posts, f, indent=2)
-
-    logger.info(f"Generated {len(posts)} posts. Saved to {CONTENT_QUEUE_FILE}")
+    logger.info(f"Generated {len(posts)} intelligent posts.")
     print(f"\n{'='*60}")
     print(f"  WEEKLY CONTENT GENERATED — {len(posts)} posts ready")
     print(f"{'='*60}")

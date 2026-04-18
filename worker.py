@@ -27,14 +27,25 @@ logger = logging.getLogger("worker")
 
 
 def create_and_post(pillar=None):
-    """Generate content + image and post to LinkedIn."""
+    """Generate content + image and post to LinkedIn with full intelligence."""
     try:
         linkedin = LinkedInAPI()
         analytics = AnalyticsEngine(linkedin)
         top_posts = analytics.get_top_posts(5, 30)
 
-        logger.info(f"Generating post for pillar: {pillar}")
-        post_data = generate_post(pillar=pillar, optimize_from=top_posts)
+        # Load full context for intelligent generation
+        from content_engine import load_full_context
+        context = load_full_context()
+
+        logger.info(f"Generating intelligent post for pillar: {pillar}")
+        post_data = generate_post(
+            pillar=pillar,
+            optimize_from=top_posts,
+            existing_queue=context["existing_queue"],
+            post_history=context["post_history"],
+            analytics_data=context["analytics_data"],
+            comment_insights=context["comment_insights"],
+        )
         post_text = post_data["text"]
 
         # Generate image
@@ -83,7 +94,7 @@ def weekly_report():
 
 
 def refill_queue():
-    """Auto-refill content queue when running low."""
+    """Auto-refill content queue when running low. Uses full intelligence."""
     try:
         import json
         queue = []
@@ -92,10 +103,9 @@ def refill_queue():
                 queue = json.load(f)
 
         if len(queue) < 3:
-            logger.info("Queue running low, generating new content...")
-            analytics = AnalyticsEngine()
-            top_posts = analytics.get_top_posts(5, 30)
-            generate_weekly_content(optimize_from=top_posts)
+            logger.info("Queue running low, generating intelligent new content...")
+            # generate_weekly_content now handles all context loading internally
+            generate_weekly_content()
     except Exception as e:
         logger.error(f"Queue refill failed: {e}")
 

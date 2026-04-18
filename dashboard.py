@@ -532,23 +532,27 @@ def api_generate():
 
     def _run_generate(tid):
         with _task_lock:
-            _background_tasks[tid] = {"status": "running", "message": "Starting content generation..."}
+            _background_tasks[tid] = {"status": "running", "message": "Starting intelligent content generation..."}
             _background_tasks["current"] = _background_tasks[tid]
 
         try:
             from content_engine import generate_weekly_content
-            from analytics_engine import AnalyticsEngine
 
             with _task_lock:
-                _background_tasks[tid]["message"] = "Analyzing past performance..."
+                _background_tasks[tid]["message"] = "Loading context: queue, history, analytics, comments..."
 
-            analytics = AnalyticsEngine()
-            top_posts = analytics.get_top_posts(5, 30)
+            # generate_weekly_content now handles ALL intelligence internally:
+            # - Loads existing queue to avoid duplicates
+            # - Loads post history to avoid repeating hooks/topics
+            # - Loads analytics to optimize for what works
+            # - Loads comment themes to address audience interests
+            # - Selects smart templates avoiding overused ones
+            # - Each post in the batch is aware of previously generated posts
 
             with _task_lock:
-                _background_tasks[tid]["message"] = "Generating posts with Claude AI (6 posts)..."
+                _background_tasks[tid]["message"] = "Generating 6 intelligent posts with Claude AI..."
 
-            posts = generate_weekly_content(optimize_from=top_posts)
+            posts = generate_weekly_content()  # Full intelligence is built-in now
 
             # Skip image generation if OPENAI_API_KEY is not set properly
             from config import OPENAI_API_KEY
@@ -562,12 +566,12 @@ def api_generate():
                         path = generate_post_image(prompt, post.get("pillar", ""))
                         post["image_path"] = path
 
-            save_json(CONTENT_QUEUE_FILE, posts)
+            # Queue is already saved by generate_weekly_content — no need to overwrite
 
             with _task_lock:
                 _background_tasks[tid] = {
                     "status": "completed",
-                    "message": f"Generated {len(posts)} posts successfully!",
+                    "message": f"Generated {len(posts)} intelligent posts! Each post is unique, optimized from analytics, and avoids duplicates.",
                 }
                 _background_tasks["current"] = _background_tasks[tid]
         except Exception as e:
