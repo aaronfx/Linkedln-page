@@ -27,7 +27,8 @@ from config import (
 )
 from knowledge_base import (
     BRAND_VOICE, GROWTH_STRATEGY, VIRAL_TEMPLATES,
-    SAMPLE_POSTS, HASHTAG_STRATEGY, ENGAGEMENT_RULES
+    SAMPLE_POSTS, HASHTAG_STRATEGY, ENGAGEMENT_RULES,
+    PILLAR_TOPIC_SUGGESTIONS, WEEKLY_POST_TYPES, EMERGENCY_CONTENT_IDEAS
 )
 from pathlib import Path
 
@@ -280,9 +281,18 @@ def _build_comment_intelligence(comment_log: list) -> str:
     return context
 
 
-def _select_smart_template(existing_queue: list, post_history: list) -> dict:
+def _select_smart_template(existing_queue: list, post_history: list, scheduled_day: str = None) -> dict:
     """
-    Select a viral template intelligently — avoiding recently overused ones.
+    Select a viral template intelligently — preferring day-appropriate templates
+    and avoiding recently overused ones.
+
+    The strategy document maps specific post types to days:
+    - Monday: Controversial Take / Myth vs Reality
+    - Tuesday: Educational Deep Dive / Data Stats Hook
+    - Wednesday: Poll / Community Question
+    - Thursday: Personal Story / Lesson Learned
+    - Friday: Market Commentary / Data-Driven Insight
+    - Saturday: Weekend Insight / Practical Framework
     """
     recent_templates = []
     for post in (existing_queue or [])[-6:]:
@@ -296,16 +306,27 @@ def _select_smart_template(existing_queue: list, post_history: list) -> dict:
 
     template_counts = Counter(recent_templates)
 
+    # Determine the target day for template matching
+    target_day = (scheduled_day or datetime.now().strftime("%A")).lower()
+
     weighted_templates = []
     for template in VIRAL_TEMPLATES:
         usage_count = template_counts.get(template["name"], 0)
-        weight = max(1, 5 - usage_count)
-        weighted_templates.append((template, weight))
+        base_weight = max(1, 5 - usage_count)
+
+        # Boost templates that match the day's recommended type from the strategy
+        best_for = template.get("best_for", "any")
+        if best_for == target_day:
+            base_weight *= 3  # 3x boost for day-matched templates
+        elif best_for == "any":
+            base_weight *= 1.5  # Small boost for versatile templates
+
+        weighted_templates.append((template, base_weight))
 
     templates, weights = zip(*weighted_templates)
     selected = random.choices(templates, weights=weights, k=1)[0]
 
-    logger.info(f"Smart template selection: {selected['name']} (used {template_counts.get(selected['name'], 0)} times recently)")
+    logger.info(f"Smart template selection for {target_day}: {selected['name']} (best_for: {selected.get('best_for', 'any')}, used {template_counts.get(selected['name'], 0)} times recently)")
     return selected
 
 
@@ -357,6 +378,7 @@ def generate_post(
     post_history: list = None,
     analytics_data: dict = None,
     comment_insights: list = None,
+    scheduled_day: str = None,
 ) -> dict:
     """
     Generate a LinkedIn post using Claude with FULL context awareness.
@@ -373,7 +395,7 @@ def generate_post(
     analytics_context = _build_analytics_intelligence(analytics_data, post_history)
     comment_context = _build_comment_intelligence(comment_insights)
     growth_context = _build_growth_phase_context(post_history)
-    template = _select_smart_template(existing_queue, post_history)
+    template = _select_smart_template(existing_queue, post_history, scheduled_day=scheduled_day)
 
     optimization_context = ""
     if optimize_from:
@@ -398,30 +420,75 @@ def generate_post(
     should_mention_gopipways = pillar in gopipways_posts
 
     gopipways_rule = (
-        "You MAY reference Gopipways briefly and naturally in this post (since it's a Personal Story or AI post)."
+        "You MAY reference Gopipways briefly and naturally in this post (since it's a Personal Story or AI post). "
+        "But Gopipways should NEVER be the main topic — it's a supporting detail in a larger story."
         if should_mention_gopipways else
         "DO NOT mention Gopipways, your company, or any product in this post. "
         "This post is purely about providing VALUE, sharing expertise, and building thought leadership. "
         "You are Dr. Aaron Akwu the forex educator and thought leader — not a brand ambassador."
     )
 
+    # Get pillar-specific topic suggestions from the strategy document
+    pillar_suggestions = PILLAR_TOPIC_SUGGESTIONS.get(pillar, {})
+    topic_list = pillar_suggestions.get("topics", [])
+    topic_suggestions_text = ""
+    if topic_list:
+        topic_suggestions_text = f"\n\nSUGGESTED TOPICS FOR THIS PILLAR (from the 20K Growth Strategy):\n"
+        for i, topic in enumerate(topic_list, 1):
+            topic_suggestions_text += f"  {i}. {topic}\n"
+        topic_suggestions_text += "\nUse these as INSPIRATION — adapt and create fresh angles, don't copy verbatim.\n"
+
+    # Get the day's recommended post type from the strategy
+    import calendar
+    today_name = datetime.now().strftime("%A").lower()
+    day_post_type = WEEKLY_POST_TYPES.get(today_name, {})
+    post_type_guidance = ""
+    if day_post_type:
+        post_type_guidance = (
+            f"\n\nTODAY'S RECOMMENDED POST TYPE (from the strategy calendar):\n"
+            f"Type: {day_post_type.get('type', 'Any')}\n"
+            f"Guidance: {day_post_type.get('guidance', '')}\n"
+        )
+
+    # Determine current week number for hashtag rotation
+    week_num = datetime.now().isocalendar()[1] % 4 + 1
+    week_key = f"week_{week_num}"
+    current_secondary_hashtags = HASHTAG_STRATEGY["secondary_rotation"].get(week_key, [])
+
     system_prompt = f"""You are the LinkedIn ghostwriter for Dr. Aaron Akwu — Africa's leading forex educator.
 
-Your job is to write posts that GROW his audience from 4,500 to 20,000+ followers. That means:
+You are executing the "LinkedIn 20K Growth Strategy" — a detailed plan to grow Aaron's followers from 4,500 to 20,000+.
+You have been TRAINED on this strategy document and the "LinkedIn 2-Week Posts" document containing 12 gold-standard example posts.
+Every post you generate must follow this plan precisely.
+
+YOUR MISSION:
 - VALUE FIRST. Every post must teach something, provoke thought, or share a genuine insight.
 - NOT a sales channel. This is NOT about promoting Gopipways. It's about building Aaron's personal authority.
 - Write like a respected thought leader who happens to teach forex — not like a company marketing page.
 - The content should feel like it comes from a real person with real opinions, real experiences, and real data.
+- Follow the "hook + story/data + specific insight + CTA question" formula from the strategy.
 
 {BRAND_VOICE}
 
-CONTENT STRATEGY (from the 20K Growth Strategy document):
-- 5 Content Pillars: Forex Education (30%), AI in Trading (20%), African Markets (20%), Personal Story (15%), Industry Commentary (15%)
-- Content formula: Hook + story/data + specific insight + CTA question
-- Target engagement: 8-12% (3x LinkedIn average)
-- Gopipways should ONLY be mentioned in 2-3 posts per week MAX, and always naturally — never as the main topic
-- Most posts should be pure education, industry commentary, or thought leadership with ZERO company mentions
-- Use real data, specific numbers, named students, and concrete frameworks
+═══════════════════════════════════════════════
+20K GROWTH STRATEGY — CORE PLAN
+═══════════════════════════════════════════════
+
+{GROWTH_STRATEGY}
+
+5-PILLAR CONTENT FRAMEWORK:
+- Forex Education (30%): Technical analysis, psychology, risk management, practical frameworks
+- AI in Trading (20%): AI tools, myth-busting, Gopipways tech (2-3 mentions/month max)
+- African Markets & Financial Literacy (20%): African economic trends, local currencies, financial inclusion
+- Personal Story & Behind-the-Scenes (15%): Founder journey, student transformations, lessons learned
+- Industry Commentary (15%): Market commentary, economic analysis, trends, weekend insights
+
+PILLAR-SPECIFIC PURPOSE:
+{json.dumps({k: v.get('purpose', '') for k, v in PILLAR_TOPIC_SUGGESTIONS.items()}, indent=2)}
+
+CURRENT PILLAR: {pillar} ({pillar_suggestions.get('weight', '?')} of content)
+{topic_suggestions_text}
+{post_type_guidance}
 
 PROFILE:
 - Name: {PROFILE['name']}
@@ -435,7 +502,7 @@ GOPIPWAYS RULE FOR THIS POST:
 {gopipways_rule}
 
 ═══════════════════════════════════════════════
-INTELLIGENCE BRIEFING
+INTELLIGENCE BRIEFING (Real-time data)
 ═══════════════════════════════════════════════
 {duplicate_guard}
 {analytics_context}
@@ -443,44 +510,46 @@ INTELLIGENCE BRIEFING
 {optimization_context}
 ═══════════════════════════════════════════════
 
-VIRAL TEMPLATE TO USE (adapt creatively, don't copy):
+VIRAL TEMPLATE TO USE (adapt creatively, don't copy verbatim):
 Template: "{template['name']}"
 Formula: {template['formula']}
 Structure:
 {template['structure'][:500]}
 
-HASHTAG STRATEGY:
-{json.dumps(HASHTAG_STRATEGY['rules'])}
-Primary hashtags (use 1): {', '.join(HASHTAG_STRATEGY['primary'])}
-Pillar-specific options: {json.dumps(HASHTAG_STRATEGY.get('pillar_specific', {}))}
+HASHTAG STRATEGY (This Week — Week {week_num} of 4-week rotation):
+Rules: {json.dumps(HASHTAG_STRATEGY['rules'])}
+Primary hashtags (ALWAYS use 1): {', '.join(HASHTAG_STRATEGY['primary'])}
+This week's secondary rotation: {', '.join(current_secondary_hashtags)}
+Pillar-specific options for {pillar}: {json.dumps(HASHTAG_STRATEGY.get('pillar_specific', {}).get(pillar, []))}
 
-STYLE EXAMPLES (for tone only — create completely fresh content):
+STYLE EXAMPLES FROM THE 12 GOLD-STANDARD POSTS (match this quality and tone):
 {sample_text}
 
-WRITING RULES:
+WRITING RULES (from the 20K Growth Strategy):
 1. Write in first person as Dr. Aaron Akwu
 2. Open with a scroll-stopping hook (first 2 lines show before "see more" — make them count)
 3. The hook MUST be unique — never repeat hooks from the Intelligence Briefing
-4. Short paragraphs: 1-3 sentences max, generous line breaks
-5. Include ONE of: a personal anecdote, a data point, a student story, or a market insight
-6. End with a genuine question or CTA that invites comments
-7. 3-4 relevant hashtags at the end
-8. Post length: 1200-2000 characters
-9. NO emojis anywhere in the post
+4. Short paragraphs: 1-3 sentences max, generous line breaks for mobile readability
+5. Include ONE of: a personal anecdote, a data point, a student story (Emeka, Chioma, Tunde, Blessing, Chukwu), or a market insight
+6. End with a genuine question or CTA that invites comments (critical for engagement)
+7. 3-4 relevant hashtags at the end (follow the rotation schedule above)
+8. Post length: 1200-2000 characters (optimal for LinkedIn algorithm)
+9. NO emojis anywhere in the post (part of the brand voice)
 10. Write like a human thought leader, not a marketing bot
 11. Vary the energy: some posts should be bold/provocative, others reflective/thoughtful
 12. Reference specific numbers, names, timeframes — vague posts don't go viral
 13. If the Intelligence Briefing shows audience questions, weave one into this post naturally
 14. NEVER reuse a hook, story, or angle from the Intelligence Briefing
+15. The CTA should be SPECIFIC ("Drop a PLAN in the comments", "Reply with your letter", "What's your daily loss limit?") — not generic ("Let me know what you think")
 
 IMAGE PROMPT RULES:
-- Describe a PHOTOREALISTIC scene — like a real photograph, not AI-generated art
-- Include specific details: lighting, camera angle, setting, people, objects
+- Describe a PHOTOREALISTIC scene — like a real photograph taken by a professional photographer
+- Include specific details: camera model, lens, lighting, camera angle, setting, people, objects
 - Think "editorial photography" or "documentary photography" style
 - Examples of good prompts:
-  * "Close-up of an African man's hands on a laptop showing trading charts, warm desk lamp lighting, shallow depth of field, professional office setting"
-  * "Wide shot of a modern co-working space in Lagos, young professionals at screens, golden hour light through floor-to-ceiling windows, photojournalistic style"
-  * "Portrait of focused trader studying multiple monitors showing candlestick charts, dramatic side lighting, dark background, editorial photography"
+  * "Close-up of an African man's hands on a laptop showing trading charts, warm desk lamp lighting, shallow depth of field, professional office setting, shot on Canon EOS R5 85mm f/1.4"
+  * "Wide shot of a modern co-working space in Lagos, young professionals at screens, golden hour light through floor-to-ceiling windows, photojournalistic style, Fuji X-T5"
+  * "Portrait of focused trader studying multiple monitors showing candlestick charts, dramatic side lighting, dark background, editorial photography, Sony A7IV 35mm"
 - NEVER include text, words, watermarks, or logos in the image
 - NEVER use abstract/conceptual/surreal imagery — keep it grounded and real
 
@@ -490,7 +559,7 @@ OUTPUT FORMAT (JSON):
   "hook": "The opening 2 lines (for preview)",
   "pillar": "The content pillar used",
   "template_used": "{template['name']}",
-  "image_prompt": "A detailed PHOTOREALISTIC image prompt (describe a real scene with specific lighting, setting, subjects, camera angle — editorial/documentary photography style, no text or logos)",
+  "image_prompt": "A detailed PHOTOREALISTIC image prompt (describe a real scene with specific camera, lighting, setting, subjects, camera angle — editorial/documentary photography style, no text or logos)",
   "hashtags": ["list", "of", "hashtags", "used"],
   "estimated_engagement": "low/medium/high based on content type and analytics patterns",
   "topic_summary": "One sentence describing the core topic (for future duplicate detection)",
@@ -757,16 +826,25 @@ def generate_weekly_content(optimize_from: list = None, progress_callback=None) 
 
     for idx, (day, schedule) in enumerate(schedule_items):
         post_num = idx + 1
-        _progress(f"Generating post {post_num}/{total}: {day.capitalize()} — {schedule['pillar_preference']}...")
+        post_type = schedule.get("post_type", "")
+        _progress(f"Generating post {post_num}/{total}: {day.capitalize()} — {schedule['pillar_preference']} ({post_type})...")
 
         try:
+            # Build a topic hint from the strategy's day-specific post type
+            day_type_info = WEEKLY_POST_TYPES.get(day, {})
+            strategy_hint = None
+            if day_type_info:
+                strategy_hint = f"Post type for {day.capitalize()}: {day_type_info.get('type', '')}. {day_type_info.get('guidance', '')}"
+
             post = generate_post(
                 pillar=schedule["pillar_preference"],
+                topic_hint=strategy_hint,
                 optimize_from=optimize_from,
                 existing_queue=running_queue,
                 post_history=post_history,
                 analytics_data=analytics_data,
                 comment_insights=comment_insights,
+                scheduled_day=day,
             )
 
             # ── Assign REAL calendar dates ──

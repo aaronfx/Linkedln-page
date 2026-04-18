@@ -41,47 +41,63 @@ PROFILE = {
 # ─── Content Pillars ────────────────────────────────────────
 CONTENT_PILLARS = [
     {
-        "name": "Personal Story & Behind-the-Scenes",
-        "weight": 0.20,
-        "description": "Founder journey, lessons learned, student transformations",
-    },
-    {
         "name": "Forex Education",
-        "weight": 0.25,
-        "description": "Trading strategies, risk management, practical frameworks",
+        "weight": 0.30,
+        "description": (
+            "Technical analysis tips, chart patterns, trading psychology insights, "
+            "risk management frameworks, common mistakes and corrections, trading setup breakdowns. "
+            "Posting frequency: 1-2 per week."
+        ),
     },
     {
         "name": "AI in Trading",
-        "weight": 0.15,
-        "description": "How AI enhances trading, myth-busting, Gopipways tech",
+        "weight": 0.20,
+        "description": (
+            "AI trading indicators and tools, how AI improves trader accuracy, "
+            "automation vs manual trading debates, future of AI in African markets. "
+            "Brand integration: include Gopipways in 2-3 posts monthly without being salesy. "
+            "Posting frequency: 1 per week."
+        ),
     },
     {
         "name": "African Markets & Financial Literacy",
         "weight": 0.20,
-        "description": "Africa fintech opportunity, local currency pairs, financial inclusion",
+        "description": (
+            "African economic trends and market impacts, currency analysis (NGN, GHS, KES, ZAR), "
+            "financial literacy for underserved communities, success stories of African traders, "
+            "cross-regional African market insights. Posting frequency: 1 per week."
+        ),
     },
     {
-        "name": "Community & Interactive",
-        "weight": 0.10,
-        "description": "Polls, questions, engagement-driven posts",
+        "name": "Personal Story & Behind-the-Scenes",
+        "weight": 0.15,
+        "description": (
+            "Founder journey and lessons learned, day-in-the-life content, challenges overcome, "
+            "team spotlights, gratitude/milestone celebrations. "
+            "Posting frequency: 0.5-1 per week."
+        ),
     },
     {
         "name": "Industry Commentary",
-        "weight": 0.10,
-        "description": "Market analysis, weekend insights, trending topics",
+        "weight": 0.15,
+        "description": (
+            "Market commentary on major moves, economic calendar analysis, geopolitical impacts on forex, "
+            "industry trends and predictions, volatility analysis. "
+            "Posting frequency: 0.5-1 per week."
+        ),
     },
 ]
 
 # ─── Posting Schedule ───────────────────────────────────────
 # Days and times (WAT - West Africa Time, UTC+1)
 POSTING_SCHEDULE = {
-    "monday":    {"time": "09:00", "pillar_preference": "Personal Story & Behind-the-Scenes"},
-    "tuesday":   {"time": "11:00", "pillar_preference": "Forex Education"},
-    "wednesday": {"time": "14:00", "pillar_preference": "Community & Interactive"},
-    "thursday":  {"time": "09:00", "pillar_preference": "AI in Trading"},
-    "friday":    {"time": "10:00", "pillar_preference": "African Markets & Financial Literacy"},
-    "saturday":  {"time": "18:00", "pillar_preference": "Industry Commentary"},
-    # Sunday: rest day
+    "monday":    {"time": "09:00", "pillar_preference": "Personal Story & Behind-the-Scenes", "post_type": "Controversial Take or Myth vs. Reality"},
+    "tuesday":   {"time": "11:00", "pillar_preference": "Forex Education", "post_type": "Educational Deep Dive or Data/Stats Hook"},
+    "wednesday": {"time": "14:00", "pillar_preference": "African Markets & Financial Literacy", "post_type": "Poll or Community Question"},
+    "thursday":  {"time": "09:00", "pillar_preference": "AI in Trading", "post_type": "Personal Story or Lesson Learned"},
+    "friday":    {"time": "10:00", "pillar_preference": "African Markets & Financial Literacy", "post_type": "Market Commentary or Data-Driven Insight"},
+    "saturday":  {"time": "18:00", "pillar_preference": "Industry Commentary", "post_type": "Weekend Insight or Practical Framework"},
+    # Sunday: rest day — content batching and review
 }
 
 TIMEZONE = "Africa/Lagos"  # WAT

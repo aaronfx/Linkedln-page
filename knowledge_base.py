@@ -4,6 +4,10 @@ Knowledge Base — Strategy, Posts & Brand Voice
 Contains all strategy documents, viral templates, sample posts,
 and brand guidelines that Claude uses to generate on-brand content.
 This is the "brain" that makes the automation sound like Dr. Aaron Akwu.
+
+SOURCE DOCUMENTS:
+- LinkedIn 20K Growth Strategy (1897 lines, comprehensive plan)
+- LinkedIn 2-Week Posts (12 ready-to-post examples, April 20 - May 3 2026)
 """
 
 # ─── Brand Voice & Identity ─────────────────────────────────
@@ -24,6 +28,8 @@ SIGNATURE PHRASES:
 - "Follow the person who shows their methodology, not their car"
 - "AI doesn't replace traders. AI replaces BAD HABITS."
 - "The best traders aren't the ones who trade the most. They're the ones who know when to stop."
+- "Your edge in forex isn't a secret indicator. It's a piece of paper with your rules on it."
+- "The future of forex isn't AI vs. humans. It's AI-powered humans vs. everyone else."
 
 NEVER SAY:
 - "Financial freedom" (overused, scammy)
@@ -31,15 +37,16 @@ NEVER SAY:
 - "Copy my trades" (goes against education philosophy)
 - "Guaranteed returns" (dishonest)
 - Generic motivational quotes without personal context
+- Emojis (never use emojis in posts)
 
 ALWAYS INCLUDE:
 - A specific data point or number
 - A reference to real experience (Gopipways, Hantec Markets, students)
 - A question or CTA at the end to drive comments
-- 3-4 relevant hashtags
+- 3-4 relevant hashtags (follow the hashtag rotation schedule)
 """
 
-# ─── Growth Strategy Summary ────────────────────────────────
+# ─── Growth Strategy — Complete Plan ──────────────────────────
 
 GROWTH_STRATEGY = """
 LINKEDIN GROWTH STRATEGY: 4.5K → 20K FOLLOWERS IN 6-12 MONTHS
@@ -50,22 +57,35 @@ STRATEGIC OBJECTIVES:
 - Tertiary: Generate consistent recruiter and partnership inquiries
 - Timeline: 6-8 months aggressive, 8-12 months sustainable
 
-PHASE 1 (Months 1-2): Foundation — 4.5K → 7K
+═══════════════════════════════════════════════
+PHASE 1: FOUNDATION (Months 1-2): 4.5K → 7K
+═══════════════════════════════════════════════
 - Post 4-5 times per week consistently
 - Test all 5 content pillars
 - Engage with 15-20 industry leaders daily
+- Build connection base to 600+ (from 500)
 - Target 500-800 impressions per post, 4-6% engagement
+- Week 1-2: Optimize profile, establish posting schedule
+- Week 3-4: First viral post (target 1,000+ impressions)
+- Week 5-8: Identify top-performing content pillar
 
-PHASE 2 (Months 3-4): Viral Content — 7K → 12K
-- Double down on high-performing pillars
-- Initiate 2-3 collaborations with micro-influencers
+═══════════════════════════════════════════════
+PHASE 2: VIRAL CONTENT (Months 3-4): 7K → 12K
+═══════════════════════════════════════════════
+- Double down on high-performing content pillars
+- Initiate 2-3 collaborations with micro-influencers (10K-50K followers)
+- Launch LinkedIn article series
+- Increase engagement to 20-25 daily interactions
 - Target 1,200-2,000 impressions, 6-8% engagement
 - 1-2 viral posts per week (2K+ impressions)
 
-PHASE 3 (Months 5-8): Authority & Scale — 12K → 20K
+═══════════════════════════════════════════════
+PHASE 3: AUTHORITY & SCALE (Months 5-8): 12K → 20K
+═══════════════════════════════════════════════
 - Weekly LinkedIn articles
+- Partner with 2-3 established voices in fintech/forex
+- Launch AMA sessions
 - Podcast appearances
-- AMA sessions
 - Target 2,500-4,000+ impressions, 8-12% engagement
 - 50+ monthly recruiter DMs
 
@@ -75,7 +95,134 @@ KEY SUCCESS FACTORS:
 3. Post at optimal times: 9-11 AM WAT, 2 PM WAT, 6-7 PM WAT
 4. Vary content types: text, polls, carousels, articles
 5. Use the "hook + story + data + CTA" formula consistently
+6. Weekly content batching on Sundays (2-3 hours)
+7. Friday analytics review (15-20 minutes)
 """
+
+# ─── 5-Pillar Framework with Topic Suggestions ────────────────
+
+PILLAR_TOPIC_SUGGESTIONS = {
+    "Forex Education": {
+        "weight": "30%",
+        "purpose": "Establish expertise and provide immediate value",
+        "topics": [
+            "The 3 chart patterns that predict reversals 70% of the time",
+            "Why 90% of traders fail: The psychology issue",
+            "Risk/reward ratios explained simply",
+            "How to read support and resistance like a pro",
+            "The trading mindset shift that changed my P&L",
+            "The 3-trade rule: stop after 3 consecutive losses",
+            "Written trading plan: the edge nobody talks about",
+            "Speed of loss acceptance separates winners from losers",
+            "The loss recovery protocol: close chart, write lesson, 10-min break",
+            "Trading journal systems that actually work",
+        ],
+    },
+    "AI in Trading": {
+        "weight": "20%",
+        "purpose": "Position Gopipways as innovation leader, highlight competitive advantage",
+        "topics": [
+            "How AI backtesting saves traders 6 months of learning",
+            "5 AI tools that transform forex education",
+            "Can AI replace traders? Here's what research shows",
+            "Why African traders need AI-powered tools NOW",
+            "AI doesn't replace traders — AI replaces BAD HABITS",
+            "5 myths about AI in trading that are costing you money",
+            "AI removes emotion from EXECUTION, not from decisions",
+            "AI scans 28 currency pairs in 3 seconds vs your 3 hours",
+            "The future: AI-powered humans vs everyone else",
+        ],
+        "brand_rule": "Include Gopipways in 2-3 posts monthly without being salesy",
+    },
+    "African Markets & Financial Literacy": {
+        "weight": "20%",
+        "purpose": "Own the 'Africa fintech educator' narrative, expand TAM beyond forex",
+        "topics": [
+            "How Naira movements affect your trading",
+            "Financial literacy: The missing piece in African education",
+            "Why Sub-Saharan Africa is the next forex frontier",
+            "Regional market analysis: West vs. East Africa",
+            "How young Africans are building wealth through trading",
+            "Africa has 1.4 billion people, fewer than 2% trade forex",
+            "Mobile-first trading platforms will explode across Africa",
+            "Local currency pairs (NGN/USD, GHS/USD, KES/USD) aren't exotic — they're HOME",
+            "The biggest problem with forex education in Africa isn't scammers — it's silence",
+        ],
+    },
+    "Personal Story & Behind-the-Scenes": {
+        "weight": "15%",
+        "purpose": "Build authentic connection, humanize authority, attract quality relationships",
+        "topics": [
+            "How I went from trader to trainer: The turning point",
+            "Building Africa's #1 forex academy: 3 lessons I'd do differently",
+            "The moment I realized education > trading for my path",
+            "Managing 3,000+ students: The infrastructure challenge",
+            "What Hantec Markets taught me about excellence",
+            "The student who changed how I teach trading (Emeka's story)",
+            "From Hantec Markets to Gopipways: solving the execution gap",
+            "The biggest mistake I made building Gopipways",
+        ],
+    },
+    "Industry Commentary": {
+        "weight": "15%",
+        "purpose": "Show real-time market relevance, attract traders looking for insights",
+        "topics": [
+            "FOMC decision impact on emerging market currencies",
+            "Why oil prices matter for NGN traders",
+            "The central bank move nobody's talking about",
+            "Volatility spikes: Opportunity or risk?",
+            "How crypto is changing forex education",
+            "Weekend loss review: the 30-minute habit that improved my win rate from 55% to 72%",
+            "Market recap and trading psychology insight",
+        ],
+    },
+}
+
+# ─── Weekly Post Type Pattern ─────────────────────────────────
+# From the Quick-Grab Post Types section of the strategy document
+
+WEEKLY_POST_TYPES = {
+    "monday": {
+        "type": "Controversial Take or Myth vs. Reality",
+        "guidance": "Take a bold stance, challenge conventional wisdom, back with data/experience, invite debate.",
+    },
+    "tuesday": {
+        "type": "Educational Deep Dive",
+        "guidance": "Technical analysis, risk management framework, or trading psychology insight with actionable steps.",
+    },
+    "wednesday": {
+        "type": "Poll or Community Question",
+        "guidance": "Simple multiple choice that reveals trading maturity level. Add context for each option. Ask for deeper engagement in comments.",
+    },
+    "thursday": {
+        "type": "Personal Story or Lesson Learned",
+        "guidance": "Vulnerable opening, specific student story with dialogue, turning point, actionable lesson.",
+    },
+    "friday": {
+        "type": "Market Commentary or Data-Driven Insight",
+        "guidance": "African markets focus, shocking statistic, industry trend, or thought leadership piece on fintech.",
+    },
+    "saturday": {
+        "type": "Weekend Insight or Practical Framework",
+        "guidance": "Reflective weekend content: trading review routines, practical rules, weekly lessons, weekend market thoughts.",
+    },
+}
+
+# ─── Emergency Content Ideas ─────────────────────────────────
+# From the strategy document — use when stuck or need fresh angles
+
+EMERGENCY_CONTENT_IDEAS = [
+    "What most forex educators don't tell you about [topic]",
+    "The ONE metric that predicts if you'll be profitable",
+    "I trained 3,000+ traders. Here's what separated winners from losers",
+    "The biggest mistake I made building Gopipways (and what I learned)",
+    "[Currency] update: Here's what traders need to know",
+    "Why 90% of traders fail (and how to avoid it)",
+    "This changed how I approach trading psychology",
+    "The REAL cost of trading education in Africa",
+    "How I decide if a trader is ready for live trading",
+    "African fintech is about to explode. Here's why.",
+]
 
 # ─── Viral Post Templates ──────────────────────────────────
 
@@ -83,6 +230,7 @@ VIRAL_TEMPLATES = [
     {
         "name": "The Controversial Take",
         "formula": "Bold claim → Data/personal proof → Counter-argument acknowledgment → CTA",
+        "best_for": "monday",
         "structure": """[BOLD CLAIM THAT CHALLENGES CONVENTIONAL WISDOM]
 
 Most people think [conventional belief]. But here's what I've found after [timeframe/experience]:
@@ -100,6 +248,7 @@ What's your take? Tell me below.""",
     {
         "name": "The Before/After Transformation",
         "formula": "Before state → Turning point → New approach → After results → Lesson",
+        "best_for": "any",
         "structure": """BEFORE: [Undesirable state/common struggle]
 [Pain point 1]
 [Pain point 2]
@@ -121,6 +270,7 @@ What transformation are you working toward?""",
     {
         "name": "The Myth vs. Reality",
         "formula": "Multiple myth/reality pairs → Common thread → Question",
+        "best_for": "monday",
         "structure": """[X] myths about [topic] that are costing you [money/time/results]:
 
 MYTH 1: "[Common misconception]"
@@ -137,6 +287,7 @@ Which myth were you believing? Be honest.""",
     {
         "name": "The Lesson I Learned",
         "formula": "Specific story with tension → Realization → Actionable lesson",
+        "best_for": "thursday",
         "structure": """When I was [doing something specific], I discovered something that changed [what].
 
 I noticed that [observation about students/traders/market].
@@ -160,6 +311,7 @@ How do YOU handle [relevant situation]?""",
     {
         "name": "The Data/Stats Hook",
         "formula": "Shocking statistic → Why it matters → What smart people do → Personal proof",
+        "best_for": "tuesday",
         "structure": """[SHOCKING STAT about forex/trading/education/Africa]
 
 But here's the number nobody talks about: [HIDDEN STAT]
@@ -179,6 +331,7 @@ Drop a "[WORD]" in the comments if you're committing to this.""",
     {
         "name": "The Personal Story",
         "formula": "Vulnerable opening → Specific story → Turning point → Lesson → Invitation",
+        "best_for": "thursday",
         "structure": """In [YEAR], a [student/person] named [NAME] told me something I'll never forget.
 
 [He/She] said: "[SPECIFIC QUOTE]"
@@ -201,6 +354,7 @@ What's keeping you from [DESIRED OUTCOME]? Tell me below.""",
     {
         "name": "The How I Built This",
         "formula": "Problem → Decision → Obstacles → Breakthroughs → Today → Invitation",
+        "best_for": "thursday",
         "structure": """How I built [WHAT]:
 
 THE PROBLEM ([YEARS]):
@@ -231,6 +385,7 @@ What are you building? I'd love to hear.""",
     {
         "name": "The Unpopular Opinion",
         "formula": "Claim strong position → Expected disagreement → Evidence → Provocative close",
+        "best_for": "monday",
         "structure": """Unpopular opinion: [BOLD STATEMENT]
 
 Let me explain.
@@ -258,6 +413,7 @@ Who's one [person/educator/leader] you actually trust? Tag them below.""",
     {
         "name": "The Weekend Insight",
         "formula": "Routine reveal → Process breakdown → Data/result → Challenge to audience",
+        "best_for": "saturday",
         "structure": """Weekend [market/trading] thought:
 
 Every [day], I spend [TIME] doing something most traders skip completely.
@@ -281,6 +437,7 @@ What's your most [repeated mistake/common challenge]? Be honest below.""",
     {
         "name": "The Practical Framework",
         "formula": "Name the rule → Explain why → Show data → Mandate action",
+        "best_for": "saturday",
         "structure": """The [NAME] rule that saved my students [SPECIFIC RESULT]:
 
 [RULE explained in 1-2 sentences]
@@ -306,16 +463,41 @@ The math is brutal and clear: [CONCLUSION]
 
 What's your [related habit/limit]? If you don't have one, that's your homework.""",
     },
+    {
+        "name": "The Community Poll",
+        "formula": "Simple question + 4 options + Why it matters + Deeper engagement hook",
+        "best_for": "wednesday",
+        "structure": """Quick question for the traders in here:
+
+[CLEAR POLL QUESTION]
+
+A) [Option A]
+B) [Option B]
+C) [Option C]
+D) [Option D]
+
+Your answer reveals [what it reveals].
+
+[What A/B answers mean — usually beginners]
+[What C answers mean — usually intermediate]
+[What D answers mean — usually advanced]
+
+There's no wrong answer. But there IS a growth path from wherever you are now.
+
+Reply with your letter, then tell me: [DEEPER QUESTION]""",
+    },
 ]
 
-# ─── Sample Posts (The 12 Scheduled Posts) ──────────────────
-# These serve as style examples for Claude to learn from
+# ─── Sample Posts (The 12 Strategy Document Posts) ────────────
+# These serve as EXACT style examples for Claude to learn from.
+# These are the gold standard — all new posts should match this quality.
 
 SAMPLE_POSTS = [
     {
         "pillar": "Personal Story & Behind-the-Scenes",
         "day": "Monday",
         "time": "9:00 AM WAT",
+        "template_used": "The Personal Story",
         "text": """In 2019, a student named Emeka told me something I'll never forget.
 
 He said: "Sir, I passed every quiz you gave me. But when I open my live account, my hands shake."
@@ -344,6 +526,7 @@ What's keeping you from going live? Tell me below.
         "pillar": "Forex Education",
         "day": "Tuesday",
         "time": "11:00 AM WAT",
+        "template_used": "The Data/Stats Hook",
         "text": """90% of retail forex traders lose money in their first year.
 
 But here's the number nobody talks about: 73% of those traders never had a written trading plan.
@@ -374,6 +557,7 @@ Drop a "PLAN" in the comments if you're committing to this.
         "pillar": "Community & Interactive",
         "day": "Wednesday",
         "time": "2:00 PM WAT",
+        "template_used": "The Community Poll",
         "text": """Quick question for the traders in here:
 
 When you enter a trade, what dominates your thinking?
@@ -399,6 +583,7 @@ Reply with your letter, then tell me: What would it take for you to level up?
         "pillar": "AI in Trading",
         "day": "Thursday",
         "time": "9:00 AM WAT",
+        "template_used": "The Controversial Take",
         "text": """"AI will replace traders."
 
 I hear this every week. And every week, I explain why it's wrong.
@@ -430,6 +615,7 @@ Which side do you want to be on?
         "pillar": "African Markets & Financial Literacy",
         "day": "Friday",
         "time": "10:00 AM WAT",
+        "template_used": "The Unpopular Opinion",
         "text": """Unpopular opinion: The biggest problem with forex education in Africa isn't scammers.
 
 It's silence.
@@ -466,6 +652,7 @@ Who's one educator you actually trust? Tag them below.
         "pillar": "Industry Commentary",
         "day": "Saturday",
         "time": "6:00 PM WAT",
+        "template_used": "The Weekend Insight",
         "text": """Weekend market thought:
 
 Every Sunday, I spend 30 minutes doing something most traders skip completely.
@@ -492,9 +679,10 @@ What's your most repeated trading mistake? Be honest below.
 #ForexTrading #TradingStrategy #TradingPsychology""",
     },
     {
-        "pillar": "Personal Story & Founder Journey",
+        "pillar": "Personal Story & Behind-the-Scenes",
         "day": "Monday",
         "time": "9:00 AM WAT",
+        "template_used": "The How I Built This",
         "text": """How I built Africa's #1 AI-powered forex academy from zero:
 
 THE PROBLEM (2016-2019):
@@ -534,6 +722,7 @@ What are you building? I'd love to hear.
         "pillar": "Forex Education",
         "day": "Tuesday",
         "time": "11:00 AM WAT",
+        "template_used": "The Lesson I Learned",
         "text": """When I was training my 1,000th student, I discovered something that changed my entire curriculum.
 
 I noticed that the students who were most profitable had ONE thing in common. It wasn't intelligence. It wasn't capital. It wasn't even discipline.
@@ -566,6 +755,7 @@ How do YOU handle losses? Fast or slow?
         "pillar": "Community & Interactive",
         "day": "Wednesday",
         "time": "2:00 PM WAT",
+        "template_used": "The Community Poll",
         "text": """I've trained 3,000+ traders. Here's the question I get asked most:
 
 "What destroyed your account?" — and it's almost always one of these four:
@@ -589,6 +779,7 @@ Vote and share your story. Let's learn from each other.
         "pillar": "AI in Trading",
         "day": "Thursday",
         "time": "9:00 AM WAT",
+        "template_used": "The Myth vs. Reality",
         "text": """5 myths about AI in trading that are costing you money:
 
 MYTH 1: "AI trading bots guarantee profits."
@@ -616,6 +807,7 @@ The traders who win in 2026 won't be the ones with the best AI. They'll be the o
         "pillar": "African Markets & Financial Literacy",
         "day": "Friday",
         "time": "10:00 AM WAT",
+        "template_used": "The Data/Stats Hook",
         "text": """Africa has 1.4 billion people. Fewer than 2% actively trade forex.
 
 Let that sink in.
@@ -644,6 +836,7 @@ The next decade belongs to African fintech. The question is: are you building, i
         "pillar": "Forex Education",
         "day": "Saturday",
         "time": "6:00 PM WAT",
+        "template_used": "The Practical Framework",
         "text": """The 3-trade rule that saved my students thousands of dollars:
 
 After your third consecutive losing trade in a day — STOP. Walk away. Come back tomorrow.
@@ -674,27 +867,41 @@ What's your daily loss limit? If you don't have one, that's your homework for th
     },
 ]
 
-# ─── Hashtag Strategy ──────────────────────────────────────
+# ─── Hashtag Strategy (Full 4-Week Rotation) ─────────────────
 
 HASHTAG_STRATEGY = {
     "primary": ["#ForexTrading", "#ForexEducation", "#FinancialMarkets"],
     "secondary_rotation": {
-        "week_odd": ["#TradingPsychology", "#AfricanStartups", "#SkillsDevelopment"],
-        "week_even": ["#TechnicalAnalysis", "#FinancialLiteracy", "#EdTech"],
+        "week_1": ["#TradingPsychology", "#AfricanStartups", "#SkillsDevelopment"],
+        "week_2": ["#TechnicalAnalysis", "#FinancialLiteracy", "#EdTech"],
+        "week_3": ["#RiskManagement", "#AfricaFintech", "#CareerGrowth"],
+        "week_4": ["#TradingStrategy", "#NigeriaFintech", "#ProfessionalDevelopment"],
     },
     "pillar_specific": {
-        "Personal Story": ["#Entrepreneurship", "#Leadership", "#PersonalGrowth"],
-        "Forex Education": ["#RiskManagement", "#TradingStrategy", "#TradingJournal"],
+        "Forex Education": ["#RiskManagement", "#TradingStrategy", "#TradingJournal", "#TradingPsychology"],
         "AI in Trading": ["#ArtificialIntelligence", "#EdTech", "#MachineLearning"],
-        "African Markets": ["#AfricaFintech", "#NigeriaFintech", "#SubSaharanAfrica"],
-        "Community": ["#TradingMindset", "#TradingCommunity"],
-        "Industry Commentary": ["#MarketAnalysis", "#TradingStrategy"],
+        "African Markets & Financial Literacy": ["#AfricaFintech", "#NigeriaFintech", "#SubSaharanAfrica", "#FinancialLiteracy"],
+        "Personal Story & Behind-the-Scenes": ["#Entrepreneurship", "#Leadership", "#PersonalGrowth"],
+        "Industry Commentary": ["#MarketAnalysis", "#TradingStrategy", "#TradingPsychology"],
+    },
+    "trending_contextual": [
+        "#FOMC", "#CentralBanks", "#Bitcoin", "#Crypto",
+        "#StartupNigeria", "#FounderStories",
+    ],
+    "quick_sets": {
+        "set_1": "#ForexTrading #TradingPsychology #AfricanStartups #SkillsDevelopment",
+        "set_2": "#ForexEducation #TechnicalAnalysis #FinancialLiteracy #EdTech",
+        "set_3": "#FinancialMarkets #RiskManagement #AfricaFintech #CareerGrowth",
+        "set_4": "#ForexTrading #TradingStrategy #NigeriaFintech #ProfessionalDevelopment",
     },
     "rules": [
-        "Always include 1 primary hashtag in every post",
-        "Use 3-4 hashtags total per post (not more)",
-        "Rotate secondary hashtags weekly",
+        "Always include 1 primary hashtag (#ForexTrading, #ForexEducation, or #FinancialMarkets) in every post",
+        "Use 3-4 hashtags total per post (ideal: 3-5, max: 8)",
+        "Rotate secondary hashtags weekly using the 4-week rotation schedule",
         "Match pillar-specific hashtags to content type",
+        "Place hashtags at the end of the post, not in the middle",
+        "Never use the same hashtag combination in consecutive posts",
+        "Use trending/contextual hashtags only when relevant to current events",
     ],
 }
 
@@ -719,9 +926,24 @@ Bad: "Thanks for your comment! Check out Gopipways for more!"
 Good: "I love that you brought this up. When I first encountered this with my students..."
 Bad: "Interesting! Follow me for more content like this."
 
-ENGAGEMENT CADENCE:
+ENGAGEMENT CADENCE (from the strategy document):
 - Reply to ALL comments within 2 hours of posting
-- Engage with 5 industry leaders' posts BEFORE posting your own content
-- Engage with 5 more AFTER posting
-- Target leaders: African fintech founders, forex educators, financial literacy advocates
+- Morning (9-10 AM WAT): Comment on 5 industry leaders' posts + reply to your posts
+- Afternoon (2-3 PM WAT): Engage with 10 more industry accounts + check DMs
+- Evening (6-7 PM WAT): Post daily content + monitor first 30 minutes + 5 group engagements
+
+COMMENT FORMULA:
+[Reference the specific insight] + [Your unique perspective/experience] + [Question to extend the conversation]
+
+GREAT COMMENT EXAMPLE:
+"Your point about technical analysis is spot-on, but I've found that the psychology behind
+sticking to the pattern is what separates winners from losers. In my 3,000+ trader cohort,
+the ones who succeed are those who acknowledge their fear and execute anyway. Are you
+finding that your students struggle more with pattern recognition or execution discipline?"
+
+BAD COMMENTS (never write these):
+- "Great post!"
+- "100% agree"
+- "Thanks for sharing this valuable content!"
+- "This is gold!"
 """
