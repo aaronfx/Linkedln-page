@@ -13,7 +13,11 @@ from config import OPENAI_API_KEY, IMAGE_SETTINGS, IMAGES_DIR, PROFILE
 
 logger = logging.getLogger("image_generator")
 
-openai_client = OpenAI(api_key=OPENAI_API_KEY)
+
+def _get_openai_client():
+    """Create OpenAI client on demand (not at import time) so env vars are fresh."""
+    from config import OPENAI_API_KEY as key
+    return OpenAI(api_key=key)
 
 
 def generate_post_image(
@@ -38,7 +42,7 @@ def generate_post_image(
     logger.info(f"Generating image with prompt: {enhanced_prompt[:100]}...")
 
     try:
-        response = openai_client.images.generate(
+        response = _get_openai_client().images.generate(
             model=IMAGE_SETTINGS["model"],
             prompt=enhanced_prompt,
             size=IMAGE_SETTINGS["size"],

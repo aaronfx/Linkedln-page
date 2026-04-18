@@ -7,6 +7,7 @@ Runs on Railway alongside the automation worker.
 
 import json
 import os
+import logging
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
@@ -16,6 +17,8 @@ from config import (
     ANALYTICS_FILE, ANALYTICS_DIR, POSTING_SCHEDULE, PROFILE,
     CONTENT_PILLARS, DATA_DIR
 )
+
+logger = logging.getLogger("dashboard")
 
 app = Flask(__name__)
 app.secret_key = os.getenv("DASHBOARD_SECRET", "gopipways-linkedin-agent-2026")
@@ -120,7 +123,9 @@ DASHBOARD_HTML = """
   .post-preview {
     background: var(--bg); border: 1px solid var(--border);
     border-radius: 8px; padding: 16px; margin-bottom: 12px;
+    cursor: pointer; transition: border-color 0.2s;
   }
+  .post-preview:hover { border-color: var(--accent); }
   .post-preview .meta {
     display: flex; justify-content: space-between; align-items: center;
     margin-bottom: 8px;
@@ -134,10 +139,34 @@ DASHBOARD_HTML = """
     font-size: 0.9rem; color: var(--muted); line-height: 1.5;
     max-height: 80px; overflow: hidden;
   }
+  .post-preview .text.expanded { max-height: none; }
+  .post-preview .expand-btn {
+    background: none; border: none; color: var(--accent); font-size: 0.8rem;
+    cursor: pointer; padding: 4px 0; margin-top: 4px;
+  }
+  .post-preview .post-image {
+    margin-top: 10px; border-radius: 6px; max-width: 100%; max-height: 200px;
+    object-fit: cover; border: 1px solid var(--border);
+  }
+  .post-preview .image-badge {
+    font-size: 0.7rem; padding: 2px 8px; border-radius: 10px;
+    background: rgba(16,185,129,0.15); color: var(--accent2);
+    display: inline-block; margin-top: 6px;
+  }
+  .post-preview .no-image {
+    font-size: 0.7rem; padding: 2px 8px; border-radius: 10px;
+    background: rgba(245,158,11,0.15); color: var(--accent3);
+    display: inline-block; margin-top: 6px;
+  }
   .post-preview .metrics {
     display: flex; gap: 16px; margin-top: 10px; font-size: 0.8rem; color: var(--muted);
   }
   .post-preview .metrics span { display: flex; align-items: center; gap: 4px; }
+  .post-preview .template-tag {
+    font-size: 0.7rem; padding: 2px 8px; border-radius: 10px;
+    background: rgba(139,92,246,0.15); color: #a78bfa;
+    display: inline-block; margin-left: 6px;
+  }
 
   /* Comment List */
   .comment-item {
@@ -253,13 +282,24 @@ DASHBOARD_HTML = """
       <!-- Content Queue -->
       <div class="card">
         <h2>Content Queue ({{ queue_count }} posts)</h2>
-        {% for post in queue[:5] %}
-        <div class="post-preview">
+        {% for post in queue %}
+        <div class="post-preview" onclick="toggleExpand(this)">
           <div class="meta">
-            <span class="pillar">{{ post.get('pillar', 'General') }}</span>
-            <span class="date">{{ post.get('scheduled_day', '') }} {{ post.get('scheduled_time', '') }}</span>
+            <span class="pillar">{{ post.get('pillar', 'General') }}
+              {% if post.get('template_used') %}<span class="template-tag">{{ post.get('template_used', '') }}</span>{% endif %}
+            </span>
+            <span class="date">{{ post.get('display_date', post.get('scheduled_day', '') + ' ' + post.get('scheduled_time', '')) }}</span>
           </div>
-          <div class="text">{{ post.get('text', post.get('hook', 'No preview'))[:200] }}...</div>
+          <div class="text">{{ post.get('text', post.get('hook', 'No preview')) }}</div>
+          <button class="expand-btn">Click to expand full post</button>
+          {% if post.get('image_path') %}
+            <div class="image-badge">Image attached</div>
+          {% else %}
+            <div class="no-image">No image</div>
+          {% endif %}
+          {% if post.get('estimated_engagement') %}
+            <span style="font-size:0.75rem; color:var(--muted); margin-left:8px;">Est: {{ post.get('estimated_engagement', '') }}</span>
+          {% endif %}
         </div>
         {% endfor %}
         {% if not queue %}<p style="color:var(--muted)">Queue empty — click "Generate Week" to create content</p>{% endif %}
@@ -361,6 +401,18 @@ DASHBOARD_HTML = """
 
 <script>
 let pollInterval = null;
+
+function toggleExpand(el) {
+  const text = el.querySelector('.text');
+  const btn = el.querySelector('.expand-btn');
+  if (text.classList.contains('expanded')) {
+    text.classList.remove('expanded');
+    btn.textContent = 'Click to expand full post';
+  } else {
+    text.classList.add('expanded');
+    btn.textContent = 'Click to collapse';
+  }
+}
 
 function showToast(message, success) {
   const toast = document.getElementById('toast');
@@ -538,43 +590,54 @@ def api_generate():
         try:
             from content_engine import generate_weekly_content
 
-            with _task_lock:
-                _background_tasks[tid]["message"] = "Loading context: queue, history, analytics, comments..."
-
-            # generate_weekly_content now handles ALL intelligence internally:
-            # - Loads existing queue to avoid duplicates
-            # - Loads post history to avoid repeating hooks/topics
-            # - Loads analytics to optimize for what works
-            # - Loads comment themes to address audience interests
-            # - Selects smart templates avoiding overused ones
-            # - Each post in the batch is aware of previously generated posts
-
-            with _task_lock:
-                _background_tasks[tid]["message"] = "Generating 6 intelligent posts with Claude AI..."
-
-            posts = generate_weekly_content()  # Full intelligence is built-in now
-
-            # Skip image generation if OPENAI_API_KEY is not set properly
-            from config import OPENAI_API_KEY
-            if OPENAI_API_KEY and not OPENAI_API_KEY.startswith("sk-your"):
+            # Progress callback so the UI shows per-post updates
+            def on_progress(msg):
                 with _task_lock:
-                    _background_tasks[tid]["message"] = "Generating images with DALL-E..."
+                    _background_tasks[tid]["message"] = msg
+                    _background_tasks["current"] = _background_tasks[tid]
+
+            # Generate all 6 posts with full intelligence + real dates
+            posts = generate_weekly_content(progress_callback=on_progress)
+
+            # Generate images with DALL-E (fresh client each time)
+            from config import OPENAI_API_KEY
+            if OPENAI_API_KEY and OPENAI_API_KEY.startswith("sk-") and "your" not in OPENAI_API_KEY:
                 from image_generator import generate_post_image
-                for post in posts:
+                for i, post in enumerate(posts, 1):
                     prompt = post.get("image_prompt", "")
                     if prompt:
-                        path = generate_post_image(prompt, post.get("pillar", ""))
-                        post["image_path"] = path
+                        on_progress(f"Generating image {i}/{len(posts)} with DALL-E...")
+                        try:
+                            path = generate_post_image(prompt, post.get("pillar", ""))
+                            post["image_path"] = path
+                        except Exception as img_err:
+                            logger.error(f"Image generation failed for post {i}: {img_err}")
+                            post["image_path"] = ""
+                            post["image_error"] = str(img_err)
 
-            # Queue is already saved by generate_weekly_content — no need to overwrite
+                # Save updated queue WITH image paths
+                queue = load_json(CONTENT_QUEUE_FILE, [])
+                # Update the last N posts in queue with image paths
+                for qpost in queue[-len(posts):]:
+                    for gpost in posts:
+                        if qpost.get("hook") == gpost.get("hook") and gpost.get("image_path"):
+                            qpost["image_path"] = gpost["image_path"]
+                            break
+                save_json(CONTENT_QUEUE_FILE, queue)
+            else:
+                on_progress("Skipping images: OPENAI_API_KEY not configured")
+                logger.warning(f"OPENAI_API_KEY check failed. Value starts with: {OPENAI_API_KEY[:10] if OPENAI_API_KEY else 'EMPTY'}")
 
             with _task_lock:
+                img_count = sum(1 for p in posts if p.get("image_path"))
                 _background_tasks[tid] = {
                     "status": "completed",
-                    "message": f"Generated {len(posts)} intelligent posts! Each post is unique, optimized from analytics, and avoids duplicates.",
+                    "message": f"Generated {len(posts)} posts with {img_count} images! Review them below before posting.",
                 }
                 _background_tasks["current"] = _background_tasks[tid]
         except Exception as e:
+            import traceback
+            logger.error(f"Generate failed: {traceback.format_exc()}")
             with _task_lock:
                 _background_tasks[tid] = {
                     "status": "failed",

@@ -11,6 +11,7 @@ INTELLIGENCE FEATURES:
 - Reads comment themes to understand what the audience wants
 - Tracks which viral templates were recently used
 - Adjusts content strategy based on real performance data
+- Assigns real calendar dates to scheduled posts
 """
 
 import json
@@ -47,6 +48,27 @@ def _load_json_safe(path, default=None):
         except (json.JSONDecodeError, IOError):
             pass
     return default if default is not None else []
+
+
+def _get_next_weekday(target_day: str) -> datetime:
+    """
+    Get the next occurrence of a weekday from today.
+    If today IS that weekday, returns today.
+    Returns a timezone-aware datetime (UTC).
+    """
+    days_map = {
+        "monday": 0, "tuesday": 1, "wednesday": 2,
+        "thursday": 3, "friday": 4, "saturday": 5, "sunday": 6,
+    }
+    target = days_map.get(target_day.lower(), 0)
+    today = datetime.now(timezone.utc)
+    today_weekday = today.weekday()
+
+    days_ahead = target - today_weekday
+    if days_ahead < 0:
+        days_ahead += 7  # Next week
+
+    return today + timedelta(days=days_ahead)
 
 
 def _build_duplicate_guard(existing_queue: list, post_history: list) -> str:
@@ -135,44 +157,36 @@ def _build_analytics_intelligence(analytics_data: dict, post_history: list) -> s
         if summary:
             context += f"\n\nLATEST PERFORMANCE SUMMARY:\n{summary}\n"
 
-        # Top performing pillars
         top_pillars = latest_report.get("top_performing_pillars", [])
         if top_pillars:
             context += f"\nBEST PERFORMING PILLARS (lean into these): {', '.join(top_pillars[:3])}\n"
 
-        # Hook patterns that work
         hook_patterns = latest_report.get("hook_patterns", "")
         if hook_patterns:
             context += f"\nHOOK STYLES THAT WORK BEST: {hook_patterns}\n"
 
-        # Topics to double down on
         double_down = latest_report.get("topics_to_double_down", [])
         if double_down:
             context += f"\nTOPICS TO DOUBLE DOWN ON: {', '.join(double_down[:5])}\n"
 
-        # Topics to avoid
         avoid = latest_report.get("topics_to_avoid", [])
         if avoid:
             context += f"\nTOPICS THAT UNDERPERFORMED (avoid or reinvent): {', '.join(avoid[:5])}\n"
 
-        # Optimal post length
         optimal_length = latest_report.get("optimal_post_length", "")
         if optimal_length:
             context += f"\nOPTIMAL POST LENGTH: {optimal_length}\n"
 
-        # Engagement trend
         trend = latest_report.get("engagement_trend", "")
         if trend:
             context += f"\nENGAGEMENT TREND: {trend}\n"
 
-        # Content recommendations
         recs = latest_report.get("content_recommendations", [])
         if recs:
             context += "\nAI-GENERATED RECOMMENDATIONS FROM LAST ANALYSIS:\n"
             for rec in recs[:5]:
                 context += f"  - {rec}\n"
 
-        # Next week suggestions
         suggestions = latest_report.get("next_week_suggestions", [])
         if suggestions:
             context += "\nSUGGESTED TOPICS FROM ANALYTICS:\n"
@@ -216,10 +230,8 @@ def _build_comment_intelligence(comment_log: list) -> str:
     if not comment_log:
         return ""
 
-    # Analyze recent comments (last 100)
     recent_comments = comment_log[-100:]
 
-    # Collect question themes
     questions = []
     appreciation_topics = []
     disagreements = []
@@ -238,7 +250,6 @@ def _build_comment_intelligence(comment_log: list) -> str:
         elif category == "disagreement":
             disagreements.append(comment_text[:100])
 
-        # Look for topic requests
         lower = comment_text.lower()
         if any(phrase in lower for phrase in ["can you write about", "post about", "talk about", "cover", "discuss"]):
             requested_topics.append(comment_text[:150])
@@ -263,7 +274,6 @@ def _build_comment_intelligence(comment_log: list) -> str:
     if appreciation_topics:
         context += f"\n\nMOST APPRECIATED CONTENT THEMES: {len(appreciation_topics)} positive comments recently\n"
 
-    # Comment volume as engagement signal
     if len(recent_comments) > 0:
         context += f"\nTOTAL COMMENT INTERACTIONS LOGGED: {len(comment_log)}\n"
 
@@ -272,10 +282,8 @@ def _build_comment_intelligence(comment_log: list) -> str:
 
 def _select_smart_template(existing_queue: list, post_history: list) -> dict:
     """
-    Select a viral template intelligently — avoiding recently overused ones
-    and favoring templates that have driven engagement.
+    Select a viral template intelligently — avoiding recently overused ones.
     """
-    # Track recently used templates
     recent_templates = []
     for post in (existing_queue or [])[-6:]:
         t = post.get("template_used", "")
@@ -288,11 +296,9 @@ def _select_smart_template(existing_queue: list, post_history: list) -> dict:
 
     template_counts = Counter(recent_templates)
 
-    # Weight templates: prefer unused or rarely used ones
     weighted_templates = []
     for template in VIRAL_TEMPLATES:
         usage_count = template_counts.get(template["name"], 0)
-        # Inverse weight: less used = higher chance
         weight = max(1, 5 - usage_count)
         weighted_templates.append((template, weight))
 
@@ -304,9 +310,7 @@ def _select_smart_template(existing_queue: list, post_history: list) -> dict:
 
 
 def _build_growth_phase_context(post_history: list) -> str:
-    """
-    Determine current growth phase and provide phase-specific guidance.
-    """
+    """Determine current growth phase and provide phase-specific guidance."""
     total_posts = len(post_history) if post_history else 0
 
     if total_posts < 30:
@@ -356,18 +360,6 @@ def generate_post(
 ) -> dict:
     """
     Generate a LinkedIn post using Claude with FULL context awareness.
-
-    Args:
-        pillar: Content pillar to write about (random if None)
-        topic_hint: Optional specific topic or angle
-        optimize_from: List of past top-performing posts to learn from
-        existing_queue: Already-scheduled posts (to avoid duplicates)
-        post_history: Full post history (to avoid repeating)
-        analytics_data: Analytics insights (to optimize strategy)
-        comment_insights: Comment log (to address audience interests)
-
-    Returns:
-        dict with 'text', 'pillar', 'image_prompt', 'hashtags', 'template_used'
     """
     if pillar is None:
         weights = [p["weight"] for p in CONTENT_PILLARS]
@@ -377,23 +369,12 @@ def generate_post(
         pillar_obj = next((p for p in CONTENT_PILLARS if p["name"] == pillar), CONTENT_PILLARS[0])
 
     # ── Intelligence Layer: Build rich context ──
-
-    # 1. Duplicate guard — what NOT to repeat
     duplicate_guard = _build_duplicate_guard(existing_queue, post_history)
-
-    # 2. Analytics intelligence — what WORKS
     analytics_context = _build_analytics_intelligence(analytics_data, post_history)
-
-    # 3. Comment intelligence — what the AUDIENCE wants
     comment_context = _build_comment_intelligence(comment_insights)
-
-    # 4. Growth phase awareness
     growth_context = _build_growth_phase_context(post_history)
-
-    # 5. Smart template selection (avoids overused templates)
     template = _select_smart_template(existing_queue, post_history)
 
-    # 6. Top posts optimization
     optimization_context = ""
     if optimize_from:
         optimization_context = "\n\nTOP-PERFORMING POSTS (learn from their style, hooks, and structure):\n"
@@ -402,17 +383,14 @@ def generate_post(
             optimization_context += f"Pillar: {post.get('pillar', 'N/A')}\n"
             optimization_context += f"{post.get('text', '')[:500]}\n"
 
-    # 7. Get sample posts for the same pillar
     pillar_samples = [p for p in SAMPLE_POSTS if pillar.lower() in p.get("pillar", "").lower()]
     if not pillar_samples:
         pillar_samples = random.sample(SAMPLE_POSTS, min(3, len(SAMPLE_POSTS)))
 
     sample_text = "\n\n".join([
         f"--- EXAMPLE POST ({s['pillar']}) ---\n{s['text'][:600]}"
-        for s in pillar_samples[:2]  # Reduced to 2 to make room for intelligence context
+        for s in pillar_samples[:2]
     ])
-
-    # ── Build the system prompt with full intelligence ──
 
     system_prompt = f"""You are a LinkedIn ghostwriter for {PROFILE['name']} — and you are an INTELLIGENT GROWTH MACHINE.
 
@@ -538,9 +516,7 @@ def generate_reply(
     original_post_text: str,
     comment_sentiment: str = "neutral"
 ) -> str:
-    """
-    Generate an intelligent reply to a LinkedIn comment using Claude.
-    """
+    """Generate an intelligent reply to a LinkedIn comment using Claude."""
     system_prompt = f"""You are {PROFILE['name']}, replying to comments on your LinkedIn posts.
 
 {BRAND_VOICE}
@@ -677,10 +653,7 @@ Return ONLY valid JSON."""
 # ─── Intelligent Content Queue Management ──────────────────
 
 def load_full_context() -> dict:
-    """
-    Load ALL available context for intelligent content generation.
-    Returns a dict with all context sources ready to pass to generate_post().
-    """
+    """Load ALL available context for intelligent content generation."""
     existing_queue = _load_json_safe(CONTENT_QUEUE_FILE, [])
     post_history = _load_json_safe(POST_HISTORY_FILE, [])
     analytics_data = _load_json_safe(ANALYTICS_FILE, {})
@@ -700,23 +673,28 @@ def load_full_context() -> dict:
     }
 
 
-def generate_weekly_content(optimize_from: list = None) -> list:
+def generate_weekly_content(optimize_from: list = None, progress_callback=None) -> list:
     """
     Generate a full week of content (6 posts, Mon-Sat) with FULL intelligence.
 
-    Each post is generated with awareness of:
-    - All previously generated posts (including earlier posts in this batch)
-    - Full post history
-    - Analytics performance data
-    - Comment themes and audience questions
+    Each post is generated with awareness of all previously generated posts
+    (including earlier posts in this batch), full history, analytics, and comments.
 
     Args:
         optimize_from: Past top-performing posts to learn from
+        progress_callback: Optional function(message) for progress updates
 
     Returns:
-        List of post dicts ready to schedule
+        List of post dicts ready to schedule (with real calendar dates)
     """
     from config import POSTING_SCHEDULE
+
+    def _progress(msg):
+        if progress_callback:
+            progress_callback(msg)
+        logger.info(msg)
+
+    _progress("Loading full context: queue, history, analytics, comments...")
 
     # Load full context ONCE
     context = load_full_context()
@@ -736,32 +714,51 @@ def generate_weekly_content(optimize_from: list = None) -> list:
             optimize_from = []
 
     weekly_posts = []
-    # Build a running queue that includes newly generated posts from this batch
     running_queue = list(existing_queue)
+    schedule_items = list(POSTING_SCHEDULE.items())
+    total = len(schedule_items)
 
-    for day, schedule in POSTING_SCHEDULE.items():
-        logger.info(f"Generating intelligent post for {day}...")
+    for idx, (day, schedule) in enumerate(schedule_items):
+        post_num = idx + 1
+        _progress(f"Generating post {post_num}/{total}: {day.capitalize()} — {schedule['pillar_preference']}...")
 
-        post = generate_post(
-            pillar=schedule["pillar_preference"],
-            optimize_from=optimize_from,
-            existing_queue=running_queue,  # Includes previously generated posts in this batch!
-            post_history=post_history,
-            analytics_data=analytics_data,
-            comment_insights=comment_insights,
-        )
-        post["scheduled_day"] = day
-        post["scheduled_time"] = schedule["time"]
-        weekly_posts.append(post)
+        try:
+            post = generate_post(
+                pillar=schedule["pillar_preference"],
+                optimize_from=optimize_from,
+                existing_queue=running_queue,
+                post_history=post_history,
+                analytics_data=analytics_data,
+                comment_insights=comment_insights,
+            )
 
-        # Add this post to the running queue so the NEXT post knows about it
-        running_queue.append(post)
+            # ── Assign REAL calendar dates ──
+            post_date = _get_next_weekday(day)
+            hour, minute = map(int, schedule["time"].split(":"))
+            post_date = post_date.replace(hour=hour, minute=minute, second=0, microsecond=0)
 
-        logger.info(f"Generated {day} post: {post.get('pillar')} | Hook: {post.get('hook', '')[:60]}...")
+            post["scheduled_day"] = day
+            post["scheduled_time"] = schedule["time"]
+            post["scheduled_date"] = post_date.strftime("%Y-%m-%d")
+            post["scheduled_datetime"] = post_date.isoformat()
+            post["display_date"] = post_date.strftime("%a, %b %d at %I:%M %p")
+
+            weekly_posts.append(post)
+            running_queue.append(post)
+
+            _progress(f"Post {post_num}/{total} done: {post.get('pillar')} — {post.get('hook', '')[:50]}...")
+
+        except Exception as e:
+            logger.error(f"Failed to generate post {post_num}/{total} for {day}: {e}")
+            _progress(f"Post {post_num}/{total} failed: {str(e)[:100]}. Continuing...")
+            # Continue generating remaining posts instead of crashing
+            continue
 
     # Save to content queue (append to existing)
-    _save_content_queue(weekly_posts)
+    if weekly_posts:
+        _save_content_queue(weekly_posts)
 
+    _progress(f"Done! Generated {len(weekly_posts)}/{total} posts.")
     logger.info(f"Weekly content generation complete — {len(weekly_posts)} intelligent posts created")
     return weekly_posts
 
