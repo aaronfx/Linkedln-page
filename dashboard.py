@@ -23,12 +23,12 @@ logger = logging.getLogger("dashboard")
 app = Flask(__name__)
 app.secret_key = os.getenv("DASHBOARD_SECRET", "gopipways-linkedin-agent-2026")
 
-# ─── Background Task Tracking ──────────────────────────────
+# âââ Background Task Tracking ââââââââââââââââââââââââââââââ
 # Simple in-memory task tracker for long-running operations
 _background_tasks = {}  # task_id -> {status, message, result}
 _task_lock = threading.Lock()
 
-# ─── Utility ────────────────────────────────────────────────
+# âââ Utility ââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def load_json(path, default=None):
     path = Path(path)
@@ -45,7 +45,7 @@ def save_json(path, data):
         json.dump(data, f, indent=2, default=str)
 
 
-# ─── Dashboard HTML Template ───────────────────────────────
+# âââ Dashboard HTML Template âââââââââââââââââââââââââââââââ
 
 DASHBOARD_HTML = """
 <!DOCTYPE html>
@@ -53,7 +53,7 @@ DASHBOARD_HTML = """
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LinkedIn Agent — Dr. Aaron Akwu</title>
+<title>LinkedIn Agent â Dr. Aaron Akwu</title>
 <style>
   :root {
     --bg: #0f1117;
@@ -236,7 +236,7 @@ DASHBOARD_HTML = """
 <div class="container">
   <!-- Header -->
   <div class="header">
-    <h1><span>LinkedIn Agent</span> — Dr. Aaron Akwu</h1>
+    <h1><span>LinkedIn Agent</span> â Dr. Aaron Akwu</h1>
     <span class="status-badge status-active">ACTIVE</span>
   </div>
 
@@ -271,6 +271,7 @@ DASHBOARD_HTML = """
     <div class="btn-group">
       <button class="btn btn-primary" onclick="apiCall('/api/generate')">Generate Week</button>
       <button class="btn btn-success" onclick="apiCall('/api/post-now')">Post Now</button>
+      <button class="btn" style="background:var(--accent);color:#fff;" onclick="apiCall('/api/test-connection')">Test Connection</button>
       <button class="btn btn-warning" onclick="apiCall('/api/check-comments')">Check Comments</button>
       <button class="btn btn-primary" onclick="apiCall('/api/analytics')">Run Analytics</button>
       <button class="btn btn-primary" onclick="apiCall('/api/generate-images')" style="background:#e67e22;">Generate Images</button>
@@ -305,7 +306,7 @@ DASHBOARD_HTML = """
           {% endif %}
         </div>
         {% endfor %}
-        {% if not queue %}<p style="color:var(--muted)">Queue empty — click "Generate Week" to create content</p>{% endif %}
+        {% if not queue %}<p style="color:var(--muted)">Queue empty â click "Generate Week" to create content</p>{% endif %}
       </div>
 
       <!-- Posting Schedule -->
@@ -341,7 +342,7 @@ DASHBOARD_HTML = """
           </div>
         </div>
         {% endfor %}
-        {% if not recent_posts %}<p style="color:var(--muted)">No posts yet — publish your first one!</p>{% endif %}
+        {% if not recent_posts %}<p style="color:var(--muted)">No posts yet â publish your first one!</p>{% endif %}
       </div>
 
       <!-- Recent Comment Replies -->
@@ -379,7 +380,7 @@ DASHBOARD_HTML = """
           </tr>
           {% endfor %}
           {% if not pillar_stats %}
-          <tr><td colspan="3" style="color:var(--muted)">No data yet — publish posts to see analytics</td></tr>
+          <tr><td colspan="3" style="color:var(--muted)">No data yet â publish posts to see analytics</td></tr>
           {% endif %}
         </table>
       </div>
@@ -387,7 +388,7 @@ DASHBOARD_HTML = """
   </div>
 
   <div class="footer">
-    LinkedIn Automation Agent v1.0 — Powered by Claude (Anthropic) + DALL-E (OpenAI)<br>
+    LinkedIn Automation Agent v1.0 â Powered by Claude (Anthropic) + DALL-E (OpenAI)<br>
     Built for Dr. Aaron Akwu | Gopipways
   </div>
 </div>
@@ -444,6 +445,7 @@ async function apiCall(endpoint) {
   const labels = {
     '/api/generate': 'Generating weekly content with AI (this takes ~30-60 seconds)...',
     '/api/post-now': 'Publishing post to LinkedIn...',
+    '/api/test-connection': 'Testing LinkedIn API connection...',
     '/api/check-comments': 'Checking for new comments...',
     '/api/analytics': 'Running analytics...',
     '/api/generate-images': 'Generating DALL-E images for queued posts (this takes 1-2 minutes)...'
@@ -539,7 +541,7 @@ async function apiCall(endpoint) {
 </html>
 """
 
-# ─── Routes ─────────────────────────────────────────────────
+# âââ Routes âââââââââââââââââââââââââââââââââââââââââââââââââ
 
 @app.route("/")
 def dashboard():
@@ -683,9 +685,28 @@ def api_post_now():
         if result:
             return jsonify({"success": True, "message": f"Posted to LinkedIn! ID: {result.get('id', 'unknown')}"})
         else:
-            return jsonify({"success": False, "message": "Queue empty — click 'Generate Week' first"})
+            return jsonify({"success": False, "message": "Queue empty â click 'Generate Week' first"})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
+
+
+@app.route("/api/test-connection", methods=["POST"])
+def api_test_connection():
+    """Test LinkedIn API connection without posting anything."""
+    try:
+        from linkedin_api import LinkedInAPI
+        linkedin = LinkedInAPI()
+        profile = linkedin.get_profile()
+        name = profile.get("name", profile.get("sub", "Unknown"))
+        return jsonify({
+            "success": True,
+            "message": f"Connection OK! Authenticated as: {name}"
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"Connection failed: {str(e)}"
+        })
 
 
 @app.route("/api/check-comments", methods=["POST"])
@@ -695,7 +716,7 @@ def api_check_comments():
         if not history:
             return jsonify({
                 "success": True,
-                "message": "No published posts yet — publish a post first, then check for comments."
+                "message": "No published posts yet â publish a post first, then check for comments."
             })
         from comment_manager import CommentManager
         manager = CommentManager()
@@ -719,7 +740,7 @@ def api_analytics():
         report = engine.generate_weekly_report()
         return jsonify({
             "success": True,
-            "message": f"Report generated — {report.get('posts_analyzed', 0)} posts analyzed",
+            "message": f"Report generated â {report.get('posts_analyzed', 0)} posts analyzed",
             "report": report,
         })
     except Exception as e:
@@ -816,7 +837,7 @@ def health():
     return jsonify({"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()})
 
 
-# ─── Run ────────────────────────────────────────────────────
+# âââ Run ââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def run_dashboard(port=None):
     port = port or int(os.getenv("PORT", 5000))
