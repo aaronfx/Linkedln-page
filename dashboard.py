@@ -273,6 +273,7 @@ DASHBOARD_HTML = """
       <button class="btn btn-success" onclick="apiCall('/api/post-now')">Post Now</button>
       <button class="btn btn-warning" onclick="apiCall('/api/check-comments')">Check Comments</button>
       <button class="btn btn-primary" onclick="apiCall('/api/analytics')">Run Analytics</button>
+      <button class="btn btn-primary" onclick="apiCall('/api/generate-images')" style="background:#e67e22;">Generate Images</button>
     </div>
   </div>
 
@@ -444,15 +445,16 @@ async function apiCall(endpoint) {
     '/api/generate': 'Generating weekly content with AI (this takes ~30-60 seconds)...',
     '/api/post-now': 'Publishing post to LinkedIn...',
     '/api/check-comments': 'Checking for new comments...',
-    '/api/analytics': 'Running analytics...'
+    '/api/analytics': 'Running analytics...',
+    '/api/generate-images': 'Generating DALL-E images for queued posts (this takes 1-2 minutes)...'
   };
 
   showBanner(labels[endpoint] || 'Processing...');
   animateProgress(10);
 
   try {
-    // For generate, use background task approach
-    if (endpoint === '/api/generate') {
+    // For long-running tasks, use background task approach
+    if (endpoint === '/api/generate' || endpoint === '/api/generate-images') {
       animateProgress(20);
       const resp = await fetch(endpoint, { method: 'POST' });
       const data = await resp.json();
@@ -722,6 +724,65 @@ def api_analytics():
         })
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
+
+
+@app.route("/api/generate-images", methods=["POST"])
+def api_generate_images():
+    """Generate DALL-E images for all queued posts that don't have images yet."""
+    def _run_image_gen():
+        task_id = "generate-images"
+        try:
+            from image_generator import generate_post_image
+            queue = load_json(CONTENT_QUEUE_FILE, [])
+            total = len(queue)
+            generated = 0
+
+            for i, post in enumerate(queue):
+                prompt = post.get("image_prompt", "")
+                existing = post.get("image_path", "")
+
+                if existing and Path(existing).exists():
+                    continue
+                if not prompt:
+                    continue
+
+                with _task_lock:
+                    _background_tasks[task_id] = {
+                        "status": "running",
+                        "message": f"Generating image {i+1}/{total}: {post.get('hook', '')[:50]}...",
+                    }
+
+                try:
+                    path = generate_post_image(prompt, post.get("pillar", ""))
+                    if path:
+                        post["image_path"] = path
+                        generated += 1
+                except Exception as e:
+                    logger.error(f"Image generation failed for post {i+1}: {e}")
+                    continue
+
+            # Save updated queue with image paths
+            save_json(CONTENT_QUEUE_FILE, queue)
+
+            with _task_lock:
+                _background_tasks[task_id] = {
+                    "status": "completed",
+                    "message": f"Generated {generated} images for {total} posts",
+                }
+        except Exception as e:
+            logger.error(f"Image generation batch failed: {e}")
+            with _task_lock:
+                _background_tasks[task_id] = {"status": "failed", "message": str(e)}
+
+    task_id = "generate-images"
+    with _task_lock:
+        existing = _background_tasks.get(task_id, {})
+        if existing.get("status") == "running":
+            return jsonify({"success": False, "message": "Image generation already in progress"})
+
+    thread = threading.Thread(target=_run_image_gen, daemon=True)
+    thread.start()
+    return jsonify({"success": True, "task_id": task_id, "message": "Image generation started"})
 
 
 @app.route("/api/queue", methods=["GET"])
