@@ -23,12 +23,12 @@ logger = logging.getLogger("dashboard")
 app = Flask(__name__)
 app.secret_key = os.getenv("DASHBOARD_SECRET", "gopipways-linkedin-agent-2026")
 
-# âââ Background Task Tracking ââââââââââââââââââââââââââââââ
+# Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Background Task Tracking Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 # Simple in-memory task tracker for long-running operations
 _background_tasks = {}  # task_id -> {status, message, result}
 _task_lock = threading.Lock()
 
-# âââ Utility ââââââââââââââââââââââââââââââââââââââââââââââââ
+# Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Utility Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 def load_json(path, default=None):
     path = Path(path)
@@ -45,7 +45,7 @@ def save_json(path, data):
         json.dump(data, f, indent=2, default=str)
 
 
-# âââ Dashboard HTML Template âââââââââââââââââââââââââââââââ
+# Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Dashboard HTML Template Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 DASHBOARD_HTML = """
 <!DOCTYPE html>
@@ -53,7 +53,7 @@ DASHBOARD_HTML = """
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LinkedIn Agent â Dr. Aaron Akwu</title>
+<title>LinkedIn Agent Ã¢ÂÂ Dr. Aaron Akwu</title>
 <style>
   :root {
     --bg: #0f1117;
@@ -158,6 +158,18 @@ DASHBOARD_HTML = """
     background: rgba(245,158,11,0.15); color: var(--accent3);
     display: inline-block; margin-top: 6px;
   }
+  .upload-btn {
+    font-size: 0.75rem; padding: 4px 12px; border-radius: 8px;
+    background: rgba(59,130,246,0.15); color: var(--accent); border: 1px dashed var(--accent);
+    cursor: pointer; margin-left: 6px; transition: all 0.2s;
+  }
+  .upload-btn:hover { background: rgba(59,130,246,0.3); }
+  .upload-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+  .remove-img-btn {
+    font-size: 0.7rem; padding: 2px 8px; border-radius: 8px;
+    background: rgba(239,68,68,0.15); color: var(--danger); border: none;
+    cursor: pointer;
+  }
   .post-preview .metrics {
     display: flex; gap: 16px; margin-top: 10px; font-size: 0.8rem; color: var(--muted);
   }
@@ -236,7 +248,7 @@ DASHBOARD_HTML = """
 <div class="container">
   <!-- Header -->
   <div class="header">
-    <h1><span>LinkedIn Agent</span> â Dr. Aaron Akwu</h1>
+    <h1><span>LinkedIn Agent</span> Ã¢ÂÂ Dr. Aaron Akwu</h1>
     <span class="status-badge status-active">ACTIVE</span>
   </div>
 
@@ -294,19 +306,24 @@ DASHBOARD_HTML = """
           </div>
           <div class="text">{{ post.get('text', post.get('hook', 'No preview')) }}</div>
           <button class="expand-btn">Click to expand full post</button>
+          <div class="upload-row">
           {% if post.get('image_path') %}
             {% set img_name = post.get('image_path', '').split('/')[-1].split('\\\\')[-1] %}
-            <img src="/images/{{ img_name }}" alt="Post image" class="post-image" onerror="this.style.display='none'">
+            <img src="/images/{{ img_name }}" alt="Post image" class="post-image" onerror="this.style.display='none'" style="display:block; width:100%;">
             <div class="image-badge">Image attached</div>
+            <button class="remove-img-btn" onclick="event.stopPropagation(); removeImage({{ loop.index0 }})">Remove</button>
+            <label class="upload-btn" onclick="event.stopPropagation();">Replace <input type="file" accept="image/*" hidden onchange="uploadImage(this, {{ loop.index0 }})"></label>
           {% else %}
             <div class="no-image">No image</div>
+            <label class="upload-btn" onclick="event.stopPropagation();">Upload Image <input type="file" accept="image/*" hidden onchange="uploadImage(this, {{ loop.index0 }})"></label>
           {% endif %}
           {% if post.get('estimated_engagement') %}
             <span style="font-size:0.75rem; color:var(--muted); margin-left:8px;">Est: {{ post.get('estimated_engagement', '') }}</span>
           {% endif %}
+          </div>
         </div>
         {% endfor %}
-        {% if not queue %}<p style="color:var(--muted)">Queue empty â click "Generate Week" to create content</p>{% endif %}
+        {% if not queue %}<p style="color:var(--muted)">Queue empty Ã¢ÂÂ click "Generate Week" to create content</p>{% endif %}
       </div>
 
       <!-- Posting Schedule -->
@@ -342,7 +359,7 @@ DASHBOARD_HTML = """
           </div>
         </div>
         {% endfor %}
-        {% if not recent_posts %}<p style="color:var(--muted)">No posts yet â publish your first one!</p>{% endif %}
+        {% if not recent_posts %}<p style="color:var(--muted)">No posts yet Ã¢ÂÂ publish your first one!</p>{% endif %}
       </div>
 
       <!-- Recent Comment Replies -->
@@ -380,7 +397,7 @@ DASHBOARD_HTML = """
           </tr>
           {% endfor %}
           {% if not pillar_stats %}
-          <tr><td colspan="3" style="color:var(--muted)">No data yet â publish posts to see analytics</td></tr>
+          <tr><td colspan="3" style="color:var(--muted)">No data yet Ã¢ÂÂ publish posts to see analytics</td></tr>
           {% endif %}
         </table>
       </div>
@@ -388,7 +405,7 @@ DASHBOARD_HTML = """
   </div>
 
   <div class="footer">
-    LinkedIn Automation Agent v1.0 â Powered by Claude (Anthropic) + DALL-E (OpenAI)<br>
+    LinkedIn Automation Agent v1.0 Ã¢ÂÂ Powered by Claude (Anthropic) + DALL-E (OpenAI)<br>
     Built for Dr. Aaron Akwu | Gopipways
   </div>
 </div>
@@ -536,12 +553,40 @@ async function apiCall(endpoint) {
     }
   } catch(e) {}
 })();
+
+async function uploadImage(input, postIndex) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  if (file.size > 10 * 1024 * 1024) { showToast('File too large (max 10MB)', false); return; }
+  showBanner('Uploading image for post #' + (postIndex + 1) + '...');
+  animateProgress(30);
+  const formData = new FormData();
+  formData.append('image', file);
+  try {
+    const resp = await fetch('/api/upload-image/' + postIndex, { method: 'POST', body: formData });
+    const data = await resp.json();
+    animateProgress(100);
+    hideBanner();
+    showToast(data.message || 'Image uploaded!', data.success);
+    if (data.success) setTimeout(() => location.reload(), 1000);
+  } catch(e) { hideBanner(); showToast('Upload failed: ' + e.message, false); }
+}
+
+async function removeImage(postIndex) {
+  if (!confirm('Remove image from this post?')) return;
+  try {
+    const resp = await fetch('/api/remove-image/' + postIndex, { method: 'POST' });
+    const data = await resp.json();
+    showToast(data.message || 'Image removed', data.success);
+    if (data.success) setTimeout(() => location.reload(), 1000);
+  } catch(e) { showToast('Failed: ' + e.message, false); }
+}
 </script>
 </body>
 </html>
 """
 
-# âââ Routes âââââââââââââââââââââââââââââââââââââââââââââââââ
+# Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Routes Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 @app.route("/")
 def dashboard():
@@ -685,7 +730,7 @@ def api_post_now():
         if result:
             return jsonify({"success": True, "message": f"Posted to LinkedIn! ID: {result.get('id', 'unknown')}"})
         else:
-            return jsonify({"success": False, "message": "Queue empty â click 'Generate Week' first"})
+            return jsonify({"success": False, "message": "Queue empty Ã¢ÂÂ click 'Generate Week' first"})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
 
@@ -716,7 +761,7 @@ def api_check_comments():
         if not history:
             return jsonify({
                 "success": True,
-                "message": "No published posts yet â publish a post first, then check for comments."
+                "message": "No published posts yet Ã¢ÂÂ publish a post first, then check for comments."
             })
         from comment_manager import CommentManager
         manager = CommentManager()
@@ -740,7 +785,7 @@ def api_analytics():
         report = engine.generate_weekly_report()
         return jsonify({
             "success": True,
-            "message": f"Report generated â {report.get('posts_analyzed', 0)} posts analyzed",
+            "message": f"Report generated Ã¢ÂÂ {report.get('posts_analyzed', 0)} posts analyzed",
             "report": report,
         })
     except Exception as e:
@@ -824,6 +869,52 @@ def api_comments():
     return jsonify(comments)
 
 
+@app.route("/api/upload-image/<int:post_index>", methods=["POST"])
+def api_upload_image(post_index):
+    """Upload a custom image for a queued post."""
+    try:
+        if "image" not in request.files:
+            return jsonify({"success": False, "message": "No image file provided"})
+        file = request.files["image"]
+        if file.filename == "":
+            return jsonify({"success": False, "message": "No file selected"})
+        allowed = {".png", ".jpg", ".jpeg", ".webp", ".gif"}
+        ext = Path(file.filename).suffix.lower()
+        if ext not in allowed:
+            return jsonify({"success": False, "message": f"Invalid file type. Allowed: {', '.join(allowed)}"})
+        queue = load_json(CONTENT_QUEUE_FILE, [])
+        if post_index < 0 or post_index >= len(queue):
+            return jsonify({"success": False, "message": "Invalid post index"})
+        from config import IMAGES_DIR
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        safe_name = f"upload_{post_index}_{timestamp}{ext}"
+        save_path = IMAGES_DIR / safe_name
+        file.save(str(save_path))
+        queue[post_index]["image_path"] = str(save_path)
+        save_json(CONTENT_QUEUE_FILE, queue)
+        pillar = queue[post_index].get("pillar", "")
+        logger.info(f"Image uploaded for post {post_index} ({pillar}): {save_path}")
+        return jsonify({"success": True, "message": f"Image uploaded for post #{post_index + 1}"})
+    except Exception as e:
+        logger.error(f"Image upload failed: {e}")
+        return jsonify({"success": False, "message": str(e)})
+
+
+@app.route("/api/remove-image/<int:post_index>", methods=["POST"])
+def api_remove_image(post_index):
+    """Remove image from a queued post."""
+    try:
+        queue = load_json(CONTENT_QUEUE_FILE, [])
+        if post_index < 0 or post_index >= len(queue):
+            return jsonify({"success": False, "message": "Invalid post index"})
+        queue[post_index]["image_path"] = ""
+        save_json(CONTENT_QUEUE_FILE, queue)
+        return jsonify({"success": True, "message": f"Image removed from post #{post_index + 1}"})
+    except Exception as e:
+        logger.error(f"Image removal failed: {e}")
+        return jsonify({"success": False, "message": str(e)})
+
+
 @app.route("/images/<path:filename>")
 def serve_image(filename):
     """Serve generated images from IMAGES_DIR."""
@@ -837,7 +928,7 @@ def health():
     return jsonify({"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()})
 
 
-# âââ Run ââââââââââââââââââââââââââââââââââââââââââââââââââââ
+# Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Run Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 def run_dashboard(port=None):
     port = port or int(os.getenv("PORT", 5000))
