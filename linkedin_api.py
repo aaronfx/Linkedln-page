@@ -35,7 +35,7 @@ class LinkedInAPI:
             "Authorization": f"Bearer {self.access_token}",
             "Content-Type": "application/json",
             "X-Restli-Protocol-Version": "2.0.0",
-            "LinkedIn-Version": "202401",
+            "LinkedIn-Version": "202501",
         }
         self.post_history = self._load_json(POST_HISTORY_FILE, [])
         self.comment_log = self._load_json(COMMENT_LOG_FILE, [])
