@@ -3,15 +3,19 @@ Worker Process
 ===============
 Runs the automation scheduler in a background thread
 alongside the Flask dashboard. Designed for Railway deployment.
+
+Timezone handling: Railway runs in UTC. All scheduled times in config
+are WAT (UTC+1), so we convert them to UTC for the schedule library.
 """
 
+import os
 import threading
 import time
 import logging
 import schedule as sched_lib
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
-from config import POSTING_SCHEDULE, ANALYTICS_SETTINGS, CONTENT_QUEUE_FILE
+from config import POSTING_SCHEDULE, ANALYTICS_SETTINGS, CONTENT_QUEUE_FILE, TIMEZONE
 from linkedin_api import LinkedInAPI
 from content_engine import generate_post, generate_weekly_content
 from image_generator import generate_post_image
@@ -24,6 +28,17 @@ logging.basicConfig(
     format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
 )
 logger = logging.getLogger("worker")
+
+
+def wat_to_utc(time_str):
+    """
+    Convert a WAT time string (HH:MM) to UTC (HH:MM).
+    WAT is UTC+1, so we subtract 1 hour.
+    Handles day wraparound (e.g., 00:30 WAT -> 23:30 UTC previous day).
+    """
+    hour, minute = map(int, time_str.split(":"))
+    utc_hour = (hour - 1) % 24
+    return f"{utc_hour:02d}:{minute:02d}"
 
 
 def create_and_post(pillar=None):
@@ -182,15 +197,19 @@ def refill_queue():
 def run_scheduler():
     """Background thread: runs the scheduled automation tasks."""
     logger.info("Scheduler starting...")
+    logger.info(f"Config timezone: {TIMEZONE} (WAT = UTC+1)")
+    logger.info(f"Server timezone: UTC (Railway default)")
+    logger.info("Converting all scheduled times from WAT to UTC...")
 
-    # Schedule posts for each day
+    # Schedule posts for each day — convert WAT times to UTC
     for day, config in POSTING_SCHEDULE.items():
-        post_time = config["time"]
+        wat_time = config["time"]
+        utc_time = wat_to_utc(wat_time)
         pillar = config["pillar_preference"]
-        getattr(sched_lib.every(), day).at(post_time).do(
+        getattr(sched_lib.every(), day).at(utc_time).do(
             create_and_post, pillar=pillar
         )
-        logger.info(f"Scheduled post: {day} at {post_time} — {pillar}")
+        logger.info(f"Scheduled post: {day} at {wat_time} WAT ({utc_time} UTC) — {pillar}")
 
     # Comment monitoring every 30 minutes
     sched_lib.every(30).minutes.do(check_comments)
@@ -198,13 +217,14 @@ def run_scheduler():
     # Analytics collection every 6 hours
     sched_lib.every(ANALYTICS_SETTINGS["track_interval_hours"]).hours.do(collect_metrics)
 
-    # Weekly report
+    # Weekly report — also convert to UTC
     report_day = ANALYTICS_SETTINGS["report_day"]
-    report_time = ANALYTICS_SETTINGS["report_time"]
-    getattr(sched_lib.every(), report_day).at(report_time).do(weekly_report)
+    report_time_wat = ANALYTICS_SETTINGS["report_time"]
+    report_time_utc = wat_to_utc(report_time_wat)
+    getattr(sched_lib.every(), report_day).at(report_time_utc).do(weekly_report)
 
-    # Queue refill check daily at midnight
-    sched_lib.every().day.at("00:00").do(refill_queue)
+    # Queue refill check daily at midnight WAT (23:00 UTC)
+    sched_lib.every().day.at("23:00").do(refill_queue)
 
     logger.info("All tasks scheduled. Running loop...")
     while True:
