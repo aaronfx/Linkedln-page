@@ -2,7 +2,9 @@
 LinkedIn API Client
 ===================
 Handles all LinkedIn API interactions: posting, comments, analytics.
-Uses LinkedIn's Marketing API v2 / Community Management API.
+Uses LinkedIn's Community Management API (rest/posts).
+
+Updated April 2026: Migrated from deprecated ugcPosts to rest/posts API.
 """
 
 import json
@@ -24,7 +26,7 @@ REST_BASE = "https://api.linkedin.com/rest"
 
 
 class LinkedInAPI:
-    """Client for LinkedIn's API."""
+    """Client for LinkedIn's Community Management API."""
 
     def __init__(self, access_token: str = None):
         self.access_token = access_token or LINKEDIN_ACCESS_TOKEN
@@ -79,32 +81,39 @@ class LinkedInAPI:
         profile = self.get_profile()
         return f"urn:li:person:{profile['sub']}"
 
-    # ─── Posting ────────────────────────────────────────────
+    # ─── Posting (Community Management API) ─────────────────
 
     def create_text_post(self, text: str) -> dict:
-        """Create a text-only post."""
+        """Create a text-only post using the rest/posts API."""
         payload = {
             "author": self.person_urn,
+            "commentary": text,
+            "visibility": "PUBLIC",
+            "distribution": {
+                "feedDistribution": "MAIN_FEED",
+                "targetEntities": [],
+                "thirdPartyDistributionChannels": [],
+            },
             "lifecycleState": "PUBLISHED",
-            "specificContent": {
-                "com.linkedin.ugc.ShareContent": {
-                    "shareCommentary": {"text": text},
-                    "shareMediaCategory": "NONE",
-                }
-            },
-            "visibility": {
-                "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
-            },
         }
+
         resp = requests.post(
-            f"{BASE_URL}/ugcPosts", headers=self.headers, json=payload
+            f"{REST_BASE}/posts", headers=self.headers, json=payload
         )
+
+        if resp.status_code == 422:
+            # Log the full error for debugging
+            logger.error(f"LinkedIn API 422 error: {resp.text}")
+
         resp.raise_for_status()
-        result = resp.json()
+
+        # rest/posts returns 201 with x-restli-id header (no JSON body)
+        post_id = resp.headers.get("x-restli-id", resp.headers.get("X-RestLi-Id", "unknown"))
+        result = {"id": post_id}
 
         # Log to history
         post_record = {
-            "id": result.get("id"),
+            "id": post_id,
             "text": text[:200],
             "created_at": datetime.now(timezone.utc).isoformat(),
             "type": "text",
@@ -113,74 +122,74 @@ class LinkedInAPI:
         self.post_history.append(post_record)
         self._save_json(POST_HISTORY_FILE, self.post_history)
 
-        logger.info(f"Text post created: {result.get('id')}")
+        logger.info(f"Text post created: {post_id}")
         return result
 
     def create_image_post(self, text: str, image_path: str) -> dict:
-        """Create a post with an image."""
-        # Step 1: Register the image upload
-        register_payload = {
-            "registerUploadRequest": {
-                "recipes": ["urn:li:digitalmediaRecipe:feedshare-image"],
+        """Create a post with an image using the rest/images + rest/posts API."""
+
+        # Step 1: Initialize the image upload
+        init_payload = {
+            "initializeUploadRequest": {
                 "owner": self.person_urn,
-                "serviceRelationships": [
-                    {
-                        "relationshipType": "OWNER",
-                        "identifier": "urn:li:userGeneratedContent",
-                    }
-                ],
             }
         }
         resp = requests.post(
-            f"{BASE_URL}/assets?action=registerUpload",
+            f"{REST_BASE}/images?action=initializeUpload",
             headers=self.headers,
-            json=register_payload,
+            json=init_payload,
         )
         resp.raise_for_status()
         upload_data = resp.json()
 
-        upload_url = upload_data["value"]["uploadMechanism"][
-            "com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest"
-        ]["uploadUrl"]
-        asset = upload_data["value"]["asset"]
+        upload_url = upload_data["value"]["uploadUrl"]
+        image_urn = upload_data["value"]["image"]
+
+        logger.info(f"Image upload initialized: {image_urn}")
 
         # Step 2: Upload the image binary
         with open(image_path, "rb") as img_file:
             upload_headers = {
                 "Authorization": f"Bearer {self.access_token}",
-                "Content-Type": "application/octet-stream",
             }
             resp = requests.put(upload_url, headers=upload_headers, data=img_file)
             resp.raise_for_status()
 
+        logger.info(f"Image binary uploaded successfully")
+
         # Step 3: Create the post with the uploaded image
         payload = {
             "author": self.person_urn,
-            "lifecycleState": "PUBLISHED",
-            "specificContent": {
-                "com.linkedin.ugc.ShareContent": {
-                    "shareCommentary": {"text": text},
-                    "shareMediaCategory": "IMAGE",
-                    "media": [
-                        {
-                            "status": "READY",
-                            "media": asset,
-                        }
-                    ],
+            "commentary": text,
+            "visibility": "PUBLIC",
+            "distribution": {
+                "feedDistribution": "MAIN_FEED",
+                "targetEntities": [],
+                "thirdPartyDistributionChannels": [],
+            },
+            "content": {
+                "media": {
+                    "title": "Post image",
+                    "id": image_urn,
                 }
             },
-            "visibility": {
-                "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
-            },
+            "lifecycleState": "PUBLISHED",
         }
+
         resp = requests.post(
-            f"{BASE_URL}/ugcPosts", headers=self.headers, json=payload
+            f"{REST_BASE}/posts", headers=self.headers, json=payload
         )
+
+        if resp.status_code == 422:
+            logger.error(f"LinkedIn API 422 error on image post: {resp.text}")
+
         resp.raise_for_status()
-        result = resp.json()
+
+        post_id = resp.headers.get("x-restli-id", resp.headers.get("X-RestLi-Id", "unknown"))
+        result = {"id": post_id}
 
         post_record = {
-            "id": result.get("id"),
+            "id": post_id,
             "text": text[:200],
             "image": str(image_path),
             "created_at": datetime.now(timezone.utc).isoformat(),
@@ -190,7 +199,7 @@ class LinkedInAPI:
         self.post_history.append(post_record)
         self._save_json(POST_HISTORY_FILE, self.post_history)
 
-        logger.info(f"Image post created: {result.get('id')}")
+        logger.info(f"Image post created: {post_id}")
         return result
 
     # ─── Comments ───────────────────────────────────────────
@@ -198,7 +207,7 @@ class LinkedInAPI:
     def get_post_comments(self, post_urn: str) -> list:
         """Get all comments on a specific post."""
         resp = requests.get(
-            f"{BASE_URL}/socialActions/{post_urn}/comments",
+            f"{REST_BASE}/socialActions/{post_urn}/comments",
             headers=self.headers,
             params={"count": 100},
         )
@@ -213,7 +222,7 @@ class LinkedInAPI:
             "parentComment": comment_urn,
         }
         resp = requests.post(
-            f"{BASE_URL}/socialActions/{post_urn}/comments",
+            f"{REST_BASE}/socialActions/{post_urn}/comments",
             headers=self.headers,
             json=payload,
         )
@@ -237,48 +246,34 @@ class LinkedInAPI:
 
     def get_post_stats(self, post_urn: str) -> dict:
         """Get engagement statistics for a specific post."""
-        # Get social actions (likes, comments, shares)
         stats = {}
         for action in ["likes", "comments"]:
             resp = requests.get(
-                f"{BASE_URL}/socialActions/{post_urn}/{action}",
+                f"{REST_BASE}/socialActions/{post_urn}/{action}",
                 headers=self.headers,
-                params={"count": 0},  # We just want the total
+                params={"count": 0},
             )
             if resp.status_code == 200:
                 data = resp.json()
                 stats[action] = data.get("paging", {}).get("total", 0)
-
-        # Get share statistics
-        resp = requests.get(
-            f"{BASE_URL}/organizationalEntityShareStatistics",
-            headers=self.headers,
-            params={"q": "organizationalEntity", "shares": [post_urn]},
-        )
-        if resp.status_code == 200:
-            elements = resp.json().get("elements", [])
-            if elements:
-                total_stats = elements[0].get("totalShareStatistics", {})
-                stats["impressions"] = total_stats.get("impressionCount", 0)
-                stats["clicks"] = total_stats.get("clickCount", 0)
-                stats["shares"] = total_stats.get("shareCount", 0)
-                stats["engagement"] = total_stats.get("engagement", 0)
 
         return stats
 
     def get_all_posts(self, count: int = 50) -> list:
         """Get recent posts by the authenticated user."""
         resp = requests.get(
-            f"{BASE_URL}/ugcPosts",
+            f"{REST_BASE}/posts",
             headers=self.headers,
             params={
-                "q": "authors",
-                "authors": f"List({self.person_urn})",
+                "q": "author",
+                "author": self.person_urn,
                 "count": count,
             },
         )
-        resp.raise_for_status()
-        return resp.json().get("elements", [])
+        if resp.status_code == 200:
+            return resp.json().get("elements", [])
+        logger.warning(f"Could not fetch posts: {resp.status_code}")
+        return []
 
     # ─── Utility ────────────────────────────────────────────
 
