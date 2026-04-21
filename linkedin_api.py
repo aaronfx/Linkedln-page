@@ -104,7 +104,7 @@ class LinkedInAPI:
             "Authorization": f"Bearer {self.access_token}",
             "Content-Type": "application/json",
             "X-Restli-Protocol-Version": "2.0.0",
-            "LinkedIn-Version": "202603",
+            "LinkedIn-Version": "202504",
         }
         self.post_history = self._load_json(POST_HISTORY_FILE, [])
         self.comment_log = self._load_json(COMMENT_LOG_FILE, [])
@@ -166,7 +166,7 @@ class LinkedInAPI:
     @staticmethod
     def get_auth_url(redirect_uri: str = "http://localhost:8080/callback") -> str:
         """Generate the OAuth 2.0 authorization URL."""
-        scopes = "openid%20profile%20w_member_social%20r_organization_social"
+        scopes = "openid%20profile%20w_member_social"
         return (
             f"https://www.linkedin.com/oauth/v2/authorization?"
             f"response_type=code&client_id={LINKEDIN_CLIENT_ID}"
