@@ -4,7 +4,9 @@ LinkedIn API Client
 Handles all LinkedIn API interactions: posting, comments, analytics.
 Uses LinkedIn's Community Management API (rest/posts).
 
-Updated April 2026: Migrated from deprecated ugcPosts to rest/posts API.
+Updated April 2026:
+- Migrated from deprecated ugcPosts to rest/posts API.
+- Added rate limiting, exponential backoff, and circuit breaker.
 """
 
 import json
@@ -24,6 +26,73 @@ logger = logging.getLogger("linkedin_api")
 BASE_URL = "https://api.linkedin.com/v2"
 REST_BASE = "https://api.linkedin.com/rest"
 
+# ─── Rate Limiting Constants ───────────────────────────────
+MIN_REQUEST_INTERVAL = 2.0       # Minimum seconds between API calls
+MAX_DAILY_REQUESTS = 80          # Stay well under LinkedIn's limits
+BACKOFF_BASE = 5                 # Base seconds for exponential backoff
+MAX_RETRIES = 3                  # Max retries on transient errors
+CIRCUIT_BREAKER_THRESHOLD = 5    # Consecutive failures before circuit breaks
+CIRCUIT_BREAKER_RESET = 300      # Seconds to wait before retrying after circuit break
+
+
+class RateLimiter:
+    """Simple rate limiter to prevent excessive API calls."""
+
+    def __init__(self):
+        self.last_request_time = 0
+        self.daily_request_count = 0
+        self.daily_reset_time = time.time()
+        self.consecutive_failures = 0
+        self.circuit_broken_until = 0
+
+    def wait_if_needed(self):
+        """Wait to respect rate limits. Returns False if circuit is broken."""
+        now = time.time()
+
+        # Reset daily counter every 24 hours
+        if now - self.daily_reset_time > 86400:
+            self.daily_request_count = 0
+            self.daily_reset_time = now
+
+        # Check circuit breaker
+        if now < self.circuit_broken_until:
+            wait_time = self.circuit_broken_until - now
+            logger.warning(f"Circuit breaker active. Waiting {wait_time:.0f}s before retrying.")
+            return False
+
+        # Check daily limit
+        if self.daily_request_count >= MAX_DAILY_REQUESTS:
+            logger.warning(f"Daily API limit reached ({MAX_DAILY_REQUESTS}). Skipping request.")
+            return False
+
+        # Enforce minimum interval between requests
+        elapsed = now - self.last_request_time
+        if elapsed < MIN_REQUEST_INTERVAL:
+            sleep_time = MIN_REQUEST_INTERVAL - elapsed
+            time.sleep(sleep_time)
+
+        self.last_request_time = time.time()
+        self.daily_request_count += 1
+        return True
+
+    def record_success(self):
+        """Record a successful API call."""
+        self.consecutive_failures = 0
+
+    def record_failure(self):
+        """Record a failed API call. Trips circuit breaker if too many."""
+        self.consecutive_failures += 1
+        if self.consecutive_failures >= CIRCUIT_BREAKER_THRESHOLD:
+            self.circuit_broken_until = time.time() + CIRCUIT_BREAKER_RESET
+            logger.error(
+                f"Circuit breaker tripped after {self.consecutive_failures} failures. "
+                f"Pausing API calls for {CIRCUIT_BREAKER_RESET}s."
+            )
+
+
+# Global rate limiter instance (shared across all LinkedInAPI instances)
+_rate_limiter = RateLimiter()
+
 
 class LinkedInAPI:
     """Client for LinkedIn's Community Management API."""
@@ -39,6 +108,58 @@ class LinkedInAPI:
         }
         self.post_history = self._load_json(POST_HISTORY_FILE, [])
         self.comment_log = self._load_json(COMMENT_LOG_FILE, [])
+        self.rate_limiter = _rate_limiter
+
+    # ─── Rate-Limited Request Helper ───────────────────────────
+
+    def _make_request(self, method, url, **kwargs):
+        """
+        Make an API request with rate limiting, retries, and backoff.
+        Returns the response object or raises on final failure.
+        """
+        if not self.rate_limiter.wait_if_needed():
+            raise Exception("Rate limit exceeded or circuit breaker active. Try again later.")
+
+        last_error = None
+        for attempt in range(MAX_RETRIES):
+            try:
+                resp = getattr(requests, method)(url, headers=self.headers, **kwargs)
+
+                # Handle rate limiting response
+                if resp.status_code == 429:
+                    retry_after = int(resp.headers.get("Retry-After", BACKOFF_BASE * (2 ** attempt)))
+                    logger.warning(f"Rate limited (429). Waiting {retry_after}s...")
+                    time.sleep(retry_after)
+                    self.rate_limiter.record_failure()
+                    continue
+
+                # Handle auth errors — don't retry, token is bad
+                if resp.status_code in (401, 403):
+                    self.rate_limiter.record_failure()
+                    logger.error(f"Auth error ({resp.status_code}): {resp.text[:200]}")
+                    resp.raise_for_status()
+
+                # Handle server errors with backoff
+                if resp.status_code >= 500:
+                    wait = BACKOFF_BASE * (2 ** attempt)
+                    logger.warning(f"Server error ({resp.status_code}). Retrying in {wait}s...")
+                    time.sleep(wait)
+                    self.rate_limiter.record_failure()
+                    continue
+
+                # Success
+                self.rate_limiter.record_success()
+                return resp
+
+            except requests.exceptions.ConnectionError as e:
+                wait = BACKOFF_BASE * (2 ** attempt)
+                logger.warning(f"Connection error (attempt {attempt + 1}): {e}. Retrying in {wait}s...")
+                time.sleep(wait)
+                last_error = e
+                self.rate_limiter.record_failure()
+
+        # All retries exhausted
+        raise last_error or Exception(f"Request failed after {MAX_RETRIES} retries")
 
     # ─── Authentication ─────────────────────────────────────
 
@@ -68,11 +189,20 @@ class LinkedInAPI:
         resp.raise_for_status()
         return resp.json()
 
+    def test_connection(self) -> dict:
+        """Test if the current access token is valid."""
+        try:
+            resp = self._make_request("get", f"{BASE_URL}/userinfo")
+            resp.raise_for_status()
+            return {"status": "ok", "profile": resp.json()}
+        except Exception as e:
+            return {"status": "error", "error": str(e)}
+
     # ─── Profile ────────────────────────────────────────────
 
     def get_profile(self) -> dict:
         """Get the authenticated user's profile."""
-        resp = requests.get(f"{BASE_URL}/userinfo", headers=self.headers)
+        resp = self._make_request("get", f"{BASE_URL}/userinfo")
         resp.raise_for_status()
         return resp.json()
 
@@ -97,17 +227,13 @@ class LinkedInAPI:
             "lifecycleState": "PUBLISHED",
         }
 
-        resp = requests.post(
-            f"{REST_BASE}/posts", headers=self.headers, json=payload
-        )
+        resp = self._make_request("post", f"{REST_BASE}/posts", json=payload)
 
         if resp.status_code == 422:
-            # Log the full error for debugging
             logger.error(f"LinkedIn API 422 error: {resp.text}")
 
         resp.raise_for_status()
 
-        # rest/posts returns 201 with x-restli-id header (no JSON body)
         post_id = resp.headers.get("x-restli-id", resp.headers.get("X-RestLi-Id", "unknown"))
         result = {"id": post_id}
 
@@ -134,9 +260,9 @@ class LinkedInAPI:
                 "owner": self.person_urn,
             }
         }
-        resp = requests.post(
+        resp = self._make_request(
+            "post",
             f"{REST_BASE}/images?action=initializeUpload",
-            headers=self.headers,
             json=init_payload,
         )
         resp.raise_for_status()
@@ -147,7 +273,7 @@ class LinkedInAPI:
 
         logger.info(f"Image upload initialized: {image_urn}")
 
-        # Step 2: Upload the image binary
+        # Step 2: Upload the image binary (uses direct requests, not rate-limited)
         with open(image_path, "rb") as img_file:
             upload_headers = {
                 "Authorization": f"Bearer {self.access_token}",
@@ -176,9 +302,7 @@ class LinkedInAPI:
             "lifecycleState": "PUBLISHED",
         }
 
-        resp = requests.post(
-            f"{REST_BASE}/posts", headers=self.headers, json=payload
-        )
+        resp = self._make_request("post", f"{REST_BASE}/posts", json=payload)
 
         if resp.status_code == 422:
             logger.error(f"LinkedIn API 422 error on image post: {resp.text}")
@@ -205,14 +329,18 @@ class LinkedInAPI:
     # ─── Comments ───────────────────────────────────────────
 
     def get_post_comments(self, post_urn: str) -> list:
-        """Get all comments on a specific post."""
-        resp = requests.get(
-            f"{REST_BASE}/socialActions/{post_urn}/comments",
-            headers=self.headers,
-            params={"count": 100},
-        )
-        resp.raise_for_status()
-        return resp.json().get("elements", [])
+        """Get comments on a specific post."""
+        try:
+            resp = self._make_request(
+                "get",
+                f"{REST_BASE}/socialActions/{post_urn}/comments",
+                params={"count": 50},  # Reduced from 100
+            )
+            resp.raise_for_status()
+            return resp.json().get("elements", [])
+        except Exception as e:
+            logger.error(f"Failed to get comments for {post_urn}: {e}")
+            return []
 
     def reply_to_comment(self, post_urn: str, comment_urn: str, reply_text: str) -> dict:
         """Reply to a specific comment on a post."""
@@ -221,9 +349,9 @@ class LinkedInAPI:
             "message": {"text": reply_text},
             "parentComment": comment_urn,
         }
-        resp = requests.post(
+        resp = self._make_request(
+            "post",
             f"{REST_BASE}/socialActions/{post_urn}/comments",
-            headers=self.headers,
             json=payload,
         )
         resp.raise_for_status()
@@ -248,32 +376,39 @@ class LinkedInAPI:
         """Get engagement statistics for a specific post."""
         stats = {}
         for action in ["likes", "comments"]:
-            resp = requests.get(
-                f"{REST_BASE}/socialActions/{post_urn}/{action}",
-                headers=self.headers,
-                params={"count": 0},
-            )
-            if resp.status_code == 200:
-                data = resp.json()
-                stats[action] = data.get("paging", {}).get("total", 0)
+            try:
+                resp = self._make_request(
+                    "get",
+                    f"{REST_BASE}/socialActions/{post_urn}/{action}",
+                    params={"count": 0},
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
+                    stats[action] = data.get("paging", {}).get("total", 0)
+            except Exception as e:
+                logger.warning(f"Failed to get {action} for {post_urn}: {e}")
 
         return stats
 
-    def get_all_posts(self, count: int = 50) -> list:
+    def get_all_posts(self, count: int = 20) -> list:
         """Get recent posts by the authenticated user."""
-        resp = requests.get(
-            f"{REST_BASE}/posts",
-            headers=self.headers,
-            params={
-                "q": "author",
-                "author": self.person_urn,
-                "count": count,
-            },
-        )
-        if resp.status_code == 200:
-            return resp.json().get("elements", [])
-        logger.warning(f"Could not fetch posts: {resp.status_code}")
-        return []
+        try:
+            resp = self._make_request(
+                "get",
+                f"{REST_BASE}/posts",
+                params={
+                    "q": "author",
+                    "author": self.person_urn,
+                    "count": count,
+                },
+            )
+            if resp.status_code == 200:
+                return resp.json().get("elements", [])
+            logger.warning(f"Could not fetch posts: {resp.status_code}")
+            return []
+        except Exception as e:
+            logger.error(f"Failed to fetch posts: {e}")
+            return []
 
     # ─── Utility ────────────────────────────────────────────
 
