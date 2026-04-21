@@ -85,7 +85,7 @@ class RateLimiter:
         if self.consecutive_failures >= CIRCUIT_BREAKER_THRESHOLD:
             self.circuit_broken_until = time.time() + CIRCUIT_BREAKER_RESET
             logger.error(
-                f"Circuit breaker tripped after {self.consecutive_failures} failures. "
+                f"Circuit breaker tripped after {self.consecutive_failures } failures. "
                 f"Pausing API calls for {CIRCUIT_BREAKER_RESET}s."
             )
 
@@ -167,7 +167,7 @@ class LinkedInAPI:
     def get_auth_url(redirect_uri: str = "http://localhost:8080/callback") -> str:
         """Generate the OAuth 2.0 authorization URL."""
         scopes = "openid%20profile%20w_member_social%20r_organization_social"
-        return (
+          return (
             f"https://www.linkedin.com/oauth/v2/authorization?"
             f"response_type=code&client_id={LINKEDIN_CLIENT_ID}"
             f"&redirect_uri={redirect_uri}&scope={scopes}"
@@ -197,6 +197,114 @@ class LinkedInAPI:
             return {"status": "ok", "profile": resp.json()}
         except Exception as e:
             return {"status": "error", "error": str(e)}
+
+    def debug_api(self) -> dict:
+        """
+        Deep diagnostic: test every API endpoint and return full error bodies.
+        Helps identify exactly which permissions/scopes are missing.
+        """
+        results = {"token_info": {}, "endpoints": {}, "headers_used": dict(self.headers), "person_urn": self.person_urn}
+
+        # 1. Test userinfo (basic profile - needs openid+profile)
+        try:
+            resp = requests.get(f"{BASE_URL}/userinfo", headers=self.headers)
+            results["endpoints"]["GET /v2/userinfo"] = {
+                "status": resp.status_code,
+                "body": resp.text[:500],
+            }
+            if resp.status_code == 200:
+                profile = resp.json()
+                results["token_info"]["sub"] = profile.get("sub", "unknown")
+                results["token_info"]["name"] = profile.get("name", "unknown")
+        except Exception as e:
+            results["endpoints"]["GET /v2/userinfo"] = {"error": str(e)}
+
+        # 2. Test introspection - what scopes does this token actually have?
+        try:
+            resp = requests.get(
+                f"{BASE_URL}/me",
+                headers={"Authorization": f"Bearer {self.access_token}"},
+            )
+            results["endpoints"]["GET /v2/me"] = {
+                "status": resp.status_code,
+                "body": resp.text[:500],
+            }
+        except Exception as e:
+            results["endpoints"]["GET /v2/me"] = {"error": str(e)}
+
+        # 3. Test REST posts endpoint (needs w_member_social)
+        try:
+            test_payload = {
+                "author": self.person_urn,
+                "commentary": "Debug test - this should not be posted",
+                "visibility": "PUBLIC",
+                "distribution": {
+                    "feedDistribution": "MAIN_FEED",
+                    "targetEntities": [],
+                    "thirdPartyDistributionChannels": [],
+                },
+                "lifecycleState": "PUBLISHED",
+            }
+            # Use VALIDATION only header to not actually post
+            debug_headers = dict(self.headers)
+            debug_headers["X-RestLi-Method"] = "BATCH_CREATE"  # invalid on purpose to get auth check only
+
+            resp = requests.post(
+                f"{REST_BASE}/posts",
+                headers=self.headers,
+                json=test_payload,
+            )
+            results["endpoints"]["POST /rest/posts"] = {
+                "status": resp.status_code,
+                "body": resp.text[:1000],
+                "response_headers": dict(resp.headers),
+            }
+        except Exception as e:
+            results["endpoints"]["POST /rest/posts"] = {"error": str(e)}
+
+        # 4. Test GET posts (reading own posts - needs r_organization_social or w_member_social)
+        try:
+            resp = requests.get(
+                f"{REST_BASE}/posts",
+                headers=self.headers,
+                params={"q": "author", "author": self.person_urn, "count": 1},
+            )
+            results["endpoints"]["GET /rest/posts"] = {
+                "status": resp.status_code,
+                "body": resp.text[:500],
+            }
+        except Exception as e:
+            results["endpoints"]["GET /rest/posts"] = {"error": str(e)}
+
+        # 5. Test social actions (needs r_organization_social)
+        try:
+            resp = requests.get(
+                f"{REST_BASE}/socialActions/urn:li:share:test/likes",
+                headers=self.headers,
+                params={"count": 0},
+            )
+            results["endpoints"]["GET /rest/socialActions"] = {
+                "status": resp.status_code,
+                "body": resp.text[:500],
+            }
+        except Exception as e:
+            results["endpoints"]["GET /rest/socialActions"] = {"error": str(e)}
+
+        # 6. Try v2 ugcPosts endpoint as fallback check
+        try:
+            resp = requests.get(
+                f"{BASE_URL}/ugcPosts",
+                headers={"Authorization": f"Bearer {self.access_token}", "X-Restli-Protocol-Version": "2.0.0"},
+                params={"q": "authors", "authors": f"List({self.person_urn})", "count": 1},
+            )
+            results["endpoints"]["GET /v2/ugcPosts"] = {
+                "status": resp.status_code,
+                "body": resp.text[:500],
+            }
+        except Exception as e:
+            results["endpoints"]["GET /v2/ugcPosts"] = {"error": str(e)}
+
+        return results
 
     # ─── Profile ────────────────────────────────────────────
 
