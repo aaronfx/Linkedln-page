@@ -348,6 +348,14 @@ DASHBOARD_HTML = """
       <div style="background:#1a1a2e;border:1px solid #16213e;border-radius:12px;padding:24px;margin-bottom:20px;">
         <h2 style="color:#e94560;margin:0 0 16px 0;">Comments</h2>
         <div id="comments-results" style="color:#ccc;"></div>
+<div style="margin-top:15px;">
+  <button class="btn" style="background:#e94560; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer; font-weight:bold;" onclick="fetchIntelligence()">Run Intelligence Loop</button>
+</div>
+<div id="intelligence-results" style="display:none; margin-top:15px; padding:15px; background:#1a1a2e; border:1px solid #e94560; border-radius:8px;">
+  <h4 style="color:#e94560; margin-top:0;">Performance Intelligence Report</h4>
+  <pre id="intelligence-text" style="color:#eee; white-space:pre-wrap; font-size:13px;"></pre>
+  <div id="intelligence-winners" style="margin-top:10px;"></div>
+</div>
       </div>
     </div>
 <div class="no-image">No image</div>
@@ -795,7 +803,48 @@ function displayAnalytics(data) {
       }
     }
 
-    </script>
+    
+function fetchIntelligence() {
+  var resultsDiv = document.getElementById('intelligence-results');
+  var textPre = document.getElementById('intelligence-text');
+  var winnersDiv = document.getElementById('intelligence-winners');
+  resultsDiv.style.display = 'block';
+  textPre.textContent = 'Running intelligence loop...';
+  winnersDiv.innerHTML = '';
+  
+  fetch('/api/intelligence', {method: 'POST'})
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.status === 'success') {
+        textPre.textContent = data.insights_text || 'No insights generated yet.';
+        if (data.winners && data.winners.length > 0) {
+          var html = '<h5 style="color:#e94560;">Viral Posts (' + data.winners_count + ' detected)</h5>';
+          data.winners.forEach(function(w) {
+            html += '<div style="background:#16213e; padding:10px; margin:5px 0; border-radius:5px; border-left:3px solid #e94560;">';
+            html += '<strong style="color:#e94560;">' + w.pillar + ' / ' + w.template + '</strong>';
+            html += '<br><span style="color:#aaa;">' + w.hook + '</span>';
+            html += '<br><span style="color:#0f0;">' + w.likes + ' likes, ' + w.comments + ' comments (' + w.vs_average + 'x avg)</span>';
+            html += '</div>';
+          });
+          winnersDiv.innerHTML = html;
+        }
+        if (data.pillar_ranking && data.pillar_ranking.length > 0) {
+          var phtml = '<h5 style="color:#e94560; margin-top:15px;">Pillar Rankings</h5>';
+          data.pillar_ranking.forEach(function(p, i) {
+            var color = i === 0 ? '#0f0' : '#aaa';
+            phtml += '<div style="color:' + color + ';">' + (i+1) + '. ' + p.pillar + ' - avg ' + p.avg_engagement + ' engagement (' + p.post_count + ' posts)</div>';
+          });
+          winnersDiv.innerHTML += phtml;
+        }
+      } else {
+        textPre.textContent = 'Error: ' + (data.error || 'Unknown error');
+      }
+    })
+    .catch(function(err) {
+      textPre.textContent = 'Error: ' + err.message;
+    });
+}
+</script>
 </body>
 </html>
 """
@@ -1364,6 +1413,26 @@ def serve_image(filename):
     from flask import send_from_directory
     from config import IMAGES_DIR
     return send_from_directory(str(IMAGES_DIR), filename)
+
+
+@app.route("/api/intelligence", methods=["POST", "GET"])
+def intelligence_report():
+    """Run the performance intelligence loop and return insights."""
+    try:
+        from analytics_engine import AnalyticsEngine
+        analytics = AnalyticsEngine()
+        insights = analytics.get_performance_insights()
+        return jsonify({
+            "status": "success",
+            "insights_text": insights.get("insights_text", "No insights yet"),
+            "winners_count": len(insights.get("winners", [])),
+            "winners": insights.get("winners", [])[:5],
+            "pillar_ranking": insights.get("pillar_ranking", []),
+            "template_ranking": insights.get("template_ranking", []),
+            "top_hooks": insights.get("top_hooks", [])
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
 
 
 @app.route("/health")
