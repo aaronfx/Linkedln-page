@@ -28,6 +28,15 @@ app.secret_key = os.getenv("DASHBOARD_SECRET", "gopipways-linkedin-agent-2026")
 _background_tasks = {}  # task_id -> {status, message, result}
 _task_lock = threading.Lock()
 
+# --- Fix queue times at startup ---
+try:
+    from fix_queue_times import fix_queue_times
+    fix_queue_times()
+    logger.info("Queue times fix applied at startup")
+except Exception as e:
+    logger.warning(f"Queue times fix skipped: {e}")
+
+
 # --- Utility ---
 
 def load_json(path, default=None):
@@ -1444,6 +1453,35 @@ def update_queue():
             return jsonify({"error": "Expected a JSON array"}), 400
         save_json(CONTENT_QUEUE_FILE, data)
         return jsonify({"status": "success", "count": len(data)})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+@app.route("/api/fix-times", methods=["POST", "GET"])
+def api_fix_times():
+    """Manually trigger queue time fix and return debug info."""
+    import os
+    from config import CONTENT_QUEUE_FILE, DATA_DIR, POSTING_SCHEDULE
+    try:
+        from fix_queue_times import fix_queue_times
+        fix_queue_times()
+        # Read back to verify
+        queue = load_json(CONTENT_QUEUE_FILE, [])
+        first_3 = [{
+            "date": p.get("scheduled_date"),
+            "time": p.get("scheduled_time"),
+            "display": p.get("display_date"),
+            "day": p.get("scheduled_day")
+        } for p in queue[:3]]
+        return jsonify({
+            "status": "fixed",
+            "queue_path": str(CONTENT_QUEUE_FILE),
+            "data_dir": str(DATA_DIR),
+            "path_exists": os.path.exists(str(CONTENT_QUEUE_FILE)),
+            "first_3_posts": first_3,
+            "schedule": {k: v["time"] for k, v in POSTING_SCHEDULE.items()}
+        })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
