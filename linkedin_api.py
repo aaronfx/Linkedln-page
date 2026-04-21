@@ -167,7 +167,7 @@ class LinkedInAPI:
     def get_auth_url(redirect_uri: str = "http://localhost:8080/callback") -> str:
         """Generate the OAuth 2.0 authorization URL."""
         scopes = "openid%20profile%20w_member_social%20r_organization_social"
-          return (
+        return (
             f"https://www.linkedin.com/oauth/v2/authorization?"
             f"response_type=code&client_id={LINKEDIN_CLIENT_ID}"
             f"&redirect_uri={redirect_uri}&scope={scopes}"
