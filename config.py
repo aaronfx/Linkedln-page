@@ -7,7 +7,7 @@ Fill in your API keys and preferences below.
 import os
 from pathlib import Path
 
-# ─── API Keys ───────────────────────────────────────────────
+# âââ API Keys âââââââââââââââââââââââââââââââââââââââââââââââ
 # Set these as environment variables or hardcode below (env vars recommended)
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "your-anthropic-api-key-here")
@@ -20,7 +20,7 @@ LINKEDIN_CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET", "your-client-secret
 LINKEDIN_ACCESS_TOKEN = os.getenv("LINKEDIN_ACCESS_TOKEN", "your-access-token-here")
 LINKEDIN_PERSON_URN = os.getenv("LINKEDIN_PERSON_URN", "your-person-urn-here")  # e.g., "urn:li:person:ABC123"
 
-# ─── Profile Configuration ──────────────────────────────────
+# âââ Profile Configuration ââââââââââââââââââââââââââââââââââ
 PROFILE = {
     "name": "Dr. Aaron Akwu",
     "title": "Forex Educator | Built Africa's #1 AI-Powered Forex Academy",
@@ -38,7 +38,7 @@ PROFILE = {
     ],
 }
 
-# ─── Content Pillars ────────────────────────────────────────
+# âââ Content Pillars ââââââââââââââââââââââââââââââââââââââââ
 CONTENT_PILLARS = [
     {
         "name": "Forex Education",
@@ -88,21 +88,22 @@ CONTENT_PILLARS = [
     },
 ]
 
-# ─── Posting Schedule ───────────────────────────────────────
+# âââ Posting Schedule âââââââââââââââââââââââââââââââââââââââ
 # Days and times (WAT - West Africa Time, UTC+1)
 POSTING_SCHEDULE = {
     "monday":    {"time": "09:00", "pillar_preference": "Personal Story & Behind-the-Scenes", "post_type": "Controversial Take or Myth vs. Reality"},
     "tuesday":   {"time": "11:00", "pillar_preference": "Forex Education", "post_type": "Educational Deep Dive or Data/Stats Hook"},
-    "wednesday": {"time": "14:00", "pillar_preference": "African Markets & Financial Literacy", "post_type": "Poll or Community Question"},
+    "wednesday": {"time": "08:00", "pillar_preference": "African Markets & Financial Literacy", "post_type": "Poll or Community Question"},
     "thursday":  {"time": "09:00", "pillar_preference": "AI in Trading", "post_type": "Personal Story or Lesson Learned"},
     "friday":    {"time": "10:00", "pillar_preference": "African Markets & Financial Literacy", "post_type": "Market Commentary or Data-Driven Insight"},
-    "saturday":  {"time": "18:00", "pillar_preference": "Industry Commentary", "post_type": "Weekend Insight or Practical Framework"},
-    # Sunday: rest day — content batching and review
+    "saturday": {"time": "10:00", "pillar_preference": "Industry Commentary", "post_type": "Weekend Insight or Practical Framework"},
+    "sunday":    {"time": "19:00", "pillar_preference": "Personal Story & Behind-the-Scenes", "post_type": "Motivational or Week-Ahead Mindset"},
+    # Sunday: rest day â content batching and review
 }
 
 TIMEZONE = "Africa/Lagos"  # WAT
 
-# ─── Image Generation Settings ──────────────────────────────
+# âââ Image Generation Settings ââââââââââââââââââââââââââââââ
 IMAGE_SETTINGS = {
     "model": "dall-e-3",
     "size": "1792x1024",  # 16:9 landscape for LinkedIn feed
@@ -116,7 +117,7 @@ IMAGE_SETTINGS = {
     ),
 }
 
-# ─── Claude Settings ────────────────────────────────────────
+# âââ Claude Settings ââââââââââââââââââââââââââââââââââââââââ
 CLAUDE_SETTINGS = {
     "model": "claude-sonnet-4-20250514",
     "max_tokens_post": 2000,
@@ -127,26 +128,26 @@ CLAUDE_SETTINGS = {
     "temperature_analysis": 0.3,
 }
 
-# ─── Comment Reply Settings ─────────────────────────────────
+# âââ Comment Reply Settings âââââââââââââââââââââââââââââââââ
 REPLY_SETTINGS = {
     "auto_reply": True,
     "reply_delay_minutes": 5,       # Wait before replying (looks more human)
-    "max_replies_per_hour": 5,      # Reduced from 20 — too aggressive
+    "max_replies_per_hour": 5,      # Reduced from 20 â too aggressive
     "min_comment_length": 3,        # Skip very short comments like "Nice"
     "skip_keywords": ["spam", "DM me", "check my profile"],
     "priority_keywords": ["how", "what", "why", "help", "question", "advice"],
 }
 
-# ─── Analytics Settings ─────────────────────────────────────
+# âââ Analytics Settings âââââââââââââââââââââââââââââââââââââ
 ANALYTICS_SETTINGS = {
-    "track_interval_hours": 12,     # Increased from 6 — less API pressure
+    "track_interval_hours": 12,     # Increased from 6 â less API pressure
     "report_day": "sunday",
     "report_time": "20:00",
     "metrics": ["impressions", "likes", "comments", "shares", "engagement_rate"],
     "optimization_lookback_days": 30,
 }
 
-# ─── File Paths ─────────────────────────────────────────────
+# âââ File Paths âââââââââââââââââââââââââââââââââââââââââââââ
 BASE_DIR = Path(__file__).parent
 
 # Use Railway persistent volume if available (survives deploys)
