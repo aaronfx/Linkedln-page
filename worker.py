@@ -211,11 +211,11 @@ def run_scheduler():
         )
         logger.info(f"Scheduled post: {day} at {wat_time} WAT ({utc_time} UTC) — {pillar}")
 
-    # Comment monitoring every 30 minutes
-    sched_lib.every(30).minutes.do(check_comments)
+    # Comment monitoring every 2 hours (was 30 min — too aggressive, caused API flagging)
+    sched_lib.every(2).hours.do(check_comments)
 
-    # Analytics collection every 6 hours
-    sched_lib.every(ANALYTICS_SETTINGS["track_interval_hours"]).hours.do(collect_metrics)
+    # Analytics collection every 12 hours (was 6 — too many API calls per post)
+    sched_lib.every(12).hours.do(collect_metrics)
 
     # Weekly report — also convert to UTC
     report_day = ANALYTICS_SETTINGS["report_day"]
