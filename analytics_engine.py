@@ -28,14 +28,27 @@ class AnalyticsEngine:
     # ─── Data Collection ────────────────────────────────────
 
     def collect_metrics(self):
-        """Collect latest metrics for all tracked posts."""
-        logger.info("Collecting post metrics...")
+        """Collect latest metrics for recent posts only (last 7 days).
+        Was collecting for ALL posts — caused hundreds of unnecessary API calls.
+        """
+        logger.info("Collecting post metrics (last 7 days only)...")
         updated_count = 0
+        cutoff = datetime.now(timezone.utc) - timedelta(days=7)
 
         for post in self.post_history:
             post_id = post.get("id")
             if not post_id:
                 continue
+
+            # Skip old posts — no need to re-fetch their stats constantly
+            created_at = post.get("created_at", "")
+            if created_at:
+                try:
+                    post_date = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                    if post_date < cutoff:
+                        continue
+                except (ValueError, TypeError):
+                    pass
 
             try:
                 stats = self.linkedin.get_post_stats(post_id)
