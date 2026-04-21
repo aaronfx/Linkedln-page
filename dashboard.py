@@ -1435,6 +1435,22 @@ def intelligence_report():
         return jsonify({"status": "error", "error": str(e)}), 500
 
 
+@app.route("/api/update-queue", methods=["POST"])
+def update_queue():
+    """Update the content queue JSON file directly."""
+    try:
+        import json
+        data = request.get_json()
+        if not data or not isinstance(data, list):
+            return jsonify({"error": "Expected a JSON array"}), 400
+        queue_file = Path("data/content_queue.json")
+        with open(queue_file, "w") as f:
+            json.dump(data, f, indent=2)
+        return jsonify({"status": "success", "count": len(data)})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/health")
 def health():
     return jsonify({"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()})
