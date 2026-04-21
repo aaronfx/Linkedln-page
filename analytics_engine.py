@@ -25,11 +25,11 @@ class AnalyticsEngine:
         self.analytics = self._load_json(ANALYTICS_FILE, {"posts": [], "reports": []})
         self.post_history = self._load_json(POST_HISTORY_FILE, [])
 
-    # ─── Data Collection ────────────────────────────────────
+    # âââ Data Collection ââââââââââââââââââââââââââââââââââââ
 
     def collect_metrics(self):
         """Collect latest metrics for recent posts only (last 7 days).
-        Was collecting for ALL posts — caused hundreds of unnecessary API calls.
+        Was collecting for ALL posts â caused hundreds of unnecessary API calls.
         """
         logger.info("Collecting post metrics (last 7 days only)...")
         updated_count = 0
@@ -40,7 +40,7 @@ class AnalyticsEngine:
             if not post_id:
                 continue
 
-            # Skip old posts — no need to re-fetch their stats constantly
+            # Skip old posts â no need to re-fetch their stats constantly
             created_at = post.get("created_at", "")
             if created_at:
                 try:
@@ -76,7 +76,7 @@ class AnalyticsEngine:
         logger.info(f"Updated metrics for {updated_count} posts")
         return updated_count
 
-    # ─── Analysis ───────────────────────────────────────────
+    # âââ Analysis âââââââââââââââââââââââââââââââââââââââââââ
 
     def get_top_posts(self, n: int = 5, days: int = 30) -> list:
         """Get top-performing posts by engagement rate."""
@@ -167,7 +167,7 @@ class AnalyticsEngine:
             reverse=True,
         ))
 
-    # ─── Reports ────────────────────────────────────────────
+    # âââ Reports ââââââââââââââââââââââââââââââââââââââââââââ
 
     def generate_weekly_report(self) -> dict:
         """Generate a comprehensive weekly performance report using Claude."""
@@ -222,7 +222,7 @@ class AnalyticsEngine:
         logger.info(f"Weekly report saved: {report_path}")
         return analysis
 
-    # ─── Utility ────────────────────────────────────────────
+    # âââ Utility ââââââââââââââââââââââââââââââââââââââââââââ
 
     @staticmethod
     def _load_json(path: Path, default=None):
@@ -235,3 +235,215 @@ class AnalyticsEngine:
     def _save_json(path: Path, data):
         with open(path, "w") as f:
             json.dump(data, f, indent=2, default=str)
+
+    # --- Performance Intelligence Loop ---
+
+    def detect_winners(self, threshold_multiplier=2.0):
+        """Identify viral posts with engagement significantly above average."""
+        if not self.post_history:
+            return []
+
+        # Calculate average engagement
+        total_likes = 0
+        total_comments = 0
+        counted = 0
+        for p in self.post_history:
+            stats = p.get("stats", {})
+            if stats:
+                total_likes += stats.get("likes", 0)
+                total_comments += stats.get("comments", 0)
+                counted += 1
+
+        if counted == 0:
+            return []
+
+        avg_likes = total_likes / counted
+        avg_comments = total_comments / counted
+        avg_engagement = avg_likes + avg_comments
+
+        # Find posts that exceed threshold
+        winners = []
+        for p in self.post_history:
+            stats = p.get("stats", {})
+            if not stats:
+                continue
+            likes = stats.get("likes", 0)
+            comments = stats.get("comments", 0)
+            engagement = likes + comments
+
+            if engagement > avg_engagement * threshold_multiplier:
+                winners.append({
+                    "post": p,
+                    "likes": likes,
+                    "comments": comments,
+                    "engagement_score": engagement,
+                    "vs_average": round(engagement / max(avg_engagement, 1), 1),
+                    "pillar": p.get("pillar", "unknown"),
+                    "template": p.get("template", "unknown"),
+                    "hook": (p.get("content", "")[:80] + "...") if p.get("content") else "",
+                    "posted_at": p.get("created_at", "unknown")
+                })
+
+        winners.sort(key=lambda w: w["engagement_score"], reverse=True)
+        logger.info(f"Detected {len(winners)} winner posts (>{threshold_multiplier}x avg engagement)")
+        return winners
+
+    def get_performance_insights(self):
+        """Analyze all posts and generate actionable insights for content generation."""
+        if not self.post_history:
+            return {"insights_text": "No post history yet. Creating baseline content.", "winners": [], "pillar_ranking": [], "template_ranking": []}
+
+        # Collect fresh metrics first
+        self.collect_metrics()
+
+        # Analyze by pillar
+        pillar_stats = {}
+        for p in self.post_history:
+            pillar = p.get("pillar", "unknown")
+            stats = p.get("stats", {})
+            if pillar not in pillar_stats:
+                pillar_stats[pillar] = {"total_likes": 0, "total_comments": 0, "count": 0}
+            pillar_stats[pillar]["total_likes"] += stats.get("likes", 0)
+            pillar_stats[pillar]["total_comments"] += stats.get("comments", 0)
+            pillar_stats[pillar]["count"] += 1
+
+        pillar_ranking = []
+        for pillar, s in pillar_stats.items():
+            avg_eng = (s["total_likes"] + s["total_comments"]) / max(s["count"], 1)
+            pillar_ranking.append({"pillar": pillar, "avg_engagement": round(avg_eng, 1), "post_count": s["count"]})
+        pillar_ranking.sort(key=lambda x: x["avg_engagement"], reverse=True)
+
+        # Analyze by template
+        template_stats = {}
+        for p in self.post_history:
+            template = p.get("template", "unknown")
+            stats = p.get("stats", {})
+            if template not in template_stats:
+                template_stats[template] = {"total_likes": 0, "total_comments": 0, "count": 0}
+            template_stats[template]["total_likes"] += stats.get("likes", 0)
+            template_stats[template]["total_comments"] += stats.get("comments", 0)
+            template_stats[template]["count"] += 1
+
+        template_ranking = []
+        for tmpl, s in template_stats.items():
+            avg_eng = (s["total_likes"] + s["total_comments"]) / max(s["count"], 1)
+            template_ranking.append({"template": tmpl, "avg_engagement": round(avg_eng, 1), "post_count": s["count"]})
+        template_ranking.sort(key=lambda x: x["avg_engagement"], reverse=True)
+
+        # Detect winners
+        winners = self.detect_winners()
+
+        # Extract top hooks from winners
+        top_hooks = [w["hook"] for w in winners[:5]]
+
+        # Build natural language insights
+        insights_parts = []
+        insights_parts.append("PERFORMANCE INTELLIGENCE REPORT:")
+
+        if pillar_ranking:
+            best = pillar_ranking[0]
+            worst = pillar_ranking[-1] if len(pillar_ranking) > 1 else None
+            insights_parts.append(f"- Best performing content pillar: {best['pillar']} (avg {best['avg_engagement']} engagement per post)")
+            if worst and worst['pillar'] != best['pillar']:
+                insights_parts.append(f"- Lowest performing pillar: {worst['pillar']} (avg {worst['avg_engagement']} engagement) - consider refreshing approach")
+
+        if template_ranking:
+            best_t = template_ranking[0]
+            insights_parts.append(f"- Best performing template: {best_t['template']} (avg {best_t['avg_engagement']} engagement)")
+
+        if winners:
+            insights_parts.append(f"- {len(winners)} viral posts detected (2x+ above average)")
+            for w in winners[:3]:
+                insights_parts.append(f"  * [{w['pillar']}/{w['template']}] {w['hook']} ({w['likes']} likes, {w['comments']} comments)")
+
+        if top_hooks:
+            insights_parts.append("- Top performing hooks/openings to emulate:")
+            for h in top_hooks:
+                insights_parts.append(f"  * {h}")
+
+        insights_parts.append("\nACTION: Generate more content using the best-performing pillars, templates, and hook styles listed above.")
+
+        insights_text = "\n".join(insights_parts)
+
+        result = {
+            "insights_text": insights_text,
+            "winners": winners,
+            "pillar_ranking": pillar_ranking,
+            "template_ranking": template_ranking,
+            "top_hooks": top_hooks
+        }
+
+        # Save insights to file for content engine to pick up
+        insights_file = Path(ANALYTICS_DIR) / "performance_insights.json"
+        try:
+            import json as json_mod
+            with open(insights_file, "w") as f:
+                json_mod.dump(result, f, indent=2, default=str)
+            logger.info(f"Performance insights saved to {insights_file}")
+        except Exception as e:
+            logger.error(f"Failed to save insights: {e}")
+
+        return result
+
+    def check_recent_performance(self, hours_ago=24):
+        """Check metrics for recently published posts and flag winners early."""
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=hours_ago)
+        recent = []
+        for p in self.post_history:
+            created = p.get("created_at", "")
+            if created:
+                try:
+                    dt = datetime.fromisoformat(created.replace("Z", "+00:00"))
+                    if dt > cutoff:
+                        recent.append(p)
+                except (ValueError, TypeError):
+                    pass
+
+        if not recent:
+            logger.info(f"No posts found in the last {hours_ago} hours")
+            return []
+
+        # Refresh stats for recent posts
+        if self.linkedin:
+            for p in recent:
+                urn = p.get("urn")
+                if urn:
+                    try:
+                        stats = self.linkedin.get_post_stats(urn)
+                        if stats:
+                            p["stats"] = stats
+                    except Exception as e:
+                        logger.error(f"Failed to get stats for {urn}: {e}")
+
+            # Save updated history
+            self._save_history()
+
+        # Flag early winners (lower threshold for recent posts)
+        flagged = []
+        for p in recent:
+            stats = p.get("stats", {})
+            likes = stats.get("likes", 0)
+            comments = stats.get("comments", 0)
+            if likes >= 10 or comments >= 5:
+                flagged.append({
+                    "urn": p.get("urn"),
+                    "content_preview": (p.get("content", "")[:80] + "...") if p.get("content") else "",
+                    "likes": likes,
+                    "comments": comments,
+                    "pillar": p.get("pillar", "unknown"),
+                    "hours_old": hours_ago
+                })
+                logger.info(f"Early winner flagged: {likes} likes, {comments} comments - {p.get('pillar')}")
+
+        return flagged
+
+    def _save_history(self):
+        """Save updated post history back to file."""
+        history_file = Path("data/post_history.json")
+        try:
+            import json as json_mod
+            with open(history_file, "w") as f:
+                json_mod.dump(self.post_history, f, indent=2, default=str)
+        except Exception as e:
+            logger.error(f"Failed to save post history: {e}")
+
