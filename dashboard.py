@@ -756,9 +756,10 @@ def api_test_connection():
 
 
 
+
 @app.route("/api/debug", methods=["POST", "GET"])
 def api_debug():
-    """Deep diagnostic — test every LinkedIn API endpoint and return full error bodies."""
+    """Deep diagnostic - test every LinkedIn API endpoint and return full error bodies."""
     try:
         from linkedin_api import LinkedInAPI
         linkedin = LinkedInAPI()
@@ -766,7 +767,6 @@ def api_debug():
         return jsonify(results)
     except Exception as e:
         return jsonify({"error": str(e)})
-
 
 @app.route("/api/check-comments", methods=["POST"])
 def api_check_comments():
