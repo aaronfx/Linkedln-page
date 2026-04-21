@@ -23,12 +23,12 @@ logger = logging.getLogger("dashboard")
 app = Flask(__name__)
 app.secret_key = os.getenv("DASHBOARD_SECRET", "gopipways-linkedin-agent-2026")
 
-# Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Background Task Tracking Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+# ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Background Task Tracking ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 # Simple in-memory task tracker for long-running operations
 _background_tasks = {}  # task_id -> {status, message, result}
 _task_lock = threading.Lock()
 
-# Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Utility Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+# ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Utility ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 
 def load_json(path, default=None):
     path = Path(path)
@@ -45,7 +45,7 @@ def save_json(path, data):
         json.dump(data, f, indent=2, default=str)
 
 
-# Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Dashboard HTML Template Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+# ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Dashboard HTML Template ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 
 DASHBOARD_HTML = """
 <!DOCTYPE html>
@@ -53,7 +53,7 @@ DASHBOARD_HTML = """
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LinkedIn Agent Ã¢ÂÂ Dr. Aaron Akwu</title>
+<title>LinkedIn Agent - Dr. Aaron Akwu</title>
 <style>
   :root {
     --bg: #0f1117;
@@ -248,7 +248,7 @@ DASHBOARD_HTML = """
 <div class="container">
   <!-- Header -->
   <div class="header">
-    <h1><span>LinkedIn Agent</span> Ã¢ÂÂ Dr. Aaron Akwu</h1>
+    <h1><span>LinkedIn Agent</span> ÃÂ¢ÃÂÃÂ Dr. Aaron Akwu</h1>
     <span class="status-badge status-active">ACTIVE</span>
   </div>
 
@@ -284,8 +284,8 @@ DASHBOARD_HTML = """
       <button class="btn btn-primary" onclick="apiCall('/api/generate')">Generate Week</button>
       <button class="btn btn-success" onclick="apiCall('/api/post-now')">Post Now</button>
       <button class="btn" style="background:var(--accent);color:#fff;" onclick="apiCall('/api/test-connection')">Test Connection</button>
-      <button class="btn btn-warning" onclick="apiCall('/api/check-comments')">Check Comments</button>
-      <button class="btn btn-primary" onclick="apiCall('/api/analytics')">Run Analytics</button>
+      <button class="btn btn-warning" onclick="fetchComments()">Check Comments</button>
+      <button class="btn btn-primary" onclick="fetchAnalytics()">Run Analytics</button>
       <button class="btn btn-primary" onclick="apiCall('/api/generate-images')" style="background:#e67e22;">Generate Images</button>
     </div>
   </div>
@@ -314,7 +314,23 @@ DASHBOARD_HTML = """
             <button class="remove-img-btn" onclick="event.stopPropagation(); removeImage({{ loop.index0 }})">Remove</button>
             <label class="upload-btn" onclick="event.stopPropagation();">Replace <input type="file" accept="image/*" hidden onchange="uploadImage(this, {{ loop.index0 }})"></label>
           {% else %}
-            <div class="no-image">No image</div>
+            
+    <!-- Analytics Results Section -->
+    <div id="analytics-section" style="display:none; grid-column: 1 / -1;">
+      <div style="background:#1a1a2e;border:1px solid #16213e;border-radius:12px;padding:24px;margin-bottom:20px;">
+        <h2 style="color:#e94560;margin:0 0 16px 0;">Analytics Results</h2>
+        <div id="analytics-results" style="color:#ccc;"></div>
+      </div>
+    </div>
+
+    <!-- Comments Results Section -->
+    <div id="comments-section" style="display:none; grid-column: 1 / -1;">
+      <div style="background:#1a1a2e;border:1px solid #16213e;border-radius:12px;padding:24px;margin-bottom:20px;">
+        <h2 style="color:#e94560;margin:0 0 16px 0;">Comments</h2>
+        <div id="comments-results" style="color:#ccc;"></div>
+      </div>
+    </div>
+<div class="no-image">No image</div>
             <label class="upload-btn" onclick="event.stopPropagation();">Upload Image <input type="file" accept="image/*" hidden onchange="uploadImage(this, {{ loop.index0 }})"></label>
           {% endif %}
           {% if post.get('estimated_engagement') %}
@@ -323,7 +339,7 @@ DASHBOARD_HTML = """
           </div>
         </div>
         {% endfor %}
-        {% if not queue %}<p style="color:var(--muted)">Queue empty Ã¢ÂÂ click "Generate Week" to create content</p>{% endif %}
+        {% if not queue %}<p style="color:var(--muted)">Queue empty ÃÂ¢ÃÂÃÂ click "Generate Week" to create content</p>{% endif %}
       </div>
 
       <!-- Posting Schedule -->
@@ -359,7 +375,7 @@ DASHBOARD_HTML = """
           </div>
         </div>
         {% endfor %}
-        {% if not recent_posts %}<p style="color:var(--muted)">No posts yet Ã¢ÂÂ publish your first one!</p>{% endif %}
+        {% if not recent_posts %}<p style="color:var(--muted)">No posts yet ÃÂ¢ÃÂÃÂ publish your first one!</p>{% endif %}
       </div>
 
       <!-- Recent Comment Replies -->
@@ -397,7 +413,7 @@ DASHBOARD_HTML = """
           </tr>
           {% endfor %}
           {% if not pillar_stats %}
-          <tr><td colspan="3" style="color:var(--muted)">No data yet Ã¢ÂÂ publish posts to see analytics</td></tr>
+          <tr><td colspan="3" style="color:var(--muted)">No data yet ÃÂ¢ÃÂÃÂ publish posts to see analytics</td></tr>
           {% endif %}
         </table>
       </div>
@@ -405,7 +421,7 @@ DASHBOARD_HTML = """
   </div>
 
   <div class="footer">
-    LinkedIn Automation Agent v1.0 Ã¢ÂÂ Powered by Claude (Anthropic) + DALL-E (OpenAI)<br>
+    LinkedIn Automation Agent v1.0 - Powered by Claude (Anthropic) + DALL-E (OpenAI)<br>
     Built for Dr. Aaron Akwu | Gopipways
   </div>
 </div>
@@ -581,12 +597,129 @@ async function removeImage(postIndex) {
     if (data.success) setTimeout(() => location.reload(), 1000);
   } catch(e) { showToast('Failed: ' + e.message, false); }
 }
-</script>
+
+    
+    async function fetchAnalytics() {
+      showBanner('Running analytics...');
+      try {
+        const resp = await fetch('/api/analytics', {method: 'POST'});
+        const data = await resp.json();
+        hideBanner();
+        displayAnalytics(data);
+        showToast('Analytics loaded', true);
+      } catch(e) {
+        hideBanner();
+        showToast('Analytics failed: ' + e.message, false);
+      }
+    }
+
+    async function fetchComments() {
+      showBanner('Checking comments...');
+      try {
+        const resp = await fetch('/api/check-comments', {method: 'POST'});
+        const data = await resp.json();
+        hideBanner();
+        displayComments(data);
+        showToast('Comments loaded', true);
+      } catch(e) {
+        hideBanner();
+        showToast('Comments check failed: ' + e.message, false);
+      }
+    }
+
+function displayAnalytics(data) {
+      const section = document.getElementById('analytics-section');
+      const container = document.getElementById('analytics-results');
+      section.style.display = 'block';
+      
+      if (data.error) {
+        container.innerHTML = '<p style="color:#e94560;">Error: ' + data.error + '</p>';
+        return;
+      }
+      
+      let html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:20px;">';
+      
+      if (data.summary) {
+        const s = data.summary;
+        html += '<div style="background:#0f3460;padding:16px;border-radius:8px;text-align:center;"><div style="color:#e94560;font-size:24px;font-weight:bold;">' + (s.total_posts || 0) + '</div><div style="color:#888;font-size:12px;">Total Posts</div></div>';
+        html += '<div style="background:#0f3460;padding:16px;border-radius:8px;text-align:center;"><div style="color:#e94560;font-size:24px;font-weight:bold;">' + (s.total_likes || 0) + '</div><div style="color:#888;font-size:12px;">Total Likes</div></div>';
+        html += '<div style="background:#0f3460;padding:16px;border-radius:8px;text-align:center;"><div style="color:#e94560;font-size:24px;font-weight:bold;">' + (s.total_comments || 0) + '</div><div style="color:#888;font-size:12px;">Total Comments</div></div>';
+        html += '<div style="background:#0f3460;padding:16px;border-radius:8px;text-align:center;"><div style="color:#e94560;font-size:24px;font-weight:bold;">' + ((s.avg_engagement || 0).toFixed(1)) + '%</div><div style="color:#888;font-size:12px;">Avg Engagement</div></div>';
+      }
+      html += '</div>';
+      
+      if (data.posts && data.posts.length > 0) {
+        html += '<h3 style="color:#fff;margin:16px 0 8px;">Post Performance</h3>';
+        html += '<table style="width:100%;border-collapse:collapse;">';
+        html += '<tr style="border-bottom:1px solid #333;"><th style="text-align:left;padding:8px;color:#888;">Post</th><th style="padding:8px;color:#888;">Views</th><th style="padding:8px;color:#888;">Likes</th><th style="padding:8px;color:#888;">Comments</th><th style="padding:8px;color:#888;">Engagement</th></tr>';
+        data.posts.forEach(function(p) {
+          const preview = (p.text || '').substring(0, 60) + '...';
+          html += '<tr style="border-bottom:1px solid #222;"><td style="padding:8px;color:#ccc;">' + preview + '</td>';
+          html += '<td style="padding:8px;text-align:center;color:#ccc;">' + (p.views || '-') + '</td>';
+          html += '<td style="padding:8px;text-align:center;color:#ccc;">' + (p.likes || '-') + '</td>';
+          html += '<td style="padding:8px;text-align:center;color:#ccc;">' + (p.comments || '-') + '</td>';
+          html += '<td style="padding:8px;text-align:center;color:#ccc;">' + ((p.engagement || 0).toFixed(1)) + '%</td></tr>';
+        });
+        html += '</table>';
+      }
+      
+      if (data.message) {
+        html += '<p style="color:#4ecca3;margin-top:12px;">' + data.message + '</p>';
+      }
+      
+      container.innerHTML = html;
+      section.scrollIntoView({behavior: 'smooth'});
+    }
+
+    function displayComments(data) {
+      const section = document.getElementById('comments-section');
+      const container = document.getElementById('comments-results');
+      section.style.display = 'block';
+      
+      if (data.error) {
+        container.innerHTML = '<p style="color:#e94560;">Error: ' + data.error + '</p>';
+        return;
+      }
+      
+      let html = '';
+      
+      if (data.summary) {
+        html += '<div style="display:flex;gap:20px;margin-bottom:16px;">';
+        html += '<span style="color:#4ecca3;">Total: ' + (data.summary.total || 0) + '</span>';
+        html += '<span style="color:#e94560;">New: ' + (data.summary.new_comments || 0) + '</span>';
+        html += '<span style="color:#888;">Replied: ' + (data.summary.replied || 0) + '</span>';
+        html += '</div>';
+      }
+      
+      const comments = data.comments || data.new_comments || [];
+      if (comments.length === 0) {
+        html += '<p style="color:#888;">No new comments found.</p>';
+      } else {
+        comments.forEach(function(cm) {
+          html += '<div style="background:#0f3460;padding:16px;border-radius:8px;margin-bottom:12px;">';
+          html += '<div style="display:flex;justify-content:space-between;margin-bottom:8px;">';
+          html += '<strong style="color:#4ecca3;">' + (cm.author || 'Unknown') + '</strong>';
+          html += '<span style="color:#666;font-size:12px;">' + (cm.date || '') + '</span></div>';
+          html += '<p style="color:#ccc;margin:4px 0;">' + (cm.text || cm.comment || '') + '</p>';
+          if (cm.reply) html += '<p style="color:#888;font-style:italic;margin:4px 0 0 16px;">Reply: ' + cm.reply + '</p>';
+          html += '</div>';
+        });
+      }
+      
+      if (data.message) {
+        html += '<p style="color:#4ecca3;margin-top:12px;">' + data.message + '</p>';
+      }
+      
+      container.innerHTML = html;
+      section.scrollIntoView({behavior: 'smooth'});
+    }
+
+    </script>
 </body>
 </html>
 """
 
-# Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Routes Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+# ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Routes ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 
 @app.route("/")
 def dashboard():
@@ -730,7 +863,7 @@ def api_post_now():
         if result:
             return jsonify({"success": True, "message": f"Posted to LinkedIn! ID: {result.get('id', 'unknown')}"})
         else:
-            return jsonify({"success": False, "message": "Queue empty Ã¢ÂÂ click 'Generate Week' first"})
+            return jsonify({"success": False, "message": "Queue empty ÃÂ¢ÃÂÃÂ click 'Generate Week' first"})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
 
@@ -814,7 +947,7 @@ def api_check_comments():
         if not history:
             return jsonify({
                 "success": True,
-                "message": "No published posts yet Ã¢ÂÂ publish a post first, then check for comments."
+                "message": "No published posts yet ÃÂ¢ÃÂÃÂ publish a post first, then check for comments."
             })
         from comment_manager import CommentManager
         manager = CommentManager()
@@ -838,7 +971,7 @@ def api_analytics():
         report = engine.generate_weekly_report()
         return jsonify({
             "success": True,
-            "message": f"Report generated Ã¢ÂÂ {report.get('posts_analyzed', 0)} posts analyzed",
+            "message": f"Report generated ÃÂ¢ÃÂÃÂ {report.get('posts_analyzed', 0)} posts analyzed",
             "report": report,
         })
     except Exception as e:
@@ -981,7 +1114,7 @@ def health():
     return jsonify({"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()})
 
 
-# Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Run Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+# ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Run ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 
 def run_dashboard(port=None):
     port = port or int(os.getenv("PORT", 5000))
