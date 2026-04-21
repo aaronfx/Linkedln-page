@@ -26,7 +26,7 @@ logger = logging.getLogger("linkedin_api")
 BASE_URL = "https://api.linkedin.com/v2"
 REST_BASE = "https://api.linkedin.com/rest"
 
-# Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Rate Limiting Constants Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+# --- Rate Limiting Constants ---
 MIN_REQUEST_INTERVAL = 2.0       # Minimum seconds between API calls
 MAX_DAILY_REQUESTS = 80          # Stay well under LinkedIn's limits
 BACKOFF_BASE = 5                 # Base seconds for exponential backoff
@@ -110,7 +110,7 @@ class LinkedInAPI:
         self.comment_log = self._load_json(COMMENT_LOG_FILE, [])
         self.rate_limiter = _rate_limiter
 
-    # Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Rate-Limited Request Helper Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+    # --- Rate-Limited Request Helper ---
 
     def _make_request(self, method, url, **kwargs):
         """
@@ -133,7 +133,7 @@ class LinkedInAPI:
                     self.rate_limiter.record_failure()
                     continue
 
-                # Handle auth errors Ã¢ÂÂ don't retry, token is bad
+                # Handle auth errors --- don't retry, token is bad
                 if resp.status_code in (401, 403):
                     self.rate_limiter.record_failure()
                     logger.error(f"Auth error ({resp.status_code}): {resp.text[:200]}")
@@ -161,7 +161,7 @@ class LinkedInAPI:
         # All retries exhausted
         raise last_error or Exception(f"Request failed after {MAX_RETRIES} retries")
 
-    # Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Authentication Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+    # --- Authentication ---
 
     @staticmethod
     def get_auth_url(redirect_uri: str = "http://localhost:8080/callback") -> str:
@@ -306,7 +306,7 @@ class LinkedInAPI:
 
         return results
 
-    # Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Profile Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+    # --- Profile ---
 
     def get_profile(self) -> dict:
         """Get the authenticated user's profile."""
@@ -319,7 +319,7 @@ class LinkedInAPI:
         profile = self.get_profile()
         return f"urn:li:person:{profile['sub']}"
 
-    # Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Posting (Community Management API) Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+    # --- Posting (Community Management API) ---
 
     def create_text_post(self, text: str) -> dict:
         """Create a text-only post using the rest/posts API."""
@@ -434,7 +434,7 @@ class LinkedInAPI:
         logger.info(f"Image post created: {post_id}")
         return result
 
-    # Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Comments Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+    # --- Comments ---
 
     def get_post_comments(self, post_urn: str) -> list:
         """Get comments on a specific post."""
@@ -478,7 +478,7 @@ class LinkedInAPI:
         logger.info(f"Replied to comment {comment_urn}")
         return result
 
-    # Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Analytics Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+    # --- Analytics ---
 
     def get_post_stats(self, post_urn: str) -> dict:
         """Get engagement statistics for a specific post."""
@@ -606,7 +606,7 @@ class LinkedInAPI:
             "total_in_history": len(history)
         }
 
-    # Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Utility Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+    # --- Utility ---
 
     @staticmethod
     def _load_json(path: Path, default=None):
