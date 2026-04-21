@@ -26,7 +26,7 @@ logger = logging.getLogger("linkedin_api")
 BASE_URL = "https://api.linkedin.com/v2"
 REST_BASE = "https://api.linkedin.com/rest"
 
-# âââ Rate Limiting Constants âââââââââââââââââââââââââââââââ
+# Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Rate Limiting Constants Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 MIN_REQUEST_INTERVAL = 2.0       # Minimum seconds between API calls
 MAX_DAILY_REQUESTS = 80          # Stay well under LinkedIn's limits
 BACKOFF_BASE = 5                 # Base seconds for exponential backoff
@@ -110,7 +110,7 @@ class LinkedInAPI:
         self.comment_log = self._load_json(COMMENT_LOG_FILE, [])
         self.rate_limiter = _rate_limiter
 
-    # âââ Rate-Limited Request Helper âââââââââââââââââââââââââââ
+    # Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Rate-Limited Request Helper Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
     def _make_request(self, method, url, **kwargs):
         """
@@ -133,7 +133,7 @@ class LinkedInAPI:
                     self.rate_limiter.record_failure()
                     continue
 
-                # Handle auth errors â don't retry, token is bad
+                # Handle auth errors Ã¢ÂÂ don't retry, token is bad
                 if resp.status_code in (401, 403):
                     self.rate_limiter.record_failure()
                     logger.error(f"Auth error ({resp.status_code}): {resp.text[:200]}")
@@ -161,7 +161,7 @@ class LinkedInAPI:
         # All retries exhausted
         raise last_error or Exception(f"Request failed after {MAX_RETRIES} retries")
 
-    # âââ Authentication âââââââââââââââââââââââââââââââââââââ
+    # Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Authentication Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
     @staticmethod
     def get_auth_url(redirect_uri: str = "http://localhost:8080/callback") -> str:
@@ -306,7 +306,7 @@ class LinkedInAPI:
 
         return results
 
-    # âââ Profile ââââââââââââââââââââââââââââââââââââââââââââ
+    # Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Profile Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
     def get_profile(self) -> dict:
         """Get the authenticated user's profile."""
@@ -319,7 +319,7 @@ class LinkedInAPI:
         profile = self.get_profile()
         return f"urn:li:person:{profile['sub']}"
 
-    # âââ Posting (Community Management API) âââââââââââââââââ
+    # Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Posting (Community Management API) Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
     def create_text_post(self, text: str) -> dict:
         """Create a text-only post using the rest/posts API."""
@@ -434,7 +434,7 @@ class LinkedInAPI:
         logger.info(f"Image post created: {post_id}")
         return result
 
-    # âââ Comments âââââââââââââââââââââââââââââââââââââââââââ
+    # Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Comments Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
     def get_post_comments(self, post_urn: str) -> list:
         """Get comments on a specific post."""
@@ -478,7 +478,7 @@ class LinkedInAPI:
         logger.info(f"Replied to comment {comment_urn}")
         return result
 
-    # âââ Analytics ââââââââââââââââââââââââââââââââââââââââââ
+    # Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Analytics Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
     def get_post_stats(self, post_urn: str) -> dict:
         """Get engagement statistics for a specific post."""
@@ -518,7 +518,95 @@ class LinkedInAPI:
             logger.error(f"Failed to fetch posts: {e}")
             return []
 
-    # âââ Utility ââââââââââââââââââââââââââââââââââââââââââââ
+
+    def sync_all_posts(self) -> dict:
+        """Sync ALL LinkedIn posts (including manual ones) into post history.
+        This makes the app a full social media manager, not just for auto-posted content."""
+        from datetime import datetime, timezone
+        
+        # Load existing post history
+        history = self._load_json(POST_HISTORY_FILE, [])
+        existing_ids = {p.get("id", "") for p in history}
+        
+        # Fetch all posts from LinkedIn
+        all_posts = self.get_all_posts(count=50)
+        
+        new_count = 0
+        updated_count = 0
+        
+        for post in all_posts:
+            post_id = post.get("id", "")
+            if not post_id:
+                continue
+            
+            # Extract post text
+            text = ""
+            commentary = post.get("commentary", "")
+            if commentary:
+                text = commentary
+            elif post.get("specificContent", {}).get("com.linkedin.ugc.ShareContent", {}).get("shareCommentary", {}).get("text"):
+                text = post["specificContent"]["com.linkedin.ugc.ShareContent"]["shareCommentary"]["text"]
+            
+            # Extract creation time
+            created_at = post.get("createdAt", 0)
+            if isinstance(created_at, (int, float)) and created_at > 0:
+                created_str = datetime.fromtimestamp(created_at / 1000, tz=timezone.utc).isoformat()
+            else:
+                created_str = datetime.now(timezone.utc).isoformat()
+            
+            # Get stats for this post
+            try:
+                stats = self.get_post_stats(post_id)
+            except Exception:
+                stats = {}
+            
+            if post_id in existing_ids:
+                # Update existing post with fresh metrics
+                for p in history:
+                    if p.get("id") == post_id:
+                        p["metrics"] = stats
+                        p["metrics_updated"] = datetime.now(timezone.utc).isoformat()
+                        if stats.get("likes", 0) + stats.get("comments", 0) > 0:
+                            views = stats.get("views", 1) or 1
+                            p["engagement_rate"] = round(
+                                (stats.get("likes", 0) + stats.get("comments", 0)) / views * 100, 2
+                            )
+                        updated_count += 1
+                        break
+            else:
+                # New post found on LinkedIn - add to history
+                new_entry = {
+                    "id": post_id,
+                    "text": text,
+                    "created_at": created_str,
+                    "source": "linkedin_manual",
+                    "metrics": stats,
+                    "metrics_updated": datetime.now(timezone.utc).isoformat(),
+                    "engagement_rate": 0.0,
+                    "type": "text"
+                }
+                if stats.get("likes", 0) + stats.get("comments", 0) > 0:
+                    views = stats.get("views", 1) or 1
+                    new_entry["engagement_rate"] = round(
+                        (stats.get("likes", 0) + stats.get("comments", 0)) / views * 100, 2
+                    )
+                history.append(new_entry)
+                new_count += 1
+        
+        # Sort by creation date
+        history.sort(key=lambda p: p.get("created_at", ""), reverse=True)
+        
+        # Save updated history
+        self._save_json(POST_HISTORY_FILE, history)
+        
+        return {
+            "total_linkedin_posts": len(all_posts),
+            "new_posts_added": new_count,
+            "posts_updated": updated_count,
+            "total_in_history": len(history)
+        }
+
+    # Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Utility Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
     @staticmethod
     def _load_json(path: Path, default=None):
