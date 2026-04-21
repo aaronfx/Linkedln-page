@@ -327,7 +327,27 @@ DASHBOARD_HTML = """
           {% else %}
             
     
-    <!-- Add Manual Post Section -->
+    <!-- Edit Schedule Modal -->
+<div id="editModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:1000;justify-content:center;align-items:center;">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;max-width:400px;width:90%;">
+    <h3 style="color:var(--accent);margin:0 0 16px 0;">Edit Post Schedule</h3>
+    <input type="hidden" id="editIndex">
+    <div style="margin-bottom:12px;">
+      <label style="color:var(--muted);font-size:13px;display:block;margin-bottom:4px;">Date</label>
+      <input type="date" id="editDate" style="width:100%;padding:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;box-sizing:border-box;">
+    </div>
+    <div style="margin-bottom:16px;">
+      <label style="color:var(--muted);font-size:13px;display:block;margin-bottom:4px;">Time</label>
+      <input type="time" id="editTime" style="width:100%;padding:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;box-sizing:border-box;">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button onclick="closeEditModal()" style="background:var(--border);color:var(--text);border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">Cancel</button>
+      <button onclick="saveEdit()" style="background:#2563eb;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Manual Post Section -->
     <div id="add-post-section" style="display:none; grid-column: 1 / -1;">
       <div style="background:#1a1a2e;border:1px solid #16213e;border-radius:12px;padding:24px;margin-bottom:20px;">
         <h2 style="color:#e94560;margin:0 0 16px 0;">Add Manual Post</h2>
@@ -373,6 +393,10 @@ DASHBOARD_HTML = """
           {% if post.get('estimated_engagement') %}
             <span style="font-size:0.75rem; color:var(--muted); margin-left:8px;">Est: {{ post.get('estimated_engagement', '') }}</span>
           {% endif %}
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button onclick="event.stopPropagation();openEditModal({{ loop.index0 }}, '{{ post.get(\'scheduled_date\', \'\') }}', '{{ post.get(\'scheduled_time\', \'\') }}')" style="background:#2563eb;color:#fff;border:none;padding:4px 12px;border-radius:6px;font-size:12px;cursor:pointer;">Edit Schedule</button>
+            <button onclick="event.stopPropagation();deletePost({{ loop.index0 }})" style="background:#dc2626;color:#fff;border:none;padding:4px 12px;border-radius:6px;font-size:12px;cursor:pointer;">Delete</button>
+          </div>
           </div>
         </div>
         {% endfor %}
@@ -852,6 +876,53 @@ function fetchIntelligence() {
     .catch(function(err) {
       textPre.textContent = 'Error: ' + err.message;
     });
+}
+
+function openEditModal(index, date, time) {
+  document.getElementById('editIndex').value = index;
+  document.getElementById('editDate').value = date;
+  document.getElementById('editTime').value = time;
+  document.getElementById('editModal').style.display = 'flex';
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').style.display = 'none';
+}
+
+function saveEdit() {
+  const index = document.getElementById('editIndex').value;
+  const date = document.getElementById('editDate').value;
+  const time = document.getElementById('editTime').value;
+  if (!date || !time) { alert('Please fill in both date and time'); return; }
+  fetch('/api/queue/' + index + '/edit', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({scheduled_date: date, scheduled_time: time})
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.status === 'updated') {
+      closeEditModal();
+      location.reload();
+    } else {
+      alert('Error: ' + (data.error || 'Unknown error'));
+    }
+  })
+  .catch(err => alert('Error: ' + err.message));
+}
+
+function deletePost(index) {
+  if (!confirm('Are you sure you want to delete this post from the queue?')) return;
+  fetch('/api/queue/' + index + '/delete', {method: 'POST'})
+  .then(r => r.json())
+  .then(data => {
+    if (data.status === 'deleted') {
+      location.reload();
+    } else {
+      alert('Error: ' + (data.error || 'Unknown error'));
+    }
+  })
+  .catch(err => alert('Error: ' + err.message));
 }
 </script>
 </body>
@@ -1482,6 +1553,61 @@ def api_fix_times():
             "first_3_posts": first_3,
             "schedule": {k: v["time"] for k, v in POSTING_SCHEDULE.items()}
         })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/queue/<int:index>/edit", methods=["POST"])
+def api_queue_edit(index):
+    """Edit a queued post's schedule date and time."""
+    try:
+        queue = load_json(CONTENT_QUEUE_FILE, [])
+        if index < 0 or index >= len(queue):
+            return jsonify({"error": "Invalid post index"}), 400
+        
+        data = request.get_json()
+        new_date = data.get("scheduled_date")
+        new_time = data.get("scheduled_time")
+        
+        if not new_date or not new_time:
+            return jsonify({"error": "Date and time are required"}), 400
+        
+        post = queue[index]
+        post["scheduled_date"] = new_date
+        post["scheduled_time"] = new_time
+        post["scheduled_datetime"] = f"{new_date}T{new_time}:00"
+        
+        # Rebuild display_date
+        from datetime import datetime as dt_cls
+        parsed = dt_cls.strptime(new_date, "%Y-%m-%d")
+        hour = int(new_time.split(":")[0])
+        minute = int(new_time.split(":")[1])
+        ampm = "AM" if hour < 12 else "PM"
+        display_hour = hour if hour <= 12 else hour - 12
+        if display_hour == 0:
+            display_hour = 12
+        post["display_date"] = parsed.strftime(f"%a, %b %d at {display_hour:02d}:{minute:02d} {ampm}")
+        post["scheduled_day"] = parsed.strftime("%A").lower()
+        
+        save_json(CONTENT_QUEUE_FILE, queue)
+        logger.info(f"Queue post {index} rescheduled to {new_date} {new_time}")
+        return jsonify({"status": "updated", "display_date": post["display_date"]})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/queue/<int:index>/delete", methods=["POST"])
+def api_queue_delete(index):
+    """Delete a queued post."""
+    try:
+        queue = load_json(CONTENT_QUEUE_FILE, [])
+        if index < 0 or index >= len(queue):
+            return jsonify({"error": "Invalid post index"}), 400
+        
+        removed = queue.pop(index)
+        save_json(CONTENT_QUEUE_FILE, queue)
+        logger.info(f"Queue post {index} deleted: {removed.get('hook', 'unknown')[:40]}")
+        return jsonify({"status": "deleted", "remaining": len(queue)})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
