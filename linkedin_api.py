@@ -26,7 +26,7 @@ logger = logging.getLogger("linkedin_api")
 BASE_URL = "https://api.linkedin.com/v2"
 REST_BASE = "https://api.linkedin.com/rest"
 
-# ─── Rate Limiting Constants ───────────────────────────────
+# âââ Rate Limiting Constants âââââââââââââââââââââââââââââââ
 MIN_REQUEST_INTERVAL = 2.0       # Minimum seconds between API calls
 MAX_DAILY_REQUESTS = 80          # Stay well under LinkedIn's limits
 BACKOFF_BASE = 5                 # Base seconds for exponential backoff
@@ -104,13 +104,13 @@ class LinkedInAPI:
             "Authorization": f"Bearer {self.access_token}",
             "Content-Type": "application/json",
             "X-Restli-Protocol-Version": "2.0.0",
-            "LinkedIn-Version": "202504",
+            "LinkedIn-Version": "202602",
         }
         self.post_history = self._load_json(POST_HISTORY_FILE, [])
         self.comment_log = self._load_json(COMMENT_LOG_FILE, [])
         self.rate_limiter = _rate_limiter
 
-    # ─── Rate-Limited Request Helper ───────────────────────────
+    # âââ Rate-Limited Request Helper âââââââââââââââââââââââââââ
 
     def _make_request(self, method, url, **kwargs):
         """
@@ -133,7 +133,7 @@ class LinkedInAPI:
                     self.rate_limiter.record_failure()
                     continue
 
-                # Handle auth errors — don't retry, token is bad
+                # Handle auth errors â don't retry, token is bad
                 if resp.status_code in (401, 403):
                     self.rate_limiter.record_failure()
                     logger.error(f"Auth error ({resp.status_code}): {resp.text[:200]}")
@@ -161,7 +161,7 @@ class LinkedInAPI:
         # All retries exhausted
         raise last_error or Exception(f"Request failed after {MAX_RETRIES} retries")
 
-    # ─── Authentication ─────────────────────────────────────
+    # âââ Authentication âââââââââââââââââââââââââââââââââââââ
 
     @staticmethod
     def get_auth_url(redirect_uri: str = "http://localhost:8080/callback") -> str:
@@ -306,7 +306,7 @@ class LinkedInAPI:
 
         return results
 
-    # ─── Profile ────────────────────────────────────────────
+    # âââ Profile ââââââââââââââââââââââââââââââââââââââââââââ
 
     def get_profile(self) -> dict:
         """Get the authenticated user's profile."""
@@ -319,7 +319,7 @@ class LinkedInAPI:
         profile = self.get_profile()
         return f"urn:li:person:{profile['sub']}"
 
-    # ─── Posting (Community Management API) ─────────────────
+    # âââ Posting (Community Management API) âââââââââââââââââ
 
     def create_text_post(self, text: str) -> dict:
         """Create a text-only post using the rest/posts API."""
@@ -434,7 +434,7 @@ class LinkedInAPI:
         logger.info(f"Image post created: {post_id}")
         return result
 
-    # ─── Comments ───────────────────────────────────────────
+    # âââ Comments âââââââââââââââââââââââââââââââââââââââââââ
 
     def get_post_comments(self, post_urn: str) -> list:
         """Get comments on a specific post."""
@@ -478,7 +478,7 @@ class LinkedInAPI:
         logger.info(f"Replied to comment {comment_urn}")
         return result
 
-    # ─── Analytics ──────────────────────────────────────────
+    # âââ Analytics ââââââââââââââââââââââââââââââââââââââââââ
 
     def get_post_stats(self, post_urn: str) -> dict:
         """Get engagement statistics for a specific post."""
@@ -518,7 +518,7 @@ class LinkedInAPI:
             logger.error(f"Failed to fetch posts: {e}")
             return []
 
-    # ─── Utility ────────────────────────────────────────────
+    # âââ Utility ââââââââââââââââââââââââââââââââââââââââââââ
 
     @staticmethod
     def _load_json(path: Path, default=None):
