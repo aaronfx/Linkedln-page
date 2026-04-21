@@ -43,7 +43,7 @@ def wat_to_utc(time_str):
 
 def create_and_post(pillar=None):
     """
-    Post to LinkedIn — QUEUE-FIRST strategy.
+    Post to LinkedIn â QUEUE-FIRST strategy.
 
     1. If the content queue has posts, pop the next one and post it.
     2. If the queue is empty, generate a fresh intelligent post on the fly.
@@ -59,7 +59,7 @@ def create_and_post(pillar=None):
         post_data = None
         source = "queue"
 
-        # ── Step 1: Try to post from queue ──
+        # ââ Step 1: Try to post from queue ââ
         queue = []
         if CONTENT_QUEUE_FILE.exists():
             try:
@@ -78,7 +78,7 @@ def create_and_post(pillar=None):
 
             logger.info(f"Posting from queue ({len(queue)} remaining): {post_data.get('pillar', '?')}")
         else:
-            # ── Step 2: Queue empty — generate fresh content ──
+            # ââ Step 2: Queue empty â generate fresh content ââ
             source = "generated"
             analytics = AnalyticsEngine(linkedin)
             top_posts = analytics.get_top_posts(5, 30)
@@ -86,7 +86,7 @@ def create_and_post(pillar=None):
             from content_engine import load_full_context
             context = load_full_context()
 
-            logger.info(f"Queue empty — generating fresh intelligent post for pillar: {pillar}")
+            logger.info(f"Queue empty â generating fresh intelligent post for pillar: {pillar}")
             post_data = generate_post(
                 pillar=pillar,
                 optimize_from=top_posts,
@@ -96,7 +96,7 @@ def create_and_post(pillar=None):
                 comment_insights=context["comment_insights"],
             )
 
-        # ── Step 3: Generate image if needed and not already present ──
+        # ââ Step 3: Generate image if needed and not already present ââ
         post_text = post_data["text"]
         image_path = post_data.get("image_path", "")
         image_prompt = post_data.get("image_prompt", "")
@@ -108,7 +108,7 @@ def create_and_post(pillar=None):
                 logger.warning(f"Image generation failed, posting text-only: {img_err}")
                 image_path = ""
 
-        # ── Step 4: Post to LinkedIn ──
+        # ââ Step 4: Post to LinkedIn ââ
         if image_path and Path(image_path).exists():
             result = linkedin.create_image_post(post_text, image_path)
         else:
@@ -117,7 +117,7 @@ def create_and_post(pillar=None):
         post_id = result.get("id", "unknown")
         logger.info(f"Post published ({source}): {post_id} | Pillar: {post_data.get('pillar', '?')}")
 
-        # ── Step 5: Save to post history for future intelligence ──
+        # ââ Step 5: Save to post history for future intelligence ââ
         from config import POST_HISTORY_FILE
         history = []
         if POST_HISTORY_FILE.exists():
@@ -194,6 +194,46 @@ def refill_queue():
         logger.error(f"Queue refill failed: {e}")
 
 
+
+def monitor_recent_posts():
+    """Check performance of posts from the last 24 hours and flag early winners."""
+    try:
+        analytics = AnalyticsEngine()
+        flagged = analytics.check_recent_performance(hours_ago=24)
+        if flagged:
+            logger.info(f"Performance monitor: {len(flagged)} early winners detected")
+            for w in flagged:
+                logger.info(f"  Winner: {w['likes']} likes, {w['comments']} comments - {w['pillar']}")
+        else:
+            logger.info("Performance monitor: no early winners yet")
+    except Exception as e:
+        logger.error(f"Performance monitoring failed: {e}")
+
+
+def detect_and_learn():
+    """Daily task: detect viral posts and save insights for content generation."""
+    try:
+        analytics = AnalyticsEngine()
+        insights = analytics.get_performance_insights()
+
+        winners = insights.get("winners", [])
+        pillar_ranking = insights.get("pillar_ranking", [])
+
+        logger.info(f"Intelligence loop: {len(winners)} viral posts, {len(pillar_ranking)} pillars ranked")
+
+        if pillar_ranking:
+            best = pillar_ranking[0]
+            logger.info(f"  Best pillar: {best['pillar']} (avg {best['avg_engagement']} engagement)")
+
+        if winners:
+            for w in winners[:3]:
+                logger.info(f"  Viral: [{w['pillar']}/{w['template']}] {w['likes']} likes, {w['comments']} comments")
+
+        logger.info("Performance insights saved - content engine will use them for next generation")
+    except Exception as e:
+        logger.error(f"Detect and learn failed: {e}")
+
+
 def run_scheduler():
     """Background thread: runs the scheduled automation tasks."""
     logger.info("Scheduler starting...")
@@ -201,7 +241,7 @@ def run_scheduler():
     logger.info(f"Server timezone: UTC (Railway default)")
     logger.info("Converting all scheduled times from WAT to UTC...")
 
-    # Schedule posts for each day — convert WAT times to UTC
+    # Schedule posts for each day â convert WAT times to UTC
     for day, config in POSTING_SCHEDULE.items():
         wat_time = config["time"]
         utc_time = wat_to_utc(wat_time)
@@ -209,19 +249,27 @@ def run_scheduler():
         getattr(sched_lib.every(), day).at(utc_time).do(
             create_and_post, pillar=pillar
         )
-        logger.info(f"Scheduled post: {day} at {wat_time} WAT ({utc_time} UTC) — {pillar}")
+        logger.info(f"Scheduled post: {day} at {wat_time} WAT ({utc_time} UTC) â {pillar}")
 
-    # Comment monitoring every 2 hours (was 30 min — too aggressive, caused API flagging)
+    # Comment monitoring every 2 hours (was 30 min â too aggressive, caused API flagging)
     sched_lib.every(2).hours.do(check_comments)
 
-    # Analytics collection every 12 hours (was 6 — too many API calls per post)
+    # Analytics collection every 12 hours (was 6 â too many API calls per post)
     sched_lib.every(12).hours.do(collect_metrics)
 
-    # Weekly report — also convert to UTC
+    # Weekly report â also convert to UTC
     report_day = ANALYTICS_SETTINGS["report_day"]
     report_time_wat = ANALYTICS_SETTINGS["report_time"]
     report_time_utc = wat_to_utc(report_time_wat)
     getattr(sched_lib.every(), report_day).at(report_time_utc).do(weekly_report)
+
+    # Performance monitoring - check recent post stats every 6 hours
+    sched_lib.every(6).hours.do(monitor_recent_posts)
+    logger.info("Scheduled: monitor_recent_posts every 6 hours")
+
+    # Daily intelligence loop - detect winners and save insights at 22:00 UTC (23:00 WAT)
+    sched_lib.every().day.at("22:00").do(detect_and_learn)
+    logger.info("Scheduled: detect_and_learn daily at 22:00 UTC")
 
     # Queue refill check daily at midnight WAT (23:00 UTC)
     sched_lib.every().day.at("23:00").do(refill_queue)
