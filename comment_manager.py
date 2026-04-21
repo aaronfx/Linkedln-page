@@ -164,9 +164,11 @@ class CommentManager:
     # ─── Data Management ────────────────────────────────────
 
     def _get_recent_post_urns(self) -> list:
-        """Get URNs of recent posts from history."""
+        """Get URNs of recent posts from history.
+        Only checks last 5 posts (was 20 — too many API calls).
+        """
         history = self._load_json(POST_HISTORY_FILE, [])
-        return [p["id"] for p in history[-20:] if p.get("id")]
+        return [p["id"] for p in history[-5:] if p.get("id")]
 
     def _get_post_text(self, post_urn: str) -> str:
         """Get the original text of a post."""
