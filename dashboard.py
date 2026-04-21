@@ -766,6 +766,47 @@ def api_debug():
         return jsonify({"error": str(e)})
 
 
+@app.route("/api/auth-url")
+def api_auth_url():
+    """Generate OAuth URL to get a new token with correct scopes."""
+    import os
+    client_id = os.getenv("LINKEDIN_CLIENT_ID", "")
+    redirect_uri = "https://linkedln-page-production.up.railway.app/api/oauth-callback"
+    scopes = "openid%20profile%20w_member_social"
+    url = f"https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}&scope={scopes}&state=oauth2"
+    return jsonify({"auth_url": url, "instructions": "Open this URL in your browser, authorize the app, then you will be redirected back with a new token."})
+
+
+@app.route("/api/oauth-callback")
+def api_oauth_callback():
+    """Handle OAuth callback - exchange code for token."""
+    import os, requests as req
+    code = request.args.get("code", "")
+    error = request.args.get("error", "")
+    if error:
+        return jsonify({"error": error, "description": request.args.get("error_description", "")})
+    if not code:
+        return jsonify({"error": "No code provided"})
+    client_id = os.getenv("LINKEDIN_CLIENT_ID", "")
+    client_secret = os.getenv("LINKEDIN_CLIENT_SECRET", "")
+    redirect_uri = "https://linkedln-page-production.up.railway.app/api/oauth-callback"
+    resp = req.post("https://www.linkedin.com/oauth/v2/accessToken", data={
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": redirect_uri,
+        "client_id": client_id,
+        "client_secret": client_secret
+    })
+    token_data = resp.json()
+    if "access_token" in token_data:
+        new_token = token_data["access_token"]
+        # Also get the person URN
+        me_resp = req.get("https://api.linkedin.com/v2/userinfo", headers={"Authorization": f"Bearer {new_token}"})
+        me_data = me_resp.json()
+        return jsonify({"success": True, "access_token": new_token, "expires_in": token_data.get("expires_in"), "person_sub": me_data.get("sub"), "name": me_data.get("name"), "instructions": "Update LINKEDIN_ACCESS_TOKEN in Railway with this new token."})
+    return jsonify({"error": "Token exchange failed", "details": token_data})
+
+
 @app.route("/api/check-comments", methods=["POST"])
 def api_check_comments():
     try:
