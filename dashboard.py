@@ -269,6 +269,16 @@ DASHBOARD_HTML = """
       <div class="value" style="color:var(--purple);">{{ comments_count }}</div>
       <div class="sub">Tracked replies</div>
     </div>
+    <div class="stat-card">
+      <div class="label">Engagements</div>
+      <div class="value" style="color:var(--accent);" id="engagementTodayCount">—</div>
+      <div class="sub" id="engagementTodaySub">Today's outreach</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Followers</div>
+      <div class="value" style="color:var(--green);" id="followerCount">—</div>
+      <div class="sub" id="followerGrowthSub">Target: 20,000</div>
+    </div>
   </div>
 
   <!-- Tab Navigation -->
@@ -277,6 +287,7 @@ DASHBOARD_HTML = """
     <button class="tab" onclick="switchTab('history')">Post History</button>
     <button class="tab" onclick="switchTab('analytics')">Analytics</button>
     <button class="tab" onclick="switchTab('comments')">Comments</button>
+    <button class="tab" onclick="switchTab('engagement')">Engagement</button>
     <button class="tab" onclick="switchTab('system')">System</button>
   </div>
 
@@ -432,6 +443,36 @@ DASHBOARD_HTML = """
     </div>
   </div>
 
+  <!-- ENGAGEMENT PANEL -->
+  <div class="panel" id="panel-engagement">
+    <div class="chart-grid">
+      <div class="card">
+        <div class="card-header"><h3>Engagement Overview</h3></div>
+        <div class="card-body" id="engagement-overview">
+          <div class="empty-state"><p>Loading engagement data...</p></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>Follower Progress → 20K</h3></div>
+        <div class="card-body" id="follower-progress">
+          <div class="empty-state"><p>Loading follower data...</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <div class="card-header"><h3>Recent Engagement Activity</h3></div>
+      <div class="card-body" id="engagement-feed">
+        <div class="empty-state"><p>Loading activity feed...</p></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <div class="card-header"><h3>Post Performance (Scraped)</h3></div>
+      <div class="card-body" id="post-performance">
+        <div class="empty-state"><p>No scraped metrics yet. Metrics will appear once scheduled tasks start reporting.</p></div>
+      </div>
+    </div>
+  </div>
+
   <!-- SYSTEM PANEL -->
   <div class="panel" id="panel-system">
     <div class="chart-grid">
@@ -549,6 +590,7 @@ function switchTab(name) {
   document.getElementById('panel-' + name).classList.add('active');
   event.target.classList.add('active');
   if (name === 'system') loadHealth();
+  if (name === 'engagement') loadEngagement();
 }
 
 // Toast notifications
@@ -831,6 +873,96 @@ function runDebug() {
   }).catch(e => { pre.innerHTML = '<span style="color:var(--red);">Error: ' + e + '</span>'; });
 }
 
+// --- Engagement Panel ---
+function loadEngagement() {
+  apiCall('/api/engagement-stats').then(d => {
+    if (!d.success) return;
+
+    // Overview card
+    let ovHtml = '<div style="display:grid;gap:12px;">';
+    ovHtml += '<div class="pillar-row"><span style="color:var(--text2);">Today</span><span><strong>' + (d.today.engagements||0) + '</strong> / ' + d.today.target + ' engagements</span></div>';
+    const pct = Math.min(100, Math.round((d.today.engagements||0) / d.today.target * 100));
+    ovHtml += '<div class="chart-bar"><div class="chart-bar-fill" style="width:' + pct + '%;background:' + (pct>=100?'var(--green)':'var(--accent)') + ';"></div></div>';
+    const sessions = d.today.sessions_completed || [];
+    ovHtml += '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
+    ['morning','midday','evening'].forEach(s => {
+      const done = sessions.includes(s);
+      ovHtml += '<span class="badge ' + (done?'badge-green':'badge-yellow') + '">' + s + (done?' ✓':' pending') + '</span>';
+    });
+    ovHtml += '</div>';
+    ovHtml += '<div class="pillar-row"><span style="color:var(--text2);">This Week</span><span>' + (d.this_week.engagements||0) + ' engagements over ' + (d.this_week.days_active||0) + ' days</span></div>';
+    ovHtml += '</div>';
+    document.getElementById('engagement-overview').innerHTML = ovHtml;
+
+    // Follower progress
+    let fpHtml = '<div style="display:grid;gap:12px;">';
+    const fc = d.followers.current;
+    const target = d.followers.target || 20000;
+    if (fc) {
+      const fpct = Math.round(fc / target * 100);
+      fpHtml += '<div style="text-align:center;"><span style="font-size:32px;font-weight:700;color:var(--green);">' + fc.toLocaleString() + '</span><span style="color:var(--text2);font-size:14px;"> / ' + target.toLocaleString() + '</span></div>';
+      fpHtml += '<div class="chart-bar" style="height:12px;"><div class="chart-bar-fill" style="width:' + fpct + '%;background:linear-gradient(90deg,var(--accent),var(--green));height:12px;"></div></div>';
+      if (d.followers.growth_7d !== null) {
+        const g = d.followers.growth_7d;
+        fpHtml += '<div style="text-align:center;color:' + (g>=0?'var(--green)':'var(--red)') + ';font-weight:600;">' + (g>=0?'+':'') + g + ' followers this week</div>';
+      }
+    } else {
+      fpHtml += '<div class="empty-state"><p>No follower data yet. Will appear after scheduled tasks scrape your profile.</p></div>';
+    }
+    fpHtml += '</div>';
+    document.getElementById('follower-progress').innerHTML = fpHtml;
+
+    // Update top stat cards
+    document.getElementById('engagementTodayCount').textContent = d.today.engagements || 0;
+    document.getElementById('engagementTodaySub').textContent = (d.today.engagements||0) + '/' + d.today.target + ' today';
+    if (fc) {
+      document.getElementById('followerCount').textContent = fc.toLocaleString();
+      document.getElementById('followerGrowthSub').textContent = (d.followers.growth_7d != null ? ((d.followers.growth_7d>=0?'+':'') + d.followers.growth_7d + ' this week') : 'Target: 20,000');
+    }
+
+    // Activity feed
+    let feedHtml = '';
+    if (d.recent_entries && d.recent_entries.length) {
+      feedHtml = d.recent_entries.map(e => {
+        const icon = e.type === 'reply' ? '↩' : e.type === 'like' ? '♥' : '💬';
+        const time = e.timestamp ? new Date(e.timestamp).toLocaleString() : '';
+        return '<div style="padding:12px;background:var(--surface2);border-radius:8px;margin-bottom:8px;">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;">'
+          + '<span style="font-weight:600;">' + icon + ' ' + (e.author||'Unknown') + '</span>'
+          + '<span class="badge badge-blue">' + (e.session||'') + '</span>'
+          + '</div>'
+          + (e.topic ? '<div style="font-size:13px;color:var(--text2);margin-top:4px;">Topic: ' + e.topic + '</div>' : '')
+          + (e.comment_preview ? '<div style="font-size:12px;color:var(--text3);margin-top:4px;font-style:italic;">"' + e.comment_preview + '"</div>' : '')
+          + '<div style="font-size:11px;color:var(--text3);margin-top:4px;">' + time + '</div>'
+          + '</div>';
+      }).join('');
+    } else {
+      feedHtml = '<div class="empty-state"><p>No engagement logged yet. Activity will appear once scheduled tasks start reporting.</p></div>';
+    }
+    document.getElementById('engagement-feed').innerHTML = feedHtml;
+
+    // Post performance
+    let perfHtml = '';
+    if (d.latest_post_metrics && d.latest_post_metrics.length) {
+      perfHtml = d.latest_post_metrics.map(m => {
+        return '<div style="padding:12px;background:var(--surface2);border-radius:8px;margin-bottom:8px;">'
+          + '<div style="font-size:13px;color:var(--text1);margin-bottom:6px;">' + (m.post_text_preview||'').substring(0,100) + '...</div>'
+          + '<div style="display:flex;gap:16px;font-size:12px;color:var(--text2);">'
+          + '<span>👁 ' + (m.impressions||0).toLocaleString() + '</span>'
+          + '<span>👍 ' + (m.likes||0) + '</span>'
+          + '<span>💬 ' + (m.comments||0) + '</span>'
+          + '<span>🔄 ' + (m.reposts||0) + '</span>'
+          + '</div></div>';
+      }).join('');
+    } else {
+      perfHtml = '<div class="empty-state"><p>No scraped metrics yet. Will appear after scheduled tasks scrape your post analytics.</p></div>';
+    }
+    document.getElementById('post-performance').innerHTML = perfHtml;
+  }).catch(() => {});
+}
+
+// Load engagement stats on page load (for top cards)
+loadEngagement();
 // Load health on page load
 loadHealth();
 </script>
@@ -1649,3 +1781,306 @@ def api_clear_history():
     """Clear all post history."""
     save_json(POST_HISTORY_FILE, [])
     return jsonify({"status": "ok", "message": "Post history cleared"})
+
+
+# ═══════════════════════════════════════════════════════════════
+# INTEGRATION API — Bridges Claude scheduled tasks ↔ Railway app
+# ═══════════════════════════════════════════════════════════════
+
+ENGAGEMENT_LOG_FILE = DATA_DIR / "engagement_log.json"
+SCRAPED_METRICS_FILE = DATA_DIR / "scraped_metrics.json"
+
+
+@app.route("/api/log-engagement", methods=["POST"])
+def api_log_engagement():
+    """Log engagement activity from Claude scheduled tasks.
+
+    Expected payload:
+    {
+        "session": "morning|midday|evening",
+        "entries": [
+            {
+                "type": "comment|reply|like",
+                "author": "Name of post author",
+                "author_title": "Their headline (optional)",
+                "topic": "Brief topic description",
+                "post_url": "https://linkedin.com/... (optional)",
+                "comment_text": "What Aaron commented",
+                "original_post_summary": "Brief summary of what the post was about",
+                "pillar": "Forex Education|AI in Trading|etc (optional)"
+            }
+        ],
+        "notes": "Any session notes or issues (optional)"
+    }
+    """
+    try:
+        data = request.json or {}
+        entries = data.get("entries", [])
+        if not entries:
+            return jsonify({"success": False, "error": "No engagement entries provided"})
+
+        log = load_json(ENGAGEMENT_LOG_FILE, [])
+
+        record = {
+            "session": data.get("session", "unknown"),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            "entries": entries,
+            "count": len(entries),
+            "notes": data.get("notes", "")
+        }
+        log.append(record)
+
+        # Keep last 90 days of engagement data
+        cutoff = (datetime.now(timezone.utc) - __import__('datetime').timedelta(days=90)).strftime("%Y-%m-%d")
+        log = [r for r in log if r.get("date", "2000-01-01") >= cutoff]
+
+        save_json(ENGAGEMENT_LOG_FILE, log)
+
+        # Update daily engagement stats in learning engine
+        try:
+            from learning_engine import LearningEngine
+            le = LearningEngine()
+            le.add_alert("engagement_logged",
+                f"{data.get('session', '?')} session: {len(entries)} engagements logged",
+                severity="info")
+        except Exception:
+            pass
+
+        return jsonify({
+            "success": True,
+            "message": f"Logged {len(entries)} engagement(s) for {data.get('session', 'unknown')} session",
+            "total_today": sum(1 for r in log if r.get("date") == datetime.now(timezone.utc).strftime("%Y-%m-%d"))
+        })
+    except Exception as e:
+        logger.error(f"Engagement log failed: {e}")
+        return jsonify({"success": False, "error": str(e)})
+
+
+@app.route("/api/log-metrics", methods=["POST"])
+def api_log_metrics():
+    """Log scraped post metrics from Claude scheduled tasks.
+
+    Expected payload:
+    {
+        "metrics": [
+            {
+                "post_text_preview": "First 100 chars of post...",
+                "post_url": "https://linkedin.com/...",
+                "post_urn": "urn:li:activity:... (optional)",
+                "impressions": 1234,
+                "likes": 45,
+                "comments": 12,
+                "reposts": 3,
+                "scraped_at": "ISO timestamp"
+            }
+        ],
+        "follower_count": 4523,
+        "profile_views_weekly": 150
+    }
+    """
+    try:
+        data = request.json or {}
+        metrics_list = data.get("metrics", [])
+
+        # Store scraped metrics with timestamp
+        scraped = load_json(SCRAPED_METRICS_FILE, {"snapshots": [], "follower_history": []})
+
+        snapshot = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            "post_metrics": metrics_list,
+            "follower_count": data.get("follower_count"),
+            "profile_views_weekly": data.get("profile_views_weekly")
+        }
+        scraped["snapshots"].append(snapshot)
+
+        # Track follower history
+        if data.get("follower_count"):
+            scraped["follower_history"].append({
+                "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+                "count": data["follower_count"]
+            })
+
+        # Keep last 90 days
+        cutoff = (datetime.now(timezone.utc) - __import__('datetime').timedelta(days=90)).strftime("%Y-%m-%d")
+        scraped["snapshots"] = [s for s in scraped["snapshots"] if s.get("date", "2000-01-01") >= cutoff]
+        scraped["follower_history"] = [f for f in scraped["follower_history"] if f.get("date", "2000-01-01") >= cutoff]
+
+        save_json(SCRAPED_METRICS_FILE, scraped)
+
+        # Also update post history with fresh metrics where possible
+        history = load_json(POST_HISTORY_FILE, [])
+        matched = 0
+        for m in metrics_list:
+            for post in history:
+                text_match = (m.get("post_text_preview", "")[:80] and
+                              m["post_text_preview"][:80] in post.get("text", ""))
+                urn_match = (m.get("post_urn") and m["post_urn"] == post.get("id"))
+                if text_match or urn_match:
+                    post["scraped_metrics"] = {
+                        "impressions": m.get("impressions", 0),
+                        "likes": m.get("likes", 0),
+                        "comments": m.get("comments", 0),
+                        "reposts": m.get("reposts", 0),
+                        "scraped_at": datetime.now(timezone.utc).isoformat()
+                    }
+                    if m.get("impressions") and m["impressions"] > 0:
+                        eng = m.get("likes", 0) + m.get("comments", 0)
+                        post["engagement_rate"] = round(eng / m["impressions"] * 100, 2)
+                    matched += 1
+                    break
+        if matched:
+            save_json(POST_HISTORY_FILE, history)
+
+        # Update learning engine with follower data
+        try:
+            from learning_engine import LearningEngine
+            le = LearningEngine()
+            if data.get("follower_count"):
+                le.record_follower_snapshot(data["follower_count"])
+        except Exception:
+            pass
+
+        return jsonify({
+            "success": True,
+            "message": f"Logged metrics for {len(metrics_list)} posts, matched {matched} to history",
+            "follower_count": data.get("follower_count"),
+            "total_snapshots": len(scraped["snapshots"])
+        })
+    except Exception as e:
+        logger.error(f"Metrics log failed: {e}")
+        return jsonify({"success": False, "error": str(e)})
+
+
+@app.route("/api/queue-context", methods=["GET"])
+def api_queue_context():
+    """Return upcoming post topics so scheduled tasks can align engagement.
+
+    Response:
+    {
+        "upcoming_posts": [
+            {"pillar": "AI in Trading", "topic_preview": "First 150 chars...", "scheduled_date": "2026-04-24", "scheduled_time": "09:00"}
+        ],
+        "recent_pillars": ["Forex Education", "AI in Trading"],
+        "suggested_engagement_topics": ["AI trading", "forex education", "african fintech"]
+    }
+    """
+    try:
+        queue = load_json(CONTENT_QUEUE_FILE, [])
+        history = load_json(POST_HISTORY_FILE, [])
+
+        upcoming = []
+        for post in queue[:5]:
+            upcoming.append({
+                "pillar": post.get("pillar", "General"),
+                "topic_preview": (post.get("text") or post.get("content", ""))[:150],
+                "scheduled_date": post.get("scheduled_date", ""),
+                "scheduled_time": post.get("scheduled_time", "")
+            })
+
+        # Recent pillars from last 7 posts
+        recent_pillars = []
+        for post in reversed(history[-7:]):
+            p = post.get("pillar", "")
+            if p and p not in recent_pillars:
+                recent_pillars.append(p)
+
+        # Suggest engagement topics based on upcoming content
+        pillar_keywords = {
+            "Forex Education": ["forex education", "trading psychology", "risk management", "technical analysis"],
+            "AI in Trading": ["AI trading", "algorithmic trading", "trading automation", "fintech AI"],
+            "African Markets & Financial Literacy": ["african fintech", "financial literacy africa", "emerging markets", "nigeria fintech"],
+            "Personal Story & Behind-the-Scenes": ["founder journey", "edtech africa", "trading mentor"],
+            "Industry Commentary": ["forex market analysis", "currency analysis", "market outlook"]
+        }
+        suggested = []
+        for post in upcoming[:2]:
+            pillar = post.get("pillar", "")
+            if pillar in pillar_keywords:
+                for kw in pillar_keywords[pillar]:
+                    if kw not in suggested:
+                        suggested.append(kw)
+
+        return jsonify({
+            "success": True,
+            "upcoming_posts": upcoming,
+            "recent_pillars": recent_pillars,
+            "suggested_engagement_topics": suggested[:6]
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+
+@app.route("/api/engagement-stats", methods=["GET"])
+def api_engagement_stats():
+    """Return engagement statistics for the dashboard."""
+    try:
+        log = load_json(ENGAGEMENT_LOG_FILE, [])
+        scraped = load_json(SCRAPED_METRICS_FILE, {"snapshots": [], "follower_history": []})
+
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        week_ago = (datetime.now(timezone.utc) - __import__('datetime').timedelta(days=7)).strftime("%Y-%m-%d")
+
+        # Today's engagement
+        today_entries = [r for r in log if r.get("date") == today]
+        today_count = sum(r.get("count", 0) for r in today_entries)
+        today_sessions = [r.get("session") for r in today_entries]
+
+        # This week's engagement
+        week_entries = [r for r in log if r.get("date", "") >= week_ago]
+        week_count = sum(r.get("count", 0) for r in week_entries)
+
+        # Recent engagement entries for feed (last 10)
+        recent_entries = []
+        for record in reversed(log[-20:]):
+            for entry in record.get("entries", []):
+                recent_entries.append({
+                    "type": entry.get("type", "comment"),
+                    "author": entry.get("author", "Unknown"),
+                    "topic": entry.get("topic", ""),
+                    "comment_preview": (entry.get("comment_text", ""))[:120],
+                    "session": record.get("session", ""),
+                    "timestamp": record.get("timestamp", ""),
+                    "pillar": entry.get("pillar", "")
+                })
+        recent_entries = recent_entries[-10:]
+        recent_entries.reverse()
+
+        # Follower tracking
+        follower_history = scraped.get("follower_history", [])
+        current_followers = follower_history[-1]["count"] if follower_history else None
+        follower_7d_ago = None
+        for f in reversed(follower_history):
+            if f.get("date", "") <= week_ago:
+                follower_7d_ago = f["count"]
+                break
+        follower_growth = (current_followers - follower_7d_ago) if (current_followers and follower_7d_ago) else None
+
+        # Latest scraped post metrics
+        latest_snapshot = scraped["snapshots"][-1] if scraped["snapshots"] else None
+        latest_metrics = latest_snapshot.get("post_metrics", [])[:5] if latest_snapshot else []
+
+        return jsonify({
+            "success": True,
+            "today": {
+                "engagements": today_count,
+                "sessions_completed": today_sessions,
+                "target": 6
+            },
+            "this_week": {
+                "engagements": week_count,
+                "days_active": len(set(r.get("date") for r in week_entries))
+            },
+            "recent_entries": recent_entries,
+            "followers": {
+                "current": current_followers,
+                "growth_7d": follower_growth,
+                "target": 20000,
+                "history": follower_history[-30:]
+            },
+            "latest_post_metrics": latest_metrics
+        })
+    except Exception as e:
+        logger.error(f"Engagement stats failed: {e}")
+        return jsonify({"success": False, "error": str(e)})
