@@ -513,8 +513,12 @@ DASHBOARD_HTML = """
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">Image URL (optional)</label>
-        <input type="url" class="form-control" id="postImageUrl" placeholder="https://example.com/image.jpg">
+        <label class="form-label">Image (optional)</label>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+          <input type="file" class="form-control" id="postImageFile" accept="image/*" style="flex:1;" onchange="handleImageUpload(this)">
+        </div>
+        <input type="url" class="form-control" id="postImageUrl" placeholder="Or paste image URL..." style="font-size:12px;">
+        <div id="imagePreview" style="margin-top:8px;display:none;"><img id="imagePreviewImg" style="max-width:100%;max-height:150px;border-radius:8px;border:1px solid var(--border);"></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div class="form-group">
@@ -603,6 +607,9 @@ function editPost(idx) {
   const content = document.getElementById('qc-' + idx).textContent;
   document.getElementById('postModalTitle').textContent = 'Edit Post';
   document.getElementById('postContent').value = content;
+  _pendingImageFile = null;
+  document.getElementById('postImageFile').value = '';
+  document.getElementById('imagePreview').style.display = 'none';
   document.getElementById('savePostBtn').onclick = function() {
     const data = {
       index: idx,
@@ -610,10 +617,21 @@ function editPost(idx) {
       pillar: document.getElementById('postPillar').value,
       scheduled_date: document.getElementById('postDate').value,
       scheduled_time: document.getElementById('postTime').value,
-    image_url: document.getElementById('postImageUrl').value
+      image_url: document.getElementById('postImageUrl').value
     };
     apiCall('/api/queue/' + idx + '/edit', 'POST', data).then(d => {
-      if (d.status === 'ok') { showToast('Post updated', 'success'); setTimeout(() => location.reload(), 500); }
+      if (d.status === 'ok') {
+        if (_pendingImageFile) {
+          uploadImageFile(_pendingImageFile, idx).then(() => {
+            _pendingImageFile = null;
+            showToast('Post updated with image!', 'success'); setTimeout(() => location.reload(), 500);
+          }).catch(() => {
+            showToast('Post updated but image upload failed', 'error'); setTimeout(() => location.reload(), 500);
+          });
+        } else {
+          showToast('Post updated', 'success'); setTimeout(() => location.reload(), 500);
+        }
+      }
       else showToast('Error: ' + (d.error || 'Unknown'), 'error');
     });
     closeModal('addPostModal');
@@ -621,16 +639,57 @@ function editPost(idx) {
   document.getElementById('addPostModal').classList.add('show');
 }
 
+let _pendingImageFile = null;
+
+function handleImageUpload(input) {
+  const preview = document.getElementById('imagePreview');
+  const previewImg = document.getElementById('imagePreviewImg');
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    if (file.size > 10 * 1024 * 1024) { showToast('Image must be under 10 MB', 'error'); input.value = ''; return; }
+    _pendingImageFile = file;
+    const reader = new FileReader();
+    reader.onload = function(e) { previewImg.src = e.target.result; preview.style.display = 'block'; };
+    reader.readAsDataURL(file);
+    document.getElementById('postImageUrl').value = '';
+  } else {
+    _pendingImageFile = null;
+    preview.style.display = 'none';
+  }
+}
+
+function uploadImageFile(file, postIndex) {
+  const fd = new FormData();
+  fd.append('image', file);
+  return fetch('/api/upload-image/' + postIndex, { method: 'POST', body: fd })
+    .then(r => r.json());
+}
+
 function savePost() {
   const data = {
     content: document.getElementById('postContent').value,
     pillar: document.getElementById('postPillar').value,
     scheduled_date: document.getElementById('postDate').value,
-    scheduled_time: document.getElementById('postTime').value
+    scheduled_time: document.getElementById('postTime').value,
+    image_url: document.getElementById('postImageUrl').value
   };
   if (!data.content.trim()) { showToast('Content is required', 'error'); return; }
   apiCall('/api/add-post', 'POST', data).then(d => {
-    if (d.status === 'ok') { showToast('Post added!', 'success'); closeModal('addPostModal'); setTimeout(() => location.reload(), 500); }
+    if (d.status === 'ok') {
+      if (_pendingImageFile && typeof d.index === 'number') {
+        uploadImageFile(_pendingImageFile, d.index).then(u => {
+          _pendingImageFile = null;
+          showToast('Post added with image!', 'success');
+          closeModal('addPostModal'); setTimeout(() => location.reload(), 500);
+        }).catch(() => {
+          showToast('Post added but image upload failed', 'error');
+          closeModal('addPostModal'); setTimeout(() => location.reload(), 500);
+        });
+      } else {
+        _pendingImageFile = null;
+        showToast('Post added!', 'success'); closeModal('addPostModal'); setTimeout(() => location.reload(), 500);
+      }
+    }
     else showToast('Error: ' + (d.error || 'Unknown'), 'error');
   });
 }
@@ -654,8 +713,8 @@ function syncPosts() {
 function testConnection() {
   showToast('Testing connection...', 'info');
   apiCall('/api/test-connection', 'POST').then(d => {
-    if (d.status === 'ok') showToast('Connected! Profile: ' + (d.name || ''), 'success');
-    else showToast('Connection failed: ' + (d.error || ''), 'error');
+    if (d.success) showToast(d.message || 'Connected!', 'success');
+    else showToast(d.message || d.error || 'Connection failed', 'error');
   });
 }
 
@@ -730,7 +789,7 @@ function loadHealth() {
     // Alerts
     let alertHtml = '';
     if (d.alerts && d.alerts.length) {
-      alertHtml = d.alerts.map(a => '<div style="padding:10px;background:var(--surface2);border-radius:8px;margin-bottom:8px;font-size:13px;">' + a + '</div>').join('');
+      alertHtml = d.alerts.map(a => '<div style="padding:10px;background:var(--surface2);border-radius:8px;margin-bottom:8px;font-size:13px;"><span class="badge ' + (a.severity==='shutdown'?'badge-yellow':a.severity==='error'?'badge-red':'badge-blue') + '" style="margin-right:8px;">' + (a.severity||'info') + '</span>' + (a.message||JSON.stringify(a)) + '<div style="font-size:11px;color:var(--text3);margin-top:4px;">' + (a.created_at||'') + '</div></div>').join('');
     } else {
       alertHtml = '<div class="empty-state"><p>No alerts. System running normally.</p></div>';
     }
@@ -967,57 +1026,39 @@ def api_sync():
 
 @app.route("/api/add-post", methods=["POST"])
 def api_add_post():
-    """Manually add a LinkedIn post to tracking (for posts made outside the app)."""
+    """Add a post to the content queue for scheduled publishing."""
     try:
         data = request.json or {}
         text = (data.get("text") or data.get("content") or "").strip()
         image_url = data.get("image_url", "").strip()
-        post_url = data.get("url", "").strip()
-        
+
         if not text:
-            return jsonify({"success": False, "error": "Post text is required."})
-        
+            return jsonify({"status": "error", "error": "Post text is required."})
+
         from datetime import datetime, timezone
-        
-        # Extract post ID from URL if provided
-        post_id = ""
-        if post_url:
-            # LinkedIn post URLs contain the activity ID
-            import re
-            match = re.search(r'activity[:-](d+)', post_url)
-            if match:
-                post_id = f"urn:li:activity:{match.group(1)}"
-            else:
-                match = re.search(r'ugcPost[:-](d+)', post_url)
-                if match:
-                    post_id = f"urn:li:ugcPost:{match.group(1)}"
-        
-        if not post_id:
-            post_id = f"manual_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
-        
-        history = load_json(POST_HISTORY_FILE, [])
-        
-        # Check if already exists
-        if any(p.get("id") == post_id for p in history):
-            return jsonify({"success": False, "error": "This post is already being tracked."})
-        
+
+        queue = load_json(CONTENT_QUEUE_FILE, [])
+
         new_entry = {
-            "id": post_id,
             "text": text,
-            "created_at": data.get("date", datetime.now(timezone.utc).isoformat()),
-            "source": "manual",
-            "url": post_url,
-            "metrics": {},
-            "engagement_rate": 0.0,
-            "type": "text"
+            "content": text,
+            "pillar": data.get("pillar", "General").strip() or "General",
+            "scheduled_date": data.get("scheduled_date", ""),
+            "scheduled_time": data.get("scheduled_time", "08:00"),
+            "image_url": image_url,
+            "image_path": "",
+            "status": "queued",
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
-        
-        history.insert(0, new_entry)
-        save_json(POST_HISTORY_FILE, history)
-        
+
+        queue.append(new_entry)
+        new_index = len(queue) - 1
+        save_json(CONTENT_QUEUE_FILE, queue)
+
         return jsonify({
-            "success": True,
-            "message": f"Post added to tracking! Total posts: {len(history)}"
+            "status": "ok",
+            "index": new_index,
+            "message": f"Post added to queue! ({len(queue)} total)"
         })
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
