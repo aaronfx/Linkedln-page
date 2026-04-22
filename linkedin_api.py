@@ -254,10 +254,11 @@ class LinkedInAPI:
             results["endpoints"]["GET /v2/me"] = {"error": str(e)}
 
         # 3. Test REST posts endpoint (needs w_member_social)
+        # SAFE: uses validationOnly header so nothing is actually published
         try:
             test_payload = {
                 "author": self.person_urn,
-                "commentary": "Debug test - this should not be posted",
+                "commentary": "Debug validation test - not published",
                 "visibility": "PUBLIC",
                 "distribution": {
                     "feedDistribution": "MAIN_FEED",
@@ -266,13 +267,12 @@ class LinkedInAPI:
                 },
                 "lifecycleState": "PUBLISHED",
             }
-            # Use VALIDATION only header to not actually post
             debug_headers = dict(self.headers)
-            debug_headers["X-RestLi-Method"] = "BATCH_CREATE"  # invalid on purpose to get auth check only
+            debug_headers["x-restli-method"] = "VALIDATION_ONLY"
 
             resp = requests.post(
-                f"{REST_BASE}/posts",
-                headers=self.headers,
+                f"{REST_BASE}/posts?validationOnly=true",
+                headers=debug_headers,
                 json=test_payload,
             )
             results["endpoints"]["POST /rest/posts"] = {
