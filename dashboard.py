@@ -512,6 +512,10 @@ DASHBOARD_HTML = """
           <option value="Engagement">Engagement</option>
         </select>
       </div>
+      <div class="form-group">
+        <label class="form-label">Image URL (optional)</label>
+        <input type="url" class="form-control" id="postImageUrl" placeholder="https://example.com/image.jpg">
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div class="form-group">
           <label class="form-label">Date</label>
@@ -605,7 +609,8 @@ function editPost(idx) {
       content: document.getElementById('postContent').value,
       pillar: document.getElementById('postPillar').value,
       scheduled_date: document.getElementById('postDate').value,
-      scheduled_time: document.getElementById('postTime').value
+      scheduled_time: document.getElementById('postTime').value,
+    image_url: document.getElementById('postImageUrl').value
     };
     apiCall('/api/queue/' + idx + '/edit', 'POST', data).then(d => {
       if (d.status === 'ok') { showToast('Post updated', 'success'); setTimeout(() => location.reload(), 500); }
@@ -965,7 +970,8 @@ def api_add_post():
     """Manually add a LinkedIn post to tracking (for posts made outside the app)."""
     try:
         data = request.json or {}
-        text = data.get("text", "").strip()
+        text = (data.get("text") or data.get("content") or "").strip()
+        image_url = data.get("image_url", "").strip()
         post_url = data.get("url", "").strip()
         
         if not text:
