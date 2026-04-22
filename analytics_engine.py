@@ -25,11 +25,11 @@ class AnalyticsEngine:
         self.analytics = self._load_json(ANALYTICS_FILE, {"posts": [], "reports": []})
         self.post_history = self._load_json(POST_HISTORY_FILE, [])
 
-    # âââ Data Collection ââââââââââââââââââââââââââââââââââââ
+    # Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Data Collection Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
     def collect_metrics(self):
         """Collect latest metrics for recent posts only (last 7 days).
-        Was collecting for ALL posts â caused hundreds of unnecessary API calls.
+        Was collecting for ALL posts Ã¢ÂÂ caused hundreds of unnecessary API calls.
         """
         logger.info("Collecting post metrics (last 7 days only)...")
         updated_count = 0
@@ -40,7 +40,7 @@ class AnalyticsEngine:
             if not post_id:
                 continue
 
-            # Skip old posts â no need to re-fetch their stats constantly
+            # Skip old posts Ã¢ÂÂ no need to re-fetch their stats constantly
             created_at = post.get("created_at", "")
             if created_at:
                 try:
@@ -76,7 +76,7 @@ class AnalyticsEngine:
         logger.info(f"Updated metrics for {updated_count} posts")
         return updated_count
 
-    # âââ Analysis âââââââââââââââââââââââââââââââââââââââââââ
+    # Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Analysis Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
     def get_top_posts(self, n: int = 5, days: int = 30) -> list:
         """Get top-performing posts by engagement rate."""
@@ -167,7 +167,7 @@ class AnalyticsEngine:
             reverse=True,
         ))
 
-    # âââ Reports ââââââââââââââââââââââââââââââââââââââââââââ
+    # Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Reports Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
     def generate_weekly_report(self) -> dict:
         """Generate a comprehensive weekly performance report using Claude."""
@@ -222,7 +222,7 @@ class AnalyticsEngine:
         logger.info(f"Weekly report saved: {report_path}")
         return analysis
 
-    # âââ Utility ââââââââââââââââââââââââââââââââââââââââââââ
+    # Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Utility Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
     @staticmethod
     def _load_json(path: Path, default=None):
@@ -447,3 +447,113 @@ class AnalyticsEngine:
         except Exception as e:
             logger.error(f"Failed to save post history: {e}")
 
+
+    def track_follower_growth(self):
+        """Track follower count and record in learning engine."""
+        try:
+            if not self.linkedin:
+                return None
+            
+            count = self.linkedin.get_follower_count()
+            if count > 0:
+                try:
+                    from learning_engine import LearningEngine
+                    le = LearningEngine()
+                    le.record_follower_snapshot(count)
+                    logger.info(f"Follower count recorded: {count}")
+                except ImportError:
+                    pass
+            return count
+        except Exception as e:
+            logger.error(f"Failed to track followers: {e}")
+            return None
+
+    def get_hashtag_performance(self) -> dict:
+        """Analyze which hashtags correlate with higher engagement."""
+        hashtag_stats = {}
+        
+        for post in self.post_history:
+            hashtags = post.get("hashtags", [])
+            if isinstance(hashtags, str):
+                import re
+                hashtags = re.findall(r'#(\w+)', hashtags)
+            
+            engagement = (
+                post.get("likes", 0) + 
+                post.get("comments", 0) * 3 +  # Comments weighted 3x
+                post.get("shares", 0) * 5       # Shares weighted 5x
+            )
+            
+            for tag in hashtags:
+                tag = tag.lower().strip('#')
+                if tag not in hashtag_stats:
+                    hashtag_stats[tag] = {"uses": 0, "total_engagement": 0, "avg_engagement": 0}
+                hashtag_stats[tag]["uses"] += 1
+                hashtag_stats[tag]["total_engagement"] += engagement
+        
+        # Calculate averages and sort
+        for tag, stats in hashtag_stats.items():
+            if stats["uses"] > 0:
+                stats["avg_engagement"] = round(stats["total_engagement"] / stats["uses"], 1)
+        
+        sorted_tags = dict(sorted(
+            hashtag_stats.items(), 
+            key=lambda x: x[1]["avg_engagement"], 
+            reverse=True
+        ))
+        
+        return sorted_tags
+
+    def get_engagement_by_time(self) -> dict:
+        """Analyze engagement patterns by posting time (hour of day in WAT)."""
+        time_stats = {}
+        
+        for post in self.post_history:
+            created = post.get("created_at", "")
+            if not created:
+                continue
+            
+            try:
+                if isinstance(created, str):
+                    dt = datetime.fromisoformat(created.replace('Z', '+00:00'))
+                else:
+                    dt = created
+                
+                # Convert UTC to WAT (UTC+1)
+                wat_hour = (dt.hour + 1) % 24
+                hour_key = f"{wat_hour:02d}:00"
+                
+                engagement = (
+                    post.get("likes", 0) + 
+                    post.get("comments", 0) * 3 + 
+                    post.get("shares", 0) * 5
+                )
+                
+                if hour_key not in time_stats:
+                    time_stats[hour_key] = {"posts": 0, "total_engagement": 0, "avg_engagement": 0}
+                time_stats[hour_key]["posts"] += 1
+                time_stats[hour_key]["total_engagement"] += engagement
+            except (ValueError, TypeError):
+                continue
+        
+        # Calculate averages
+        for hour, stats in time_stats.items():
+            if stats["posts"] > 0:
+                stats["avg_engagement"] = round(stats["total_engagement"] / stats["posts"], 1)
+        
+        # Sort by hour
+        sorted_times = dict(sorted(time_stats.items()))
+        return sorted_times
+
+    def get_enhanced_insights(self) -> dict:
+        """Get comprehensive analytics insights including new tracking."""
+        insights = self.get_performance_insights()
+        insights["hashtag_performance"] = self.get_hashtag_performance()
+        insights["engagement_by_time"] = self.get_engagement_by_time()
+        
+        # Add follower tracking if available
+        follower_count = self.track_follower_growth()
+        if follower_count:
+            insights["current_followers"] = follower_count
+        
+        return insights
