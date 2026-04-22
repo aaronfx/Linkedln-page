@@ -25,6 +25,31 @@ app = Flask(__name__)
 app.secret_key = os.getenv("DASHBOARD_SECRET", "gopipways-linkedin-agent-2026")
 
 
+# --- CORS for integration endpoints ---
+@app.after_request
+def add_cors_headers(response):
+    """Allow cross-origin requests to integration API endpoints."""
+    cors_paths = ['/api/log-engagement', '/api/log-metrics', '/api/queue-context', '/api/engagement-stats']
+    if any(request.path.startswith(p) for p in cors_paths):
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    return response
+
+@app.route("/api/log-engagement", methods=["OPTIONS"])
+@app.route("/api/log-metrics", methods=["OPTIONS"])
+@app.route("/api/queue-context", methods=["OPTIONS"])
+@app.route("/api/engagement-stats", methods=["OPTIONS"])
+def cors_preflight():
+    """Handle CORS preflight requests."""
+    from flask import Response
+    resp = Response('', 204)
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    resp.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    return resp
+
+
 # --- HTTP Basic Auth ---
 def check_auth(username, password):
     """Verify credentials against config."""
@@ -44,8 +69,10 @@ def require_auth():
     """Enforce auth on all routes except /health (for Railway health checks)."""
     if not DASHBOARD_PASSWORD:
         return  # No password set = dev mode, no auth
-    if request.path == '/health':
-        return  # Health check is always public
+    # Public endpoints (no auth required)
+    public_paths = ['/health', '/api/log-engagement', '/api/log-metrics', '/api/queue-context', '/api/engagement-stats']
+    if any(request.path == p for p in public_paths):
+        return
     auth = request.authorization
     if not auth or not check_auth(auth.username, auth.password):
         return authenticate()
