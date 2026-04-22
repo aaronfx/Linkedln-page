@@ -339,7 +339,7 @@ DASHBOARD_HTML = """
           {% if post.get('image_url') %}
           <img class="img-preview" src="{{ post.get('image_url') }}" alt="Post image">
           {% elif post.get('image_path') %}
-          <img class="img-preview" src="/images/{{ post.get('image_path').split('/')[-1].split('\\')[-1] }}" alt="Post image">
+          <img class="img-preview" src="/images/{{ post.get('image_path','').replace('\\','/').split('/')[-1] }}" alt="Post image">
           {% endif %}
           <div class="post-actions">
             <button class="btn btn-primary btn-sm" onclick="postNow({{ loop.index0 }})">Post Now</button>
