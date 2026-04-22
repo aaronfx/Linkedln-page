@@ -296,7 +296,7 @@ DASHBOARD_HTML = """
             <span class="post-date">{{ post.get('scheduled_date','Unscheduled') }} {{ post.get('scheduled_time','') }}</span>
             {% if post.get('image_url') %}<span class="badge badge-blue">Has Image</span>{% endif %}
           </div>
-          <div class="post-content" id="qc-{{ loop.index0 }}">{{ post.get('content','(empty)') }}</div>
+          <div class="post-content" id="qc-{{ loop.index0 }}">{{ post.get('text', post.get('content','(empty)')) }}</div>
           <span class="post-expand" onclick="toggleExpand('qc-{{ loop.index0 }}')">Show more</span>
           {% if post.get('image_url') %}
           <img class="img-preview" src="{{ post.get('image_url') }}" alt="Post image">
@@ -333,7 +333,7 @@ DASHBOARD_HTML = """
             <span class="post-date">{{ post.get('posted_at', post.get('scheduled_date','')) }}</span>
             {% if post.get('engagement_rate') %}<span class="badge badge-green">{{ post.get('engagement_rate') }}% eng.</span>{% endif %}
           </div>
-          <div class="post-content" id="hc-{{ loop.index0 }}">{{ post.get('content','') }}</div>
+          <div class="post-content" id="hc-{{ loop.index0 }}">{{ post.get('text', post.get('content','')) }}</div>
           <span class="post-expand" onclick="toggleExpand('hc-{{ loop.index0 }}')">Show more</span>
           <div class="post-stats">
             <span>Likes: <strong>{{ post.get('likes', 0) }}</strong></span>
