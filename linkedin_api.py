@@ -28,11 +28,32 @@ REST_BASE = "https://api.linkedin.com/rest"
 
 # --- Rate Limiting Constants ---
 MIN_REQUEST_INTERVAL = 2.0       # Minimum seconds between API calls
-MAX_DAILY_REQUESTS = 80          # Stay well under LinkedIn's limits
+MAX_DAILY_REQUESTS = 500          # Stay well under LinkedIn's limits
 BACKOFF_BASE = 5                 # Base seconds for exponential backoff
 MAX_RETRIES = 3                  # Max retries on transient errors
 CIRCUIT_BREAKER_THRESHOLD = 5    # Consecutive failures before circuit breaks
 CIRCUIT_BREAKER_RESET = 300      # Seconds to wait before retrying after circuit break
+
+def sanitize_post_text(text: str) -> str:
+    """Sanitize post text to prevent encoding issues on LinkedIn."""
+    if not text:
+        return text
+    replacements = {
+        '\u2018': "'",
+        '\u2019': "'",
+        '\u201C': '"',
+        '\u201D': '"',
+        '\u2013': '-',
+        '\u2014': '--',
+        '\u2026': '...',
+        '\u00A0': ' ',
+    }
+    for char, replacement in replacements.items():
+        text = text.replace(char, replacement)
+    text = ''.join(c for c in text if c == '\n' or c == '\t' or (ord(c) >= 32 and ord(c) < 127) or ord(c) >= 160)
+    logger.info(f"Post text sanitized: {len(text)} chars, preview: {text[:100]}...")
+    return text
+
 
 
 class RateLimiter:
@@ -325,7 +346,7 @@ class LinkedInAPI:
         """Create a text-only post using the rest/posts API."""
         payload = {
             "author": self.person_urn,
-            "commentary": text,
+            "commentary": sanitize_post_text(text),
             "visibility": "PUBLIC",
             "distribution": {
                 "feedDistribution": "MAIN_FEED",
@@ -394,7 +415,7 @@ class LinkedInAPI:
         # Step 3: Create the post with the uploaded image
         payload = {
             "author": self.person_urn,
-            "commentary": text,
+            "commentary": sanitize_post_text(text),
             "visibility": "PUBLIC",
             "distribution": {
                 "feedDistribution": "MAIN_FEED",
