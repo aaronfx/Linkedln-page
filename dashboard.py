@@ -292,7 +292,7 @@ DASHBOARD_HTML = """
         {% for post in queue %}
         <div class="post-card" id="queue-{{ loop.index0 }}">
           <div class="post-meta">
-            <span class="post-pillar {{ post.get('pillar','unknown')|lower|replace(' ','') }}">{{ post.get('pillar','—') }}</span>
+            <span class="post-pillar {{ post.get('pillar','unknown')|lower|replace(' ','') }}">{{ post.get('pillar','â') }}</span>
             <span class="post-date">{{ post.get('scheduled_date','Unscheduled') }} {{ post.get('scheduled_time','') }}</span>
             {% if post.get('image_url') %}<span class="badge badge-blue">Has Image</span>{% endif %}
           </div>
@@ -329,7 +329,7 @@ DASHBOARD_HTML = """
         {% for post in recent_posts %}
         <div class="post-card">
           <div class="post-meta">
-            <span class="post-pillar {{ post.get('pillar','unknown')|lower|replace(' ','') }}">{{ post.get('pillar','—') }}</span>
+            <span class="post-pillar {{ post.get('pillar','unknown')|lower|replace(' ','') }}">{{ post.get('pillar','â') }}</span>
             <span class="post-date">{{ post.get('posted_at', post.get('scheduled_date','')) }}</span>
             {% if post.get('engagement_rate') %}<span class="badge badge-green">{{ post.get('engagement_rate') }}% eng.</span>{% endif %}
           </div>
@@ -419,7 +419,7 @@ DASHBOARD_HTML = """
           <tr>
             <td style="font-weight:500;">{{ c.get('author','Unknown') }}</td>
             <td style="max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ c.get('comment','') }}</td>
-            <td style="max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text2);">{{ c.get('reply','—') }}</td>
+            <td style="max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text2);">{{ c.get('reply','â') }}</td>
             <td style="white-space:nowrap;">{{ c.get('replied_at', c.get('date','')) }}</td>
           </tr>
           {% endfor %}
@@ -588,7 +588,7 @@ function postNow(idx) {
 
 function deletePost(idx) {
   if (!confirm('Remove this post from queue?')) return;
-  apiCall('/api/queue/delete', 'POST', {index: idx}).then(d => {
+  apiCall('/api/queue/' + idx + '/delete', 'POST').then(d => {
     if (d.status === 'ok') { showToast('Post removed', 'success'); setTimeout(() => location.reload(), 500); }
     else showToast('Error: ' + (d.error || 'Unknown'), 'error');
   });
@@ -607,7 +607,7 @@ function editPost(idx) {
       scheduled_date: document.getElementById('postDate').value,
       scheduled_time: document.getElementById('postTime').value
     };
-    apiCall('/api/queue/edit', 'POST', data).then(d => {
+    apiCall('/api/queue/' + idx + '/edit', 'POST', data).then(d => {
       if (d.status === 'ok') { showToast('Post updated', 'success'); setTimeout(() => location.reload(), 500); }
       else showToast('Error: ' + (d.error || 'Unknown'), 'error');
     });
@@ -713,7 +713,7 @@ function loadHealth() {
     html += '<div class="pillar-row"><span style="color:var(--text2);">Scheduler</span><span class="badge ' + (d.scheduler_alive?'badge-green':'badge-red') + '">' + (d.scheduler_alive?'Running':'Stopped') + '</span></div>';
     html += '<div class="pillar-row"><span style="color:var(--text2);">Posts Today</span><span>' + (d.posts_today||0) + '</span></div>';
     html += '<div class="pillar-row"><span style="color:var(--text2);">Dead Letters</span><span>' + (d.dead_letter_count||0) + '</span></div>';
-    html += '<div class="pillar-row"><span style="color:var(--text2);">Started</span><span style="font-size:12px;">' + (d.started_at||'—') + '</span></div>';
+    html += '<div class="pillar-row"><span style="color:var(--text2);">Started</span><span style="font-size:12px;">' + (d.started_at||'â') + '</span></div>';
     if (d.learning_summary) html += '<div class="pillar-row"><span style="color:var(--text2);">AI Insights</span><span style="font-size:12px;">' + d.learning_summary + '</span></div>';
     html += '</div>';
     document.getElementById('health-info').innerHTML = html;
@@ -1532,36 +1532,3 @@ def api_clear_history():
     """Clear all post history."""
     save_json(POST_HISTORY_FILE, [])
     return jsonify({"status": "ok", "message": "Post history cleared"})
-
-
-@app.route("/api/queue/delete", methods=["POST"])
-def api_queue_delete():
-    """Delete a post from the queue by index."""
-    data = request.get_json() or {}
-    idx = data.get("index", -1)
-    queue = load_json(CONTENT_QUEUE_FILE, [])
-    if 0 <= idx < len(queue):
-        removed = queue.pop(idx)
-        save_json(CONTENT_QUEUE_FILE, queue)
-        return jsonify({"status": "ok", "removed": removed.get("pillar", "")})
-    return jsonify({"status": "error", "error": "Invalid index"}), 400
-
-
-@app.route("/api/queue/edit", methods=["POST"])
-def api_queue_edit():
-    """Edit a post in the queue by index."""
-    data = request.get_json() or {}
-    idx = data.get("index", -1)
-    queue = load_json(CONTENT_QUEUE_FILE, [])
-    if 0 <= idx < len(queue):
-        if data.get("content"):
-            queue[idx]["content"] = data["content"]
-        if data.get("pillar"):
-            queue[idx]["pillar"] = data["pillar"]
-        if data.get("scheduled_date"):
-            queue[idx]["scheduled_date"] = data["scheduled_date"]
-        if data.get("scheduled_time"):
-            queue[idx]["scheduled_time"] = data["scheduled_time"]
-        save_json(CONTENT_QUEUE_FILE, queue)
-        return jsonify({"status": "ok"})
-    return jsonify({"status": "error", "error": "Invalid index"}), 400
