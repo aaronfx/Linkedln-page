@@ -648,7 +648,7 @@ function showAddPostModal() {
 
 // API calls
 async function apiCall(url, method, body) {
-  const opts = { method: method || 'GET', headers: {'Content-Type':'application/json'} };
+  const opts = { method: method || 'GET', headers: {'Content-Type':'application/json'}, credentials: 'same-origin' };
   if (body) opts.body = JSON.stringify(body);
   const r = await fetch(url, opts);
   return r.json();
@@ -730,8 +730,8 @@ function handleImageUpload(input) {
 function uploadImageFile(file, postIndex) {
   const fd = new FormData();
   fd.append('image', file);
-  return fetch('/api/upload-image/' + postIndex, { method: 'POST', body: fd })
-    .then(r => r.json());
+  return fetch('/api/upload-image/' + postIndex, { method: 'POST', body: fd, credentials: 'same-origin' })
+    .then(r => { if (!r.ok) throw new Error('Upload failed: ' + r.status); return r.json(); });
 }
 
 function savePost() {
