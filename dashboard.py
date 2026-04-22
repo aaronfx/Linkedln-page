@@ -332,14 +332,14 @@ DASHBOARD_HTML = """
           <div class="post-meta">
             <span class="post-pillar {{ post.get('pillar','unknown')|lower|replace(' ','') }}">{{ post.get('pillar','â') }}</span>
             <span class="post-date">{{ post.get('scheduled_date','Unscheduled') }} {{ post.get('scheduled_time','') }}</span>
-            {% if post.get('image_url') or post.get('image_path') %}<span class="badge badge-blue">Has Image</span>{% endif %}
+            {% if post.get('image_url') or post.get('image_filename') %}<span class="badge badge-blue">Has Image</span>{% endif %}
           </div>
           <div class="post-content" id="qc-{{ loop.index0 }}">{{ post.get('text', post.get('content','(empty)')) }}</div>
           <span class="post-expand" onclick="toggleExpand('qc-{{ loop.index0 }}')">Show more</span>
           {% if post.get('image_url') %}
           <img class="img-preview" src="{{ post.get('image_url') }}" alt="Post image">
-          {% elif post.get('image_path') %}
-          <img class="img-preview" src="/images/{{ post.get('image_path','').replace('\\','/').split('/')[-1] }}" alt="Post image">
+          {% elif post.get('image_filename') %}
+          <img class="img-preview" src="/images/{{ post.image_filename }}" alt="Post image">
           {% endif %}
           <div class="post-actions">
             <button class="btn btn-primary btn-sm" onclick="postNow({{ loop.index0 }})">Post Now</button>
@@ -1003,6 +1003,13 @@ loadHealth();
 @app.route("/")
 def dashboard():
     queue = load_json(CONTENT_QUEUE_FILE, [])
+    # Pre-extract image filenames so Jinja2 never touches backslashes
+    for post in queue:
+        ip = post.get("image_path", "")
+        if ip:
+            post["image_filename"] = os.path.basename(ip.replace("\\", "/"))
+        else:
+            post["image_filename"] = ""
     history = load_json(POST_HISTORY_FILE, [])
     comments = load_json(COMMENT_LOG_FILE, [])
     analytics = load_json(ANALYTICS_FILE, {"posts": [], "reports": []})
