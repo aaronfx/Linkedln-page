@@ -371,3 +371,90 @@ def set_token_expiry_warning(warning):
 def backup_to_dict():
     """Export full learning state for backup."""
     return _load_state()
+
+
+# ═══ Class Wrapper for OOP usage ═══════════════════════════════════
+
+class LearningEngine:
+    """
+    Object-oriented wrapper around the module-level learning functions.
+    Provides the same interface but can be instantiated by worker.py and dashboard.py.
+    """
+
+    def record_post_result(self, post_id=None, pillar="", hook="", template="",
+                           hashtags=None, success=True, error=None, engagement=None):
+        """Record a post result with flexible parameters."""
+        record_post_result(
+            post_text=hook,
+            pillar=pillar,
+            format_type=template,
+            success=success,
+            error_msg=error,
+            post_id=post_id,
+        )
+        # If engagement data provided, update metrics
+        if engagement and post_id:
+            update_engagement_metrics(
+                post_id=post_id,
+                likes=engagement.get("likes", 0),
+                comments=engagement.get("comments", 0),
+                shares=engagement.get("shares", 0),
+                impressions=engagement.get("impressions", 0),
+            )
+
+    def record_follower_snapshot(self, count):
+        record_follower_snapshot(count)
+
+    def get_growth_rate(self):
+        return get_growth_rate()
+
+    def track_hashtag_performance(self, hashtag, engagement_score):
+        track_hashtag_performance([hashtag], 0, engagement_score)
+
+    def get_top_hashtags(self, n=10):
+        return get_top_hashtags(n)
+
+    def get_best_posting_times(self):
+        return get_best_posting_times()
+
+    def add_alert(self, severity, message):
+        add_alert(severity, message)
+
+    def get_alerts(self, limit=10):
+        alerts = get_alerts(unacknowledged_only=False)
+        return alerts[:limit] if limit else alerts
+
+    def get_dead_letter_queue(self):
+        return get_dead_letter_queue()
+
+    def add_to_dead_letter(self, post_data, error, source="unknown"):
+        """Add a failed post to the dead-letter queue."""
+        state = _load_state()
+        dl_entry = {
+            "id": f"dl_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            "post_data": post_data,
+            "error": error,
+            "source": source,
+            "failed_at": datetime.now().isoformat(),
+            "retry_count": 0,
+        }
+        state["dead_letter_queue"].append(dl_entry)
+        _save_state(state)
+
+    def remove_from_dead_letter(self, item_id):
+        """Remove an item from dead-letter queue by ID."""
+        state = _load_state()
+        state["dead_letter_queue"] = [
+            dl for dl in state["dead_letter_queue"]
+            if dl.get("id") != item_id
+        ]
+        _save_state(state)
+
+    def get_learning_summary(self):
+        return get_learning_summary()
+
+    def check_token_expiry_warning(self):
+        return check_token_expiry_warning()
+
+    def backup_to_dict(self):
+        return backup_to_dict()
