@@ -12,16 +12,43 @@ import threading
 from datetime import datetime, timezone
 from pathlib import Path
 from flask import Flask, render_template_string, jsonify, request, redirect, url_for
+from functools import wraps
 from config import (
     CONTENT_QUEUE_FILE, POST_HISTORY_FILE, COMMENT_LOG_FILE,
     ANALYTICS_FILE, ANALYTICS_DIR, POSTING_SCHEDULE, PROFILE,
-    CONTENT_PILLARS, DATA_DIR
+    CONTENT_PILLARS, DATA_DIR, DASHBOARD_USERNAME, DASHBOARD_PASSWORD
 )
 
 logger = logging.getLogger("dashboard")
 
 app = Flask(__name__)
 app.secret_key = os.getenv("DASHBOARD_SECRET", "gopipways-linkedin-agent-2026")
+
+
+# --- HTTP Basic Auth ---
+def check_auth(username, password):
+    """Verify credentials against config."""
+    return username == DASHBOARD_USERNAME and password == DASHBOARD_PASSWORD
+
+def authenticate():
+    """Send 401 response requesting Basic Auth."""
+    from flask import Response
+    return Response(
+        'Authentication required. Set DASHBOARD_PASSWORD env var on Railway.',
+        401,
+        {'WWW-Authenticate': 'Basic realm="LinkedIn Agent Dashboard"'}
+    )
+
+@app.before_request
+def require_auth():
+    """Enforce auth on all routes except /health (for Railway health checks)."""
+    if not DASHBOARD_PASSWORD:
+        return  # No password set = dev mode, no auth
+    if request.path == '/health':
+        return  # Health check is always public
+    auth = request.authorization
+    if not auth or not check_auth(auth.username, auth.password):
+        return authenticate()
 
 # --- Background Task Tracking ---
 # Simple in-memory task tracker for long-running operations
@@ -1614,7 +1641,86 @@ def api_queue_delete(index):
 
 @app.route("/health")
 def health():
-    return jsonify({"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()})
+    """Enhanced health endpoint with worker status and learning engine data."""
+    try:
+        from worker import get_health_status
+        health_data = get_health_status()
+        health_data["status"] = "ok"
+        health_data["timestamp"] = datetime.now(timezone.utc).isoformat()
+        return jsonify(health_data)
+    except ImportError:
+        return jsonify({"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()})
+
+
+@app.route("/api/alerts", methods=["GET"])
+def api_alerts():
+    """Get system alerts from learning engine."""
+    try:
+        from learning_engine import LearningEngine
+        le = LearningEngine()
+        alerts = le.get_alerts(limit=20)
+        return jsonify({"alerts": alerts})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/dead-letter", methods=["GET"])
+def api_dead_letter():
+    """Get dead-letter queue (failed posts awaiting retry)."""
+    try:
+        from learning_engine import LearningEngine
+        le = LearningEngine()
+        dead_letters = le.get_dead_letter_queue()
+        return jsonify({"dead_letters": dead_letters, "count": len(dead_letters)})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/dead-letter/<item_id>/retry", methods=["POST"])
+def api_retry_dead_letter(item_id):
+    """Manually retry a dead-letter post."""
+    try:
+        from learning_engine import LearningEngine
+        from linkedin_api import LinkedInAPI
+        le = LearningEngine()
+        dead_letters = le.get_dead_letter_queue()
+        target = None
+        for dl in dead_letters:
+            if dl.get("id") == item_id:
+                target = dl
+                break
+        if not target:
+            return jsonify({"error": "Dead letter not found"}), 404
+
+        post_data = target.get("post_data", {})
+        linkedin = LinkedInAPI()
+        post_text = post_data.get("text", "")
+        image_path = post_data.get("image_path", "")
+
+        if image_path and Path(image_path).exists():
+            result = linkedin.create_image_post(post_text, image_path)
+        else:
+            result = linkedin.create_text_post(post_text)
+
+        le.remove_from_dead_letter(item_id)
+        return jsonify({"success": True, "post_id": result.get("id", "unknown")})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/learning-summary", methods=["GET"])
+def api_learning_summary():
+    """Get learning engine insights summary."""
+    try:
+        from learning_engine import LearningEngine
+        le = LearningEngine()
+        summary = le.get_learning_summary()
+        summary["top_hashtags"] = le.get_top_hashtags(10)
+        summary["best_times"] = le.get_best_posting_times()
+        summary["growth_rate"] = le.get_growth_rate()
+        return jsonify(summary)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # --- Run ---
