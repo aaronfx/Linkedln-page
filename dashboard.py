@@ -1400,6 +1400,17 @@ def api_queue_edit(index):
         post = queue[index]
         post["scheduled_date"] = new_date
         post["scheduled_time"] = new_time
+        # Also update content, pillar, image if provided
+        new_content = (data.get("text") or data.get("content") or "").strip()
+        if new_content:
+            post["text"] = new_content
+            post["content"] = new_content
+        new_pillar = data.get("pillar", "").strip()
+        if new_pillar:
+            post["pillar"] = new_pillar
+        new_image = data.get("image_url", "").strip()
+        if new_image:
+            post["image_url"] = new_image
         post["scheduled_datetime"] = f"{new_date}T{new_time}:00"
         
         # Rebuild display_date
