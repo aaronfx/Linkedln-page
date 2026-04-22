@@ -89,874 +89,666 @@ DASHBOARD_HTML = """
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LinkedIn Agent - Dr. Aaron Akwu</title>
+<title>LinkedIn Autopilot</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #0f1117;
-    --card: #1a1d27;
-    --border: #2a2d3a;
-    --accent: #3b82f6;
-    --accent2: #10b981;
-    --accent3: #f59e0b;
-    --text: #e2e8f0;
-    --muted: #94a3b8;
-    --danger: #ef4444;
+    --surface: #1a1d27;
+    --surface2: #232733;
+    --border: #2e3345;
+    --text: #e4e6ef;
+    --text2: #8b90a5;
+    --accent: #0a66c2;
+    --accent2: #1b8fef;
+    --green: #2dd4a8;
+    --red: #f87171;
+    --orange: #fb923c;
+    --purple: #a78bfa;
+    --radius: 12px;
   }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.6;
-  }
-  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-
-  /* Header */
-  .header {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 20px 0; border-bottom: 1px solid var(--border); margin-bottom: 24px;
-  }
-  .header h1 { font-size: 1.5rem; }
-  .header h1 span { color: var(--accent); }
-  .status-badge {
-    padding: 6px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;
-  }
-  .status-active { background: rgba(16,185,129,0.15); color: var(--accent2); }
-  .status-paused { background: rgba(245,158,11,0.15); color: var(--accent3); }
-
-  /* Stats Grid */
-  .stats-grid {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px; margin-bottom: 24px;
-  }
-  .stat-card {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 12px; padding: 20px;
-  }
-  .stat-card .label { color: var(--muted); font-size: 0.85rem; margin-bottom: 4px; }
-  .stat-card .value { font-size: 2rem; font-weight: 700; }
-  .stat-card .change { font-size: 0.8rem; margin-top: 4px; }
-  .change.up { color: var(--accent2); }
-  .change.down { color: var(--danger); }
-
-  /* Cards */
-  .card {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 12px; padding: 24px; margin-bottom: 20px;
-  }
-  .card h2 {
-    font-size: 1.1rem; margin-bottom: 16px;
-    padding-bottom: 12px; border-bottom: 1px solid var(--border);
-  }
-
-  /* Content Grid */
-  .content-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
-  }
-  @media (max-width: 768px) { .content-grid { grid-template-columns: 1fr; } }
-
-  /* Post Preview */
-  .post-preview {
-    background: var(--bg); border: 1px solid var(--border);
-    border-radius: 8px; padding: 16px; margin-bottom: 12px;
-    cursor: pointer; transition: border-color 0.2s;
-  }
-  .post-preview:hover { border-color: var(--accent); }
-  .post-preview .meta {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 8px;
-  }
-  .post-preview .pillar {
-    font-size: 0.75rem; padding: 3px 10px; border-radius: 12px;
-    background: rgba(59,130,246,0.15); color: var(--accent);
-  }
-  .post-preview .date { color: var(--muted); font-size: 0.8rem; }
-  .post-preview .text {
-    font-size: 0.9rem; color: var(--muted); line-height: 1.5;
-    max-height: 80px; overflow: hidden;
-  }
-  .post-preview .text.expanded { max-height: none; }
-  .post-preview .expand-btn {
-    background: none; border: none; color: var(--accent); font-size: 0.8rem;
-    cursor: pointer; padding: 4px 0; margin-top: 4px;
-  }
-  .post-preview .post-image {
-    margin-top: 10px; border-radius: 6px; max-width: 100%; max-height: 200px;
-    object-fit: cover; border: 1px solid var(--border);
-  }
-  .post-preview .image-badge {
-    font-size: 0.7rem; padding: 2px 8px; border-radius: 10px;
-    background: rgba(16,185,129,0.15); color: var(--accent2);
-    display: inline-block; margin-top: 6px;
-  }
-  .post-preview .no-image {
-    font-size: 0.7rem; padding: 2px 8px; border-radius: 10px;
-    background: rgba(245,158,11,0.15); color: var(--accent3);
-    display: inline-block; margin-top: 6px;
-  }
-  .upload-btn {
-    font-size: 0.75rem; padding: 4px 12px; border-radius: 8px;
-    background: rgba(59,130,246,0.15); color: var(--accent); border: 1px dashed var(--accent);
-    cursor: pointer; margin-left: 6px; transition: all 0.2s;
-  }
-  .upload-btn:hover { background: rgba(59,130,246,0.3); }
-  .upload-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
-  .remove-img-btn {
-    font-size: 0.7rem; padding: 2px 8px; border-radius: 8px;
-    background: rgba(239,68,68,0.15); color: var(--danger); border: none;
-    cursor: pointer;
-  }
-  .post-preview .metrics {
-    display: flex; gap: 16px; margin-top: 10px; font-size: 0.8rem; color: var(--muted);
-  }
-  .post-preview .metrics span { display: flex; align-items: center; gap: 4px; }
-  .post-preview .template-tag {
-    font-size: 0.7rem; padding: 2px 8px; border-radius: 10px;
-    background: rgba(139,92,246,0.15); color: #a78bfa;
-    display: inline-block; margin-left: 6px;
-  }
-
-  /* Comment List */
-  .comment-item {
-    background: var(--bg); border: 1px solid var(--border);
-    border-radius: 8px; padding: 14px; margin-bottom: 10px;
-  }
-  .comment-item .commenter { font-weight: 600; font-size: 0.9rem; }
-  .comment-item .comment-text { color: var(--muted); font-size: 0.85rem; margin: 6px 0; }
-  .comment-item .reply {
-    background: rgba(59,130,246,0.08); border-left: 3px solid var(--accent);
-    padding: 8px 12px; margin-top: 8px; border-radius: 0 6px 6px 0;
-    font-size: 0.85rem;
-  }
-  .comment-item .reply-label { color: var(--accent); font-size: 0.75rem; font-weight: 600; }
-
-  /* Schedule */
-  .schedule-row {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 10px 0; border-bottom: 1px solid var(--border);
-  }
-  .schedule-row:last-child { border: none; }
-  .schedule-row .day { font-weight: 600; width: 100px; }
-  .schedule-row .time { color: var(--accent); width: 80px; }
-  .schedule-row .pillar-name { color: var(--muted); flex: 1; }
-
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+  
+  /* Layout */
+  .topbar { background:var(--surface); border-bottom:1px solid var(--border); padding:16px 32px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; backdrop-filter:blur(12px); }
+  .topbar h1 { font-size:20px; font-weight:700; }
+  .topbar h1 span { color:var(--accent2); }
+  .topbar-actions { display:flex; gap:8px; }
+  
+  .container { max-width:1400px; margin:0 auto; padding:24px 32px; }
+  
+  /* Stats Cards */
+  .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:28px; }
+  .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; }
+  .stat-card .label { font-size:12px; font-weight:500; color:var(--text2); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; }
+  .stat-card .value { font-size:28px; font-weight:700; }
+  .stat-card .sub { font-size:12px; color:var(--text2); margin-top:4px; }
+  
+  /* Tabs */
+  .tabs { display:flex; gap:4px; margin-bottom:24px; background:var(--surface); border-radius:var(--radius); padding:4px; border:1px solid var(--border); width:fit-content; }
+  .tab { padding:8px 20px; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer; color:var(--text2); transition:all .2s; border:none; background:none; }
+  .tab:hover { color:var(--text); }
+  .tab.active { background:var(--accent); color:#fff; }
+  
+  /* Panels */
+  .panel { display:none; }
+  .panel.active { display:block; }
+  
+  /* Cards & Tables */
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:20px; }
+  .card-header { padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .card-header h3 { font-size:15px; font-weight:600; }
+  .card-body { padding:20px; }
+  
+  table { width:100%; border-collapse:collapse; }
+  th { text-align:left; font-size:11px; font-weight:600; color:var(--text2); text-transform:uppercase; letter-spacing:0.5px; padding:10px 16px; border-bottom:1px solid var(--border); }
+  td { padding:12px 16px; border-bottom:1px solid var(--border); font-size:13px; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover { background:var(--surface2); }
+  
+  /* Post Cards */
+  .post-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:12px; transition:border-color .2s; }
+  .post-card:hover { border-color:var(--accent); }
+  .post-meta { display:flex; gap:12px; align-items:center; margin-bottom:10px; flex-wrap:wrap; }
+  .post-pillar { font-size:11px; font-weight:600; padding:3px 10px; border-radius:20px; text-transform:uppercase; letter-spacing:0.3px; }
+  .post-pillar.education { background:rgba(43,180,168,0.15); color:var(--green); }
+  .post-pillar.authority { background:rgba(167,139,250,0.15); color:var(--purple); }
+  .post-pillar.storytelling { background:rgba(251,146,60,0.15); color:var(--orange); }
+  .post-pillar.engagement { background:rgba(27,143,239,0.15); color:var(--accent2); }
+  .post-pillar.unknown { background:rgba(139,144,165,0.15); color:var(--text2); }
+  .post-date { font-size:12px; color:var(--text2); }
+  .post-content { font-size:13px; line-height:1.65; color:var(--text); white-space:pre-wrap; max-height:120px; overflow:hidden; position:relative; }
+  .post-content.expanded { max-height:none; }
+  .post-expand { font-size:12px; color:var(--accent2); cursor:pointer; margin-top:6px; display:inline-block; }
+  .post-stats { display:flex; gap:20px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
+  .post-stats span { font-size:12px; color:var(--text2); }
+  .post-stats span strong { color:var(--text); }
+  .post-actions { display:flex; gap:8px; margin-top:12px; }
+  
   /* Buttons */
-  .btn {
-    padding: 8px 20px; border-radius: 8px; border: none;
-    font-size: 0.85rem; font-weight: 600; cursor: pointer;
-    transition: all 0.2s;
-  }
-  .btn-primary { background: var(--accent); color: white; }
-  .btn-primary:hover { background: #2563eb; }
-  .btn-success { background: var(--accent2); color: white; }
-  .btn-success:hover { background: #059669; }
-  .btn-warning { background: var(--accent3); color: #1a1d27; }
-  .btn-danger { background: var(--danger); color: white; }
-  .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
-
-  /* Action Bar */
-  .action-bar {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 20px; flex-wrap: wrap; gap: 10px;
-  }
-
-  /* Table */
-  table { width: 100%; border-collapse: collapse; }
-  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
-  th { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
-  td { font-size: 0.9rem; }
-
-  /* Pillar bar chart */
-  .bar-container { margin: 4px 0; }
-  .bar {
-    height: 24px; border-radius: 4px; display: flex; align-items: center;
-    padding-left: 8px; font-size: 0.75rem; font-weight: 600; color: white;
-    min-width: 30px;
-  }
-
-  .footer {
-    text-align: center; padding: 30px 0; color: var(--muted);
-    font-size: 0.8rem; border-top: 1px solid var(--border); margin-top: 30px;
-  }
+  .btn { padding:8px 16px; border-radius:8px; font-size:13px; font-weight:500; border:none; cursor:pointer; transition:all .2s; display:inline-flex; align-items:center; gap:6px; }
+  .btn-primary { background:var(--accent); color:#fff; }
+  .btn-primary:hover { background:var(--accent2); }
+  .btn-secondary { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
+  .btn-secondary:hover { border-color:var(--text2); }
+  .btn-danger { background:rgba(248,113,113,0.1); color:var(--red); border:1px solid rgba(248,113,113,0.2); }
+  .btn-danger:hover { background:rgba(248,113,113,0.2); }
+  .btn-sm { padding:5px 12px; font-size:12px; }
+  .btn-icon { width:32px; height:32px; padding:0; display:flex; align-items:center; justify-content:center; border-radius:8px; }
+  
+  /* Badges */
+  .badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; }
+  .badge-green { background:rgba(45,212,168,0.15); color:var(--green); }
+  .badge-red { background:rgba(248,113,113,0.15); color:var(--red); }
+  .badge-orange { background:rgba(251,146,60,0.15); color:var(--orange); }
+  .badge-blue { background:rgba(27,143,239,0.15); color:var(--accent2); }
+  
+  /* Analytics Charts */
+  .chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media(max-width:900px) { .chart-grid { grid-template-columns:1fr; } }
+  .chart-bar { height:8px; border-radius:4px; background:var(--surface2); overflow:hidden; margin-top:6px; }
+  .chart-bar-fill { height:100%; border-radius:4px; transition:width .5s ease; }
+  .pillar-row { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border); }
+  .pillar-row:last-child { border-bottom:none; }
+  
+  /* Loading / Status */
+  .status-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:6px; }
+  .status-dot.online { background:var(--green); box-shadow:0 0 6px var(--green); }
+  .status-dot.offline { background:var(--red); box-shadow:0 0 6px var(--red); }
+  
+  .toast { position:fixed; bottom:24px; right:24px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px 20px; font-size:13px; z-index:999; box-shadow:0 8px 24px rgba(0,0,0,0.3); transform:translateY(100px); opacity:0; transition:all .3s; }
+  .toast.show { transform:translateY(0); opacity:1; }
+  .toast.success { border-color:var(--green); }
+  .toast.error { border-color:var(--red); }
+  
+  .empty-state { text-align:center; padding:48px 20px; color:var(--text2); }
+  .empty-state svg { width:48px; height:48px; margin-bottom:12px; opacity:0.3; }
+  .empty-state p { font-size:14px; }
+  
+  /* Scrollbar */
+  ::-webkit-scrollbar { width:6px; }
+  ::-webkit-scrollbar-track { background:var(--bg); }
+  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+  
+  /* Modal */
+  .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:200; display:none; align-items:center; justify-content:center; }
+  .modal-bg.show { display:flex; }
+  .modal { background:var(--surface); border:1px solid var(--border); border-radius:16px; width:90%; max-width:600px; max-height:80vh; overflow-y:auto; }
+  .modal-header { padding:20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+  .modal-body { padding:20px; }
+  .modal-footer { padding:16px 20px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:8px; }
+  textarea.form-control { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:12px; color:var(--text); font-family:inherit; font-size:13px; resize:vertical; min-height:120px; }
+  textarea.form-control:focus { outline:none; border-color:var(--accent); }
+  input.form-control { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:10px 12px; color:var(--text); font-family:inherit; font-size:13px; }
+  input.form-control:focus { outline:none; border-color:var(--accent); }
+  select.form-control { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:10px 12px; color:var(--text); font-family:inherit; font-size:13px; }
+  .form-label { font-size:12px; font-weight:600; color:var(--text2); margin-bottom:6px; display:block; text-transform:uppercase; letter-spacing:0.3px; }
+  .form-group { margin-bottom:16px; }
+  
+  .img-preview { max-width:100%; border-radius:8px; margin-top:8px; max-height:200px; object-fit:cover; }
 </style>
 </head>
 <body>
-<div class="container">
-  <!-- Header -->
-  <div class="header">
-    <h1><span>LinkedIn Agent</span> --- Dr. Aaron Akwu</h1>
-    <span class="status-badge status-active">ACTIVE</span>
-  </div>
 
-  <!-- Stats -->
+<!-- Topbar -->
+<div class="topbar">
+  <h1><span>LinkedIn</span> Autopilot</h1>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div style="font-size:13px;color:var(--text2);">
+      <span class="status-dot online" id="statusDot"></span>
+      <span id="statusText">System Online</span>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-secondary btn-sm" onclick="syncPosts()">Sync LinkedIn</button>
+      <button class="btn btn-primary btn-sm" onclick="showGenerateModal()">+ Generate Content</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Stats Row -->
   <div class="stats-grid">
     <div class="stat-card">
-      <div class="label">Scheduled Posts</div>
-      <div class="value">{{ queue_count }}</div>
-      <div class="change up">In queue</div>
+      <div class="label">Queue</div>
+      <div class="value" style="color:var(--accent2);">{{ queue_count }}</div>
+      <div class="sub">Posts scheduled</div>
     </div>
     <div class="stat-card">
-      <div class="label">Posts Published</div>
-      <div class="value">{{ published_count }}</div>
-      <div class="change up">All time</div>
-    </div>
-    <div class="stat-card">
-      <div class="label">Comments Replied</div>
-      <div class="value">{{ comments_count }}</div>
-      <div class="change up">Auto-replied</div>
+      <div class="label">Published</div>
+      <div class="value" style="color:var(--green);">{{ published_count }}</div>
+      <div class="sub">Posts delivered</div>
     </div>
     <div class="stat-card">
       <div class="label">Avg Engagement</div>
-      <div class="value">{{ avg_engagement }}%</div>
-      <div class="change {{ 'up' if avg_engagement|float > 4 else 'down' }}">
-        {{ 'Above' if avg_engagement|float > 4 else 'Below' }} LinkedIn avg
+      <div class="value" style="color:var(--orange);">{{ avg_engagement }}%</div>
+      <div class="sub">Across all posts</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Comments</div>
+      <div class="value" style="color:var(--purple);">{{ comments_count }}</div>
+      <div class="sub">Tracked replies</div>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('queue')">Queue</button>
+    <button class="tab" onclick="switchTab('history')">Post History</button>
+    <button class="tab" onclick="switchTab('analytics')">Analytics</button>
+    <button class="tab" onclick="switchTab('comments')">Comments</button>
+    <button class="tab" onclick="switchTab('system')">System</button>
+  </div>
+
+  <!-- QUEUE PANEL -->
+  <div class="panel active" id="panel-queue">
+    <div class="card">
+      <div class="card-header">
+        <h3>Content Queue ({{ queue_count }} posts)</h3>
+        <button class="btn btn-secondary btn-sm" onclick="showAddPostModal()">+ Add Post</button>
       </div>
-    </div>
-  </div>
-
-  <!-- Actions -->
-  <div class="action-bar">
-    <div class="btn-group">
-      <button class="btn btn-primary" onclick="apiCall('/api/generate')">Generate Week</button>
-      <button class="btn btn-success" onclick="apiCall('/api/post-now')">Post Now</button>
-      <button class="btn" style="background:var(--accent);color:#fff;" onclick="apiCall('/api/test-connection')">Test Connection</button>
-      <button class="btn btn-warning" onclick="fetchComments()">Check Comments</button>
-      <button class="btn btn-primary" onclick="fetchAnalytics()">Run Analytics</button>
-      <button class="btn btn-primary" onclick="apiCall('/api/generate-images')" style="background:#e67e22;">Generate Images</button>
-            <button onclick="syncLinkedIn()" style="padding:12px 24px;background:#9b59b6;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;">Sync LinkedIn</button>
-            <button onclick="toggleAddPost()" style="padding:12px 24px;background:#2ecc71;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;">Add Post</button>
-    </div>
-  </div>
-
-  <div class="content-grid">
-    <!-- Left Column -->
-    <div>
-      <!-- Content Queue -->
-      <div class="card">
-        <h2>Content Queue ({{ queue_count }} posts)</h2>
+      <div class="card-body" style="padding:12px;">
+        {% if queue %}
         {% for post in queue %}
-        <div class="post-preview" onclick="toggleExpand(this)">
-          <div class="meta">
-            <span class="pillar">{{ post.get('pillar', 'General') }}
-              {% if post.get('template_used') %}<span class="template-tag">{{ post.get('template_used', '') }}</span>{% endif %}
-            </span>
-            <span class="date">{{ post.get('display_date', post.get('scheduled_day', '') + ' ' + post.get('scheduled_time', '')) }}</span>
+        <div class="post-card" id="queue-{{ loop.index0 }}">
+          <div class="post-meta">
+            <span class="post-pillar {{ post.get('pillar','unknown')|lower|replace(' ','') }}">{{ post.get('pillar','—') }}</span>
+            <span class="post-date">{{ post.get('scheduled_date','Unscheduled') }} {{ post.get('scheduled_time','') }}</span>
+            {% if post.get('image_url') %}<span class="badge badge-blue">Has Image</span>{% endif %}
           </div>
-          <div class="text">{{ post.get('text', post.get('hook', 'No preview')) }}</div>
-          <button class="expand-btn">Click to expand full post</button>
-          <div class="upload-row">
-          {% if post.get('image_path') %}
-            {% set img_name = post.get('image_path', '').split('/')[-1].split('\\\\')[-1] %}
-            <img src="/images/{{ img_name }}" alt="Post image" class="post-image" onerror="this.style.display='none'" style="display:block; width:100%;">
-            <div class="image-badge">Image attached</div>
-            <button class="remove-img-btn" onclick="event.stopPropagation(); removeImage({{ loop.index0 }})">Remove</button>
-            <label class="upload-btn" onclick="event.stopPropagation();">Replace <input type="file" accept="image/*" hidden onchange="uploadImage(this, {{ loop.index0 }})"></label>
-          {% else %}
-            
-    
-    <!-- Edit Schedule Modal -->
-<div id="editModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:1000;justify-content:center;align-items:center;">
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;max-width:400px;width:90%;">
-    <h3 style="color:var(--accent);margin:0 0 16px 0;">Edit Post Schedule</h3>
-    <input type="hidden" id="editIndex">
-    <div style="margin-bottom:12px;">
-      <label style="color:var(--muted);font-size:13px;display:block;margin-bottom:4px;">Date</label>
-      <input type="date" id="editDate" style="width:100%;padding:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;box-sizing:border-box;">
-    </div>
-    <div style="margin-bottom:16px;">
-      <label style="color:var(--muted);font-size:13px;display:block;margin-bottom:4px;">Time</label>
-      <input type="time" id="editTime" style="width:100%;padding:8px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;box-sizing:border-box;">
-    </div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;">
-      <button onclick="closeEditModal()" style="background:var(--border);color:var(--text);border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">Cancel</button>
-      <button onclick="saveEdit()" style="background:#2563eb;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">Save</button>
+          <div class="post-content" id="qc-{{ loop.index0 }}">{{ post.get('content','(empty)') }}</div>
+          <span class="post-expand" onclick="toggleExpand('qc-{{ loop.index0 }}')">Show more</span>
+          {% if post.get('image_url') %}
+          <img class="img-preview" src="{{ post.get('image_url') }}" alt="Post image">
+          {% endif %}
+          <div class="post-actions">
+            <button class="btn btn-primary btn-sm" onclick="postNow({{ loop.index0 }})">Post Now</button>
+            <button class="btn btn-secondary btn-sm" onclick="editPost({{ loop.index0 }})">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deletePost({{ loop.index0 }})">Delete</button>
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="empty-state">
+          <p>No posts in queue. Generate content or add a post manually.</p>
+        </div>
+        {% endif %}
+      </div>
     </div>
   </div>
-</div>
 
-<!-- Add Manual Post Section -->
-    <div id="add-post-section" style="display:none; grid-column: 1 / -1;">
-      <div style="background:#1a1a2e;border:1px solid #16213e;border-radius:12px;padding:24px;margin-bottom:20px;">
-        <h2 style="color:#e94560;margin:0 0 16px 0;">Add Manual Post</h2>
-        <p style="color:#888;margin-bottom:12px;">Track a post you published directly on LinkedIn.</p>
-        <div style="margin-bottom:12px;">
-          <label style="color:#ccc;display:block;margin-bottom:4px;">Post Text:</label>
-          <textarea id="manual-post-text" rows="4" style="width:100%;background:#0f3460;color:#fff;border:1px solid #333;border-radius:8px;padding:12px;font-size:14px;" placeholder="Paste your LinkedIn post text here..."></textarea>
+  <!-- HISTORY PANEL -->
+  <div class="panel" id="panel-history">
+    <div class="card">
+      <div class="card-header">
+        <h3>Post History ({{ published_count }} posts)</h3>
+        <button class="btn btn-danger btn-sm" onclick="clearHistory()">Clear All History</button>
+      </div>
+      <div class="card-body" style="padding:12px;">
+        {% if recent_posts %}
+        {% for post in recent_posts %}
+        <div class="post-card">
+          <div class="post-meta">
+            <span class="post-pillar {{ post.get('pillar','unknown')|lower|replace(' ','') }}">{{ post.get('pillar','—') }}</span>
+            <span class="post-date">{{ post.get('posted_at', post.get('scheduled_date','')) }}</span>
+            {% if post.get('engagement_rate') %}<span class="badge badge-green">{{ post.get('engagement_rate') }}% eng.</span>{% endif %}
+          </div>
+          <div class="post-content" id="hc-{{ loop.index0 }}">{{ post.get('content','') }}</div>
+          <span class="post-expand" onclick="toggleExpand('hc-{{ loop.index0 }}')">Show more</span>
+          <div class="post-stats">
+            <span>Likes: <strong>{{ post.get('likes', 0) }}</strong></span>
+            <span>Comments: <strong>{{ post.get('comments', 0) }}</strong></span>
+            <span>Shares: <strong>{{ post.get('shares', 0) }}</strong></span>
+            <span>Views: <strong>{{ post.get('impressions', 0) }}</strong></span>
+          </div>
         </div>
-        <div style="margin-bottom:12px;">
-          <label style="color:#ccc;display:block;margin-bottom:4px;">LinkedIn Post URL (optional):</label>
-          <input id="manual-post-url" type="text" style="width:100%;background:#0f3460;color:#fff;border:1px solid #333;border-radius:8px;padding:12px;font-size:14px;" placeholder="https://www.linkedin.com/posts/...">
+        {% endfor %}
+        {% else %}
+        <div class="empty-state">
+          <p>No post history yet. Posts will appear here after publishing.</p>
         </div>
-        <button onclick="addManualPost()" style="padding:12px 24px;background:#4ecca3;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;">Add Post</button>
+        {% endif %}
       </div>
     </div>
+  </div>
 
-<!-- Analytics Results Section -->
-    <div id="analytics-section" style="display:none; grid-column: 1 / -1;">
-      <div style="background:#1a1a2e;border:1px solid #16213e;border-radius:12px;padding:24px;margin-bottom:20px;">
-        <h2 style="color:#e94560;margin:0 0 16px 0;">Analytics Results</h2>
-        <div id="analytics-results" style="color:#ccc;"></div>
-      </div>
-    </div>
-
-    <!-- Comments Results Section -->
-    <div id="comments-section" style="display:none; grid-column: 1 / -1;">
-      <div style="background:#1a1a2e;border:1px solid #16213e;border-radius:12px;padding:24px;margin-bottom:20px;">
-        <h2 style="color:#e94560;margin:0 0 16px 0;">Comments</h2>
-        <div id="comments-results" style="color:#ccc;"></div>
-<div style="margin-top:15px;">
-  <button class="btn" style="background:#e94560; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer; font-weight:bold;" onclick="fetchIntelligence()">Run Intelligence Loop</button>
-</div>
-<div id="intelligence-results" style="display:none; margin-top:15px; padding:15px; background:#1a1a2e; border:1px solid #e94560; border-radius:8px;">
-  <h4 style="color:#e94560; margin-top:0;">Performance Intelligence Report</h4>
-  <pre id="intelligence-text" style="color:#eee; white-space:pre-wrap; font-size:13px;"></pre>
-  <div id="intelligence-winners" style="margin-top:10px;"></div>
-</div>
-      </div>
-    </div>
-<div class="no-image">No image</div>
-            <label class="upload-btn" onclick="event.stopPropagation();">Upload Image <input type="file" accept="image/*" hidden onchange="uploadImage(this, {{ loop.index0 }})"></label>
+  <!-- ANALYTICS PANEL -->
+  <div class="panel" id="panel-analytics">
+    <div class="chart-grid">
+      <div class="card">
+        <div class="card-header"><h3>Content Pillar Performance</h3></div>
+        <div class="card-body">
+          {% if pillar_stats %}
+          {% for pillar, stats in pillar_stats.items() %}
+          <div class="pillar-row">
+            <div>
+              <div style="font-size:14px;font-weight:600;">{{ pillar }}</div>
+              <div style="font-size:12px;color:var(--text2);">{{ stats.count }} posts &middot; {{ stats.avg_engagement_rate }}% avg engagement</div>
+            </div>
+            <div style="width:120px;">
+              <div class="chart-bar"><div class="chart-bar-fill" style="width:{{ [stats.avg_engagement_rate * 10, 100]|min }}%;background:var(--accent2);"></div></div>
+            </div>
+          </div>
+          {% endfor %}
+          {% else %}
+          <div class="empty-state"><p>No analytics data yet. Publish posts to see performance.</p></div>
           {% endif %}
-          {% if post.get('estimated_engagement') %}
-            <span style="font-size:0.75rem; color:var(--muted); margin-left:8px;">Est: {{ post.get('estimated_engagement', '') }}</span>
-          {% endif %}
-          <div style="display:flex;gap:8px;margin-top:8px;">
-            <button onclick="event.stopPropagation();openEditModal({{ loop.index0 }}, '{{ post.get(\'scheduled_date\', \'\') }}', '{{ post.get(\'scheduled_time\', \'\') }}')" style="background:#2563eb;color:#fff;border:none;padding:4px 12px;border-radius:6px;font-size:12px;cursor:pointer;">Edit Schedule</button>
-            <button onclick="event.stopPropagation();deletePost({{ loop.index0 }})" style="background:#dc2626;color:#fff;border:none;padding:4px 12px;border-radius:6px;font-size:12px;cursor:pointer;">Delete</button>
-          </div>
-          </div>
         </div>
-        {% endfor %}
-        {% if not queue %}<p style="color:var(--muted)">Queue empty --- click "Generate Week" to create content</p>{% endif %}
       </div>
-
-      <!-- Posting Schedule -->
       <div class="card">
-        <h2>Posting Schedule (WAT)</h2>
-        {% for day, config in schedule.items() %}
-        <div class="schedule-row">
-          <span class="day">{{ day|capitalize }}</span>
-          <span class="time">{{ config.time }}</span>
-          <span class="pillar-name">{{ config.pillar_preference }}</span>
+        <div class="card-header"><h3>Posting Schedule</h3></div>
+        <div class="card-body">
+          <table>
+            <thead><tr><th>Day</th><th>Times (WAT)</th></tr></thead>
+            <tbody>
+            {% for day, times in schedule.items() %}
+            <tr>
+              <td style="font-weight:600;">{{ day }}</td>
+              <td>{{ times|join(', ') }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+          </table>
         </div>
-        {% endfor %}
       </div>
     </div>
-
-    <!-- Right Column -->
-    <div>
-      <!-- Recent Posts -->
-      <div class="card">
-        <h2>Recent Posts</h2>
-        {% for post in recent_posts[:5] %}
-        <div class="post-preview">
-          <div class="meta">
-            <span class="pillar">{{ post.get('pillar', 'General') }}</span>
-            <span class="date">{{ post.get('created_at', '')[:10] }}</span>
-          </div>
-          <div class="text">{{ post.get('text', '')[:150] }}...</div>
-          <div class="metrics">
-            <span>{{ post.get('metrics', {}).get('impressions', '-') }} views</span>
-            <span>{{ post.get('metrics', {}).get('likes', '-') }} likes</span>
-            <span>{{ post.get('metrics', {}).get('comments', '-') }} comments</span>
-            <span>{{ post.get('engagement_rate', '-') }}% eng</span>
-          </div>
-        </div>
-        {% endfor %}
-        {% if not recent_posts %}<p style="color:var(--muted)">No posts yet --- publish your first one!</p>{% endif %}
+    <div class="card" style="margin-top:16px;">
+      <div class="card-header">
+        <h3>Enhanced Insights</h3>
+        <button class="btn btn-secondary btn-sm" onclick="loadAnalytics()">Refresh Analytics</button>
       </div>
-
-      <!-- Recent Comment Replies -->
-      <div class="card">
-        <h2>Recent Auto-Replies ({{ comments_count }})</h2>
-        {% for comment in recent_comments[:5] %}
-        <div class="comment-item">
-          <div class="commenter">{{ comment.get('commenter', 'Unknown') }}</div>
-          <div class="comment-text">"{{ comment.get('comment_text', '')[:120] }}"</div>
-          <div class="reply">
-            <div class="reply-label">Auto-reply</div>
-            {{ comment.get('reply_text', '')[:150] }}
-          </div>
-        </div>
-        {% endfor %}
-        {% if not recent_comments %}<p style="color:var(--muted)">No comment replies yet</p>{% endif %}
+      <div class="card-body" id="analytics-detail">
+        <div class="empty-state"><p>Click "Refresh Analytics" to load detailed insights.</p></div>
       </div>
+    </div>
+  </div>
 
-      <!-- Pillar Performance -->
-      <div class="card">
-        <h2>Pillar Performance</h2>
+  <!-- COMMENTS PANEL -->
+  <div class="panel" id="panel-comments">
+    <div class="card">
+      <div class="card-header">
+        <h3>Recent Comments ({{ comments_count }})</h3>
+        <button class="btn btn-secondary btn-sm" onclick="checkComments()">Check New Comments</button>
+      </div>
+      <div class="card-body">
+        {% if recent_comments %}
         <table>
-          <tr><th>Pillar</th><th>Posts</th><th>Avg Engagement</th></tr>
-          {% for name, stats in pillar_stats.items() %}
+          <thead><tr><th>Author</th><th>Comment</th><th>Reply</th><th>Date</th></tr></thead>
+          <tbody>
+          {% for c in recent_comments %}
           <tr>
-            <td>{{ name[:25] }}</td>
-            <td>{{ stats.get('count', 0) }}</td>
-            <td>
-              <div class="bar-container">
-                <div class="bar" style="width: {{ [stats.get('avg_engagement_rate', 0) * 10, 100]|min }}%; background: var(--accent);">
-                  {{ stats.get('avg_engagement_rate', 0) }}%
-                </div>
-              </div>
-            </td>
+            <td style="font-weight:500;">{{ c.get('author','Unknown') }}</td>
+            <td style="max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ c.get('comment','') }}</td>
+            <td style="max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text2);">{{ c.get('reply','—') }}</td>
+            <td style="white-space:nowrap;">{{ c.get('replied_at', c.get('date','')) }}</td>
           </tr>
           {% endfor %}
-          {% if not pillar_stats %}
-          <tr><td colspan="3" style="color:var(--muted)">No data yet --- publish posts to see analytics</td></tr>
-          {% endif %}
+          </tbody>
         </table>
+        {% else %}
+        <div class="empty-state"><p>No comments tracked yet.</p></div>
+        {% endif %}
       </div>
     </div>
   </div>
 
-  <div class="footer">
-    LinkedIn Automation Agent v1.0 - Powered by Claude (Anthropic) + DALL-E (OpenAI)<br>
-    Built for Dr. Aaron Akwu | Gopipways
+  <!-- SYSTEM PANEL -->
+  <div class="panel" id="panel-system">
+    <div class="chart-grid">
+      <div class="card">
+        <div class="card-header"><h3>System Health</h3></div>
+        <div class="card-body" id="health-info">
+          <p style="color:var(--text2);">Loading...</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>Quick Actions</h3></div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+          <button class="btn btn-secondary" onclick="testConnection()">Test LinkedIn Connection</button>
+          <button class="btn btn-secondary" onclick="syncPosts()">Sync Posts from LinkedIn</button>
+          <button class="btn btn-secondary" onclick="checkComments()">Check & Reply to Comments</button>
+          <button class="btn btn-secondary" onclick="generateImages()">Generate Images for Queue</button>
+          <button class="btn btn-danger" onclick="clearHistory()">Clear Post History</button>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <div class="card-header"><h3>Alerts & Dead Letter Queue</h3></div>
+      <div class="card-body" id="alerts-info">
+        <div class="empty-state"><p>Loading alerts...</p></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <div class="card-header"><h3>Debug Console</h3></div>
+      <div class="card-body">
+        <button class="btn btn-secondary btn-sm" onclick="runDebug()">Run Debug Check</button>
+        <pre id="debug-output" style="margin-top:12px;background:var(--surface2);padding:16px;border-radius:8px;font-size:12px;max-height:400px;overflow-y:auto;white-space:pre-wrap;display:none;"></pre>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<!-- Generate Modal -->
+<div class="modal-bg" id="generateModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Generate Weekly Content</h3>
+      <button class="btn btn-icon btn-secondary" onclick="closeModal('generateModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text2);font-size:13px;margin-bottom:16px;">This will use Claude AI to generate a week's worth of LinkedIn posts based on your content strategy.</p>
+      <div id="generate-progress" style="display:none;">
+        <div style="background:var(--surface2);border-radius:8px;padding:16px;">
+          <div id="generate-status" style="font-size:13px;color:var(--text2);">Starting generation...</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('generateModal')">Cancel</button>
+      <button class="btn btn-primary" id="generateBtn" onclick="generateContent()">Generate</button>
+    </div>
   </div>
 </div>
 
-<!-- Status Banner for background tasks -->
-<div id="status-banner" style="display:none; position:fixed; top:0; left:0; right:0; background:var(--accent); color:white; padding:12px 24px; text-align:center; font-weight:600; z-index:1000; font-size:0.9rem;">
-  <span id="status-text">Processing...</span>
-  <div style="margin-top:6px; height:3px; background:rgba(255,255,255,0.3); border-radius:2px; overflow:hidden;">
-    <div id="status-bar" style="height:100%; background:white; border-radius:2px; width:0%; transition:width 0.5s;"></div>
+<!-- Add Post Modal -->
+<div class="modal-bg" id="addPostModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="postModalTitle">Add Post to Queue</h3>
+      <button class="btn btn-icon btn-secondary" onclick="closeModal('addPostModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Content</label>
+        <textarea class="form-control" id="postContent" rows="8" placeholder="Write your LinkedIn post..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Content Pillar</label>
+        <select class="form-control" id="postPillar">
+          <option value="Education">Education</option>
+          <option value="Authority">Authority</option>
+          <option value="Storytelling">Storytelling</option>
+          <option value="Engagement">Engagement</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input type="date" class="form-control" id="postDate">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Time (WAT)</label>
+          <input type="time" class="form-control" id="postTime" value="08:00">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('addPostModal')">Cancel</button>
+      <button class="btn btn-primary" id="savePostBtn" onclick="savePost()">Add to Queue</button>
+    </div>
   </div>
 </div>
 
-<div id="toast" style="display:none; position:fixed; bottom:20px; right:20px; background:var(--accent2); color:white; padding:16px 28px; border-radius:12px; font-weight:600; z-index:999; max-width:400px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); font-size:0.95rem;"></div>
+<!-- Toast -->
+<div class="toast" id="toast"></div>
 
 <script>
-let pollInterval = null;
-
-function toggleExpand(el) {
-  const text = el.querySelector('.text');
-  const btn = el.querySelector('.expand-btn');
-  if (text.classList.contains('expanded')) {
-    text.classList.remove('expanded');
-    btn.textContent = 'Click to expand full post';
-  } else {
-    text.classList.add('expanded');
-    btn.textContent = 'Click to collapse';
-  }
+// Tab switching
+function switchTab(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  event.target.classList.add('active');
+  if (name === 'system') loadHealth();
 }
 
-function showToast(message, success) {
-  const toast = document.getElementById('toast');
-  toast.textContent = message;
-  toast.style.display = 'block';
-  toast.style.background = success ? '#10b981' : '#ef4444';
-  setTimeout(() => { toast.style.display = 'none'; }, 5000);
+// Toast notifications
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (type || '');
+  setTimeout(() => t.className = 'toast', 3000);
 }
 
-function showBanner(message) {
-  const banner = document.getElementById('status-banner');
-  document.getElementById('status-text').textContent = message;
-  banner.style.display = 'block';
+// Expand/collapse post content
+function toggleExpand(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('expanded');
+  const btn = el.nextElementSibling;
+  btn.textContent = el.classList.contains('expanded') ? 'Show less' : 'Show more';
 }
 
-function hideBanner() {
-  document.getElementById('status-banner').style.display = 'none';
+// Modal management
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+function showGenerateModal() { document.getElementById('generateModal').classList.add('show'); }
+function showAddPostModal() {
+  document.getElementById('postModalTitle').textContent = 'Add Post to Queue';
+  document.getElementById('postContent').value = '';
+  document.getElementById('savePostBtn').onclick = savePost;
+  document.getElementById('addPostModal').classList.add('show');
 }
 
-function animateProgress(percent) {
-  document.getElementById('status-bar').style.width = percent + '%';
+// API calls
+async function apiCall(url, method, body) {
+  const opts = { method: method || 'GET', headers: {'Content-Type':'application/json'} };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(url, opts);
+  return r.json();
 }
 
-async function apiCall(endpoint) {
-  const banner = document.getElementById('status-banner');
-  const labels = {
-    '/api/generate': 'Generating weekly content with AI (this takes ~30-60 seconds)...',
-    '/api/post-now': 'Publishing post to LinkedIn...',
-    '/api/test-connection': 'Testing LinkedIn API connection...',
-    '/api/check-comments': 'Checking for new comments...',
-    '/api/analytics': 'Running analytics...',
-    '/api/generate-images': 'Generating DALL-E images for queued posts (this takes 1-2 minutes)...'
-  };
-
-  showBanner(labels[endpoint] || 'Processing...');
-  animateProgress(10);
-
-  try {
-    // For long-running tasks, use background task approach
-    if (endpoint === '/api/generate' || endpoint === '/api/generate-images') {
-      animateProgress(20);
-      const resp = await fetch(endpoint, { method: 'POST' });
-      const data = await resp.json();
-
-      if (data.task_id) {
-        // Poll for task completion
-        animateProgress(30);
-        pollInterval = setInterval(async () => {
-          try {
-            const statusResp = await fetch('/api/task-status/' + data.task_id);
-            const statusData = await statusResp.json();
-
-            if (statusData.status === 'completed') {
-              clearInterval(pollInterval);
-              animateProgress(100);
-              showToast(statusData.message || 'Content generated!', true);
-              setTimeout(() => { hideBanner(); location.reload(); }, 1500);
-            } else if (statusData.status === 'failed') {
-              clearInterval(pollInterval);
-              animateProgress(0);
-              hideBanner();
-              showToast('Error: ' + (statusData.message || 'Generation failed'), false);
-            } else {
-              // Still running - animate progress
-              const currentWidth = parseInt(document.getElementById('status-bar').style.width) || 30;
-              animateProgress(Math.min(currentWidth + 5, 90));
-              document.getElementById('status-text').textContent = statusData.message || 'Generating...';
-            }
-          } catch(e) {
-            // Keep polling on network errors
-          }
-        }, 3000);
-      } else {
-        // Immediate response (not background)
-        animateProgress(100);
-        hideBanner();
-        showToast(data.message || 'Done!', data.success);
-        if (data.success) setTimeout(() => location.reload(), 2000);
-      }
-    } else {
-      // Regular API calls
-      animateProgress(50);
-      const resp = await fetch(endpoint, { method: 'POST' });
-      const data = await resp.json();
-      animateProgress(100);
-      hideBanner();
-      showToast(data.message || 'Done!', data.success);
-      if (data.success) setTimeout(() => location.reload(), 2000);
-    }
-  } catch(e) {
-    hideBanner();
-    showToast('Error: ' + e.message, false);
-  }
+function postNow(idx) {
+  if (!confirm('Post this to LinkedIn now?')) return;
+  showToast('Publishing...', 'info');
+  apiCall('/api/post-now', 'POST', {post_index: idx}).then(d => {
+    if (d.status === 'ok') { showToast('Posted successfully!', 'success'); setTimeout(() => location.reload(), 1000); }
+    else showToast('Error: ' + (d.error || 'Unknown'), 'error');
+  });
 }
 
-// Check for running tasks on page load
-(async function() {
-  try {
-    const resp = await fetch('/api/task-status/current');
-    const data = await resp.json();
-    if (data.status === 'running') {
-      showBanner(data.message || 'Background task running...');
-      animateProgress(50);
-      // Start polling
-      pollInterval = setInterval(async () => {
-        const statusResp = await fetch('/api/task-status/current');
-        const statusData = await statusResp.json();
-        if (statusData.status !== 'running') {
-          clearInterval(pollInterval);
-          hideBanner();
-          if (statusData.status === 'completed') {
-            showToast(statusData.message || 'Task completed!', true);
-            setTimeout(() => location.reload(), 1500);
-          }
-        }
-      }, 3000);
-    }
-  } catch(e) {}
-})();
-
-async function uploadImage(input, postIndex) {
-  if (!input.files || !input.files[0]) return;
-  const file = input.files[0];
-  if (file.size > 10 * 1024 * 1024) { showToast('File too large (max 10MB)', false); return; }
-  showBanner('Uploading image for post #' + (postIndex + 1) + '...');
-  animateProgress(30);
-  const formData = new FormData();
-  formData.append('image', file);
-  try {
-    const resp = await fetch('/api/upload-image/' + postIndex, { method: 'POST', body: formData });
-    const data = await resp.json();
-    animateProgress(100);
-    hideBanner();
-    showToast(data.message || 'Image uploaded!', data.success);
-    if (data.success) setTimeout(() => location.reload(), 1000);
-  } catch(e) { hideBanner(); showToast('Upload failed: ' + e.message, false); }
+function deletePost(idx) {
+  if (!confirm('Remove this post from queue?')) return;
+  apiCall('/api/queue/delete', 'POST', {index: idx}).then(d => {
+    if (d.status === 'ok') { showToast('Post removed', 'success'); setTimeout(() => location.reload(), 500); }
+    else showToast('Error: ' + (d.error || 'Unknown'), 'error');
+  });
 }
 
-async function removeImage(postIndex) {
-  if (!confirm('Remove image from this post?')) return;
-  try {
-    const resp = await fetch('/api/remove-image/' + postIndex, { method: 'POST' });
-    const data = await resp.json();
-    showToast(data.message || 'Image removed', data.success);
-    if (data.success) setTimeout(() => location.reload(), 1000);
-  } catch(e) { showToast('Failed: ' + e.message, false); }
-}
-
-    
-    async function fetchAnalytics() {
-      showBanner('Running analytics...');
-      try {
-        const resp = await fetch('/api/analytics', {method: 'POST'});
-        const data = await resp.json();
-        hideBanner();
-        displayAnalytics(data);
-        showToast('Analytics loaded', true);
-      } catch(e) {
-        hideBanner();
-        showToast('Analytics failed: ' + e.message, false);
-      }
-    }
-
-    async function fetchComments() {
-      showBanner('Checking comments...');
-      try {
-        const resp = await fetch('/api/check-comments', {method: 'POST'});
-        const data = await resp.json();
-        hideBanner();
-        displayComments(data);
-        showToast('Comments loaded', true);
-      } catch(e) {
-        hideBanner();
-        showToast('Comments check failed: ' + e.message, false);
-      }
-    }
-
-function displayAnalytics(data) {
-      const section = document.getElementById('analytics-section');
-      const container = document.getElementById('analytics-results');
-      section.style.display = 'block';
-      
-      if (data.error) {
-        container.innerHTML = '<p style="color:#e94560;">Error: ' + data.error + '</p>';
-        return;
-      }
-      
-      let html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:20px;">';
-      
-      if (data.summary) {
-        const s = data.summary;
-        html += '<div style="background:#0f3460;padding:16px;border-radius:8px;text-align:center;"><div style="color:#e94560;font-size:24px;font-weight:bold;">' + (s.total_posts || 0) + '</div><div style="color:#888;font-size:12px;">Total Posts</div></div>';
-        html += '<div style="background:#0f3460;padding:16px;border-radius:8px;text-align:center;"><div style="color:#e94560;font-size:24px;font-weight:bold;">' + (s.total_likes || 0) + '</div><div style="color:#888;font-size:12px;">Total Likes</div></div>';
-        html += '<div style="background:#0f3460;padding:16px;border-radius:8px;text-align:center;"><div style="color:#e94560;font-size:24px;font-weight:bold;">' + (s.total_comments || 0) + '</div><div style="color:#888;font-size:12px;">Total Comments</div></div>';
-        html += '<div style="background:#0f3460;padding:16px;border-radius:8px;text-align:center;"><div style="color:#e94560;font-size:24px;font-weight:bold;">' + ((s.avg_engagement || 0).toFixed(1)) + '%</div><div style="color:#888;font-size:12px;">Avg Engagement</div></div>';
-      }
-      html += '</div>';
-      
-      if (data.posts && data.posts.length > 0) {
-        html += '<h3 style="color:#fff;margin:16px 0 8px;">Post Performance</h3>';
-        html += '<table style="width:100%;border-collapse:collapse;">';
-        html += '<tr style="border-bottom:1px solid #333;"><th style="text-align:left;padding:8px;color:#888;">Post</th><th style="padding:8px;color:#888;">Views</th><th style="padding:8px;color:#888;">Likes</th><th style="padding:8px;color:#888;">Comments</th><th style="padding:8px;color:#888;">Engagement</th></tr>';
-        data.posts.forEach(function(p) {
-          const preview = (p.text || '').substring(0, 60) + '...';
-          html += '<tr style="border-bottom:1px solid #222;"><td style="padding:8px;color:#ccc;">' + preview + '</td>';
-          html += '<td style="padding:8px;text-align:center;color:#ccc;">' + (p.views || '-') + '</td>';
-          html += '<td style="padding:8px;text-align:center;color:#ccc;">' + (p.likes || '-') + '</td>';
-          html += '<td style="padding:8px;text-align:center;color:#ccc;">' + (p.comments || '-') + '</td>';
-          html += '<td style="padding:8px;text-align:center;color:#ccc;">' + ((p.engagement || 0).toFixed(1)) + '%</td></tr>';
-        });
-        html += '</table>';
-      }
-      
-      if (data.message) {
-        html += '<p style="color:#4ecca3;margin-top:12px;">' + data.message + '</p>';
-      }
-      
-      container.innerHTML = html;
-      section.scrollIntoView({behavior: 'smooth'});
-    }
-
-    function displayComments(data) {
-      const section = document.getElementById('comments-section');
-      const container = document.getElementById('comments-results');
-      section.style.display = 'block';
-      
-      if (data.error) {
-        container.innerHTML = '<p style="color:#e94560;">Error: ' + data.error + '</p>';
-        return;
-      }
-      
-      let html = '';
-      
-      if (data.summary) {
-        html += '<div style="display:flex;gap:20px;margin-bottom:16px;">';
-        html += '<span style="color:#4ecca3;">Total: ' + (data.summary.total || 0) + '</span>';
-        html += '<span style="color:#e94560;">New: ' + (data.summary.new_comments || 0) + '</span>';
-        html += '<span style="color:#888;">Replied: ' + (data.summary.replied || 0) + '</span>';
-        html += '</div>';
-      }
-      
-      const comments = data.comments || data.new_comments || [];
-      if (comments.length === 0) {
-        html += '<p style="color:#888;">No new comments found.</p>';
-      } else {
-        comments.forEach(function(cm) {
-          html += '<div style="background:#0f3460;padding:16px;border-radius:8px;margin-bottom:12px;">';
-          html += '<div style="display:flex;justify-content:space-between;margin-bottom:8px;">';
-          html += '<strong style="color:#4ecca3;">' + (cm.author || 'Unknown') + '</strong>';
-          html += '<span style="color:#666;font-size:12px;">' + (cm.date || '') + '</span></div>';
-          html += '<p style="color:#ccc;margin:4px 0;">' + (cm.text || cm.comment || '') + '</p>';
-          if (cm.reply) html += '<p style="color:#888;font-style:italic;margin:4px 0 0 16px;">Reply: ' + cm.reply + '</p>';
-          html += '</div>';
-        });
-      }
-      
-      if (data.message) {
-        html += '<p style="color:#4ecca3;margin-top:12px;">' + data.message + '</p>';
-      }
-      
-      container.innerHTML = html;
-      section.scrollIntoView({behavior: 'smooth'});
-    }
-
-    
-    async function syncLinkedIn() {
-      showBanner('Syncing all LinkedIn posts...');
-      try {
-        const resp = await fetch('/api/sync', {method: 'POST'});
-        const data = await resp.json();
-        hideBanner();
-        if (data.success) {
-          showToast(data.message, true);
-          setTimeout(() => location.reload(), 2000);
-        } else {
-          showToast('Sync failed: ' + (data.error || 'Unknown error'), false);
-        }
-      } catch(e) {
-        hideBanner();
-        showToast('Sync failed: ' + e.message, false);
-      }
-    }
-
-    // Auto-sync on page load (runs in background)
-    (async function autoSync() {
-      try {
-        await fetch('/api/sync', {method: 'POST'});
-      } catch(e) {}
-    })();
-
-    
-    function toggleAddPost() {
-      const section = document.getElementById('add-post-section');
-      section.style.display = section.style.display === 'none' ? 'block' : 'none';
-      if (section.style.display === 'block') section.scrollIntoView({behavior: 'smooth'});
-    }
-
-    async function addManualPost() {
-      const text = document.getElementById('manual-post-text').value.trim();
-      const url = document.getElementById('manual-post-url').value.trim();
-      if (!text) { showToast('Please paste your post text', false); return; }
-      
-      showBanner('Adding post...');
-      try {
-        const resp = await fetch('/api/add-post', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({text: text, url: url})
-        });
-        const data = await resp.json();
-        hideBanner();
-        if (data.success) {
-          showToast(data.message, true);
-          document.getElementById('manual-post-text').value = '';
-          document.getElementById('manual-post-url').value = '';
-          setTimeout(() => location.reload(), 1500);
-        } else {
-          showToast(data.error || 'Failed to add post', false);
-        }
-      } catch(e) {
-        hideBanner();
-        showToast('Error: ' + e.message, false);
-      }
-    }
-
-    
-function fetchIntelligence() {
-  var resultsDiv = document.getElementById('intelligence-results');
-  var textPre = document.getElementById('intelligence-text');
-  var winnersDiv = document.getElementById('intelligence-winners');
-  resultsDiv.style.display = 'block';
-  textPre.textContent = 'Running intelligence loop...';
-  winnersDiv.innerHTML = '';
-  
-  fetch('/api/intelligence', {method: 'POST'})
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (data.status === 'success') {
-        textPre.textContent = data.insights_text || 'No insights generated yet.';
-        if (data.winners && data.winners.length > 0) {
-          var html = '<h5 style="color:#e94560;">Viral Posts (' + data.winners_count + ' detected)</h5>';
-          data.winners.forEach(function(w) {
-            html += '<div style="background:#16213e; padding:10px; margin:5px 0; border-radius:5px; border-left:3px solid #e94560;">';
-            html += '<strong style="color:#e94560;">' + w.pillar + ' / ' + w.template + '</strong>';
-            html += '<br><span style="color:#aaa;">' + w.hook + '</span>';
-            html += '<br><span style="color:#0f0;">' + w.likes + ' likes, ' + w.comments + ' comments (' + w.vs_average + 'x avg)</span>';
-            html += '</div>';
-          });
-          winnersDiv.innerHTML = html;
-        }
-        if (data.pillar_ranking && data.pillar_ranking.length > 0) {
-          var phtml = '<h5 style="color:#e94560; margin-top:15px;">Pillar Rankings</h5>';
-          data.pillar_ranking.forEach(function(p, i) {
-            var color = i === 0 ? '#0f0' : '#aaa';
-            phtml += '<div style="color:' + color + ';">' + (i+1) + '. ' + p.pillar + ' - avg ' + p.avg_engagement + ' engagement (' + p.post_count + ' posts)</div>';
-          });
-          winnersDiv.innerHTML += phtml;
-        }
-      } else {
-        textPre.textContent = 'Error: ' + (data.error || 'Unknown error');
-      }
-    })
-    .catch(function(err) {
-      textPre.textContent = 'Error: ' + err.message;
+function editPost(idx) {
+  const queue = document.getElementById('queue-' + idx);
+  const content = document.getElementById('qc-' + idx).textContent;
+  document.getElementById('postModalTitle').textContent = 'Edit Post';
+  document.getElementById('postContent').value = content;
+  document.getElementById('savePostBtn').onclick = function() {
+    const data = {
+      index: idx,
+      content: document.getElementById('postContent').value,
+      pillar: document.getElementById('postPillar').value,
+      scheduled_date: document.getElementById('postDate').value,
+      scheduled_time: document.getElementById('postTime').value
+    };
+    apiCall('/api/queue/edit', 'POST', data).then(d => {
+      if (d.status === 'ok') { showToast('Post updated', 'success'); setTimeout(() => location.reload(), 500); }
+      else showToast('Error: ' + (d.error || 'Unknown'), 'error');
     });
+    closeModal('addPostModal');
+  };
+  document.getElementById('addPostModal').classList.add('show');
 }
 
-function openEditModal(index, date, time) {
-  document.getElementById('editIndex').value = index;
-  document.getElementById('editDate').value = date;
-  document.getElementById('editTime').value = time;
-  document.getElementById('editModal').style.display = 'flex';
+function savePost() {
+  const data = {
+    content: document.getElementById('postContent').value,
+    pillar: document.getElementById('postPillar').value,
+    scheduled_date: document.getElementById('postDate').value,
+    scheduled_time: document.getElementById('postTime').value
+  };
+  if (!data.content.trim()) { showToast('Content is required', 'error'); return; }
+  apiCall('/api/add-post', 'POST', data).then(d => {
+    if (d.status === 'ok') { showToast('Post added!', 'success'); closeModal('addPostModal'); setTimeout(() => location.reload(), 500); }
+    else showToast('Error: ' + (d.error || 'Unknown'), 'error');
+  });
 }
 
-function closeEditModal() {
-  document.getElementById('editModal').style.display = 'none';
+function clearHistory() {
+  if (!confirm('Clear ALL post history? This cannot be undone.')) return;
+  apiCall('/api/clear-history', 'POST').then(d => {
+    if (d.status === 'ok') { showToast('History cleared', 'success'); setTimeout(() => location.reload(), 500); }
+    else showToast('Error: ' + (d.error || 'Unknown'), 'error');
+  });
 }
 
-function saveEdit() {
-  const index = document.getElementById('editIndex').value;
-  const date = document.getElementById('editDate').value;
-  const time = document.getElementById('editTime').value;
-  if (!date || !time) { alert('Please fill in both date and time'); return; }
-  fetch('/api/queue/' + index + '/edit', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({scheduled_date: date, scheduled_time: time})
-  })
-  .then(r => r.json())
-  .then(data => {
-    if (data.status === 'updated') {
-      closeEditModal();
-      location.reload();
-    } else {
-      alert('Error: ' + (data.error || 'Unknown error'));
+function syncPosts() {
+  showToast('Syncing with LinkedIn...', 'info');
+  apiCall('/api/sync', 'POST').then(d => {
+    showToast('Synced: ' + (d.new_posts || 0) + ' new, ' + (d.updated || 0) + ' updated', 'success');
+    setTimeout(() => location.reload(), 1500);
+  }).catch(() => showToast('Sync failed', 'error'));
+}
+
+function testConnection() {
+  showToast('Testing connection...', 'info');
+  apiCall('/api/test-connection', 'POST').then(d => {
+    if (d.status === 'ok') showToast('Connected! Profile: ' + (d.name || ''), 'success');
+    else showToast('Connection failed: ' + (d.error || ''), 'error');
+  });
+}
+
+function checkComments() {
+  showToast('Checking comments...', 'info');
+  apiCall('/api/check-comments', 'POST').then(d => {
+    showToast('Found ' + (d.new_comments || 0) + ' new comments, replied to ' + (d.replies_sent || 0), 'success');
+    setTimeout(() => location.reload(), 1500);
+  }).catch(() => showToast('Comment check failed', 'error'));
+}
+
+function generateContent() {
+  document.getElementById('generate-progress').style.display = 'block';
+  document.getElementById('generateBtn').disabled = true;
+  apiCall('/api/generate', 'POST').then(d => {
+    if (d.task_id) pollTask(d.task_id);
+    else { showToast('Generation started', 'success'); }
+  });
+}
+
+function pollTask(tid) {
+  const interval = setInterval(() => {
+    apiCall('/api/task-status/' + tid).then(d => {
+      document.getElementById('generate-status').textContent = d.status || 'Working...';
+      if (d.status === 'complete' || d.status === 'error' || d.done) {
+        clearInterval(interval);
+        if (d.status === 'error') showToast('Generation failed', 'error');
+        else { showToast('Content generated!', 'success'); setTimeout(() => location.reload(), 1000); }
+      }
+    });
+  }, 2000);
+}
+
+function generateImages() {
+  showToast('Generating images...', 'info');
+  apiCall('/api/generate-images', 'POST').then(d => {
+    showToast('Generated ' + (d.generated || 0) + ' images', 'success');
+    setTimeout(() => location.reload(), 1500);
+  }).catch(() => showToast('Image generation failed', 'error'));
+}
+
+function loadAnalytics() {
+  document.getElementById('analytics-detail').innerHTML = '<p style="color:var(--text2);">Loading...</p>';
+  apiCall('/api/analytics', 'POST').then(d => {
+    let html = '<div style="display:grid;gap:16px;">';
+    if (d.report) {
+      html += '<div style="background:var(--surface2);padding:16px;border-radius:8px;font-size:13px;line-height:1.7;white-space:pre-wrap;">' + (d.report.summary || d.report || JSON.stringify(d.report, null, 2)) + '</div>';
     }
-  })
-  .catch(err => alert('Error: ' + err.message));
+    html += '</div>';
+    document.getElementById('analytics-detail').innerHTML = html;
+  }).catch(() => {
+    document.getElementById('analytics-detail').innerHTML = '<p style="color:var(--red);">Failed to load analytics.</p>';
+  });
 }
 
-function deletePost(index) {
-  if (!confirm('Are you sure you want to delete this post from the queue?')) return;
-  fetch('/api/queue/' + index + '/delete', {method: 'POST'})
-  .then(r => r.json())
-  .then(data => {
-    if (data.status === 'deleted') {
-      location.reload();
+function loadHealth() {
+  apiCall('/health').then(d => {
+    let html = '<div style="display:grid;gap:12px;">';
+    html += '<div class="pillar-row"><span style="color:var(--text2);">Status</span><span class="badge ' + (d.status==='ok'?'badge-green':'badge-red') + '">' + d.status + '</span></div>';
+    html += '<div class="pillar-row"><span style="color:var(--text2);">Scheduler</span><span class="badge ' + (d.scheduler_alive?'badge-green':'badge-red') + '">' + (d.scheduler_alive?'Running':'Stopped') + '</span></div>';
+    html += '<div class="pillar-row"><span style="color:var(--text2);">Posts Today</span><span>' + (d.posts_today||0) + '</span></div>';
+    html += '<div class="pillar-row"><span style="color:var(--text2);">Dead Letters</span><span>' + (d.dead_letter_count||0) + '</span></div>';
+    html += '<div class="pillar-row"><span style="color:var(--text2);">Started</span><span style="font-size:12px;">' + (d.started_at||'—') + '</span></div>';
+    if (d.learning_summary) html += '<div class="pillar-row"><span style="color:var(--text2);">AI Insights</span><span style="font-size:12px;">' + d.learning_summary + '</span></div>';
+    html += '</div>';
+    document.getElementById('health-info').innerHTML = html;
+    
+    // Update status dot
+    document.getElementById('statusDot').className = 'status-dot ' + (d.status==='ok'?'online':'offline');
+    document.getElementById('statusText').textContent = d.status==='ok'?'System Online':'System Error';
+    
+    // Alerts
+    let alertHtml = '';
+    if (d.alerts && d.alerts.length) {
+      alertHtml = d.alerts.map(a => '<div style="padding:10px;background:var(--surface2);border-radius:8px;margin-bottom:8px;font-size:13px;">' + a + '</div>').join('');
     } else {
-      alert('Error: ' + (data.error || 'Unknown error'));
+      alertHtml = '<div class="empty-state"><p>No alerts. System running normally.</p></div>';
     }
-  })
-  .catch(err => alert('Error: ' + err.message));
+    document.getElementById('alerts-info').innerHTML = alertHtml;
+  });
 }
+
+function runDebug() {
+  const pre = document.getElementById('debug-output');
+  pre.style.display = 'block';
+  pre.textContent = 'Running diagnostics...';
+  apiCall('/api/debug', 'POST').then(d => {
+    pre.textContent = JSON.stringify(d, null, 2);
+  }).catch(e => { pre.textContent = 'Error: ' + e; });
+}
+
+// Load health on page load
+loadHealth();
 </script>
 </body>
 </html>
 """
 
-# --- Routes ---
 
 @app.route("/")
 def dashboard():
@@ -1732,3 +1524,44 @@ def run_dashboard(port=None):
 
 if __name__ == "__main__":
     run_dashboard()
+
+
+
+@app.route("/api/clear-history", methods=["POST"])
+def api_clear_history():
+    """Clear all post history."""
+    save_json(POST_HISTORY_FILE, [])
+    return jsonify({"status": "ok", "message": "Post history cleared"})
+
+
+@app.route("/api/queue/delete", methods=["POST"])
+def api_queue_delete():
+    """Delete a post from the queue by index."""
+    data = request.get_json() or {}
+    idx = data.get("index", -1)
+    queue = load_json(CONTENT_QUEUE_FILE, [])
+    if 0 <= idx < len(queue):
+        removed = queue.pop(idx)
+        save_json(CONTENT_QUEUE_FILE, queue)
+        return jsonify({"status": "ok", "removed": removed.get("pillar", "")})
+    return jsonify({"status": "error", "error": "Invalid index"}), 400
+
+
+@app.route("/api/queue/edit", methods=["POST"])
+def api_queue_edit():
+    """Edit a post in the queue by index."""
+    data = request.get_json() or {}
+    idx = data.get("index", -1)
+    queue = load_json(CONTENT_QUEUE_FILE, [])
+    if 0 <= idx < len(queue):
+        if data.get("content"):
+            queue[idx]["content"] = data["content"]
+        if data.get("pillar"):
+            queue[idx]["pillar"] = data["pillar"]
+        if data.get("scheduled_date"):
+            queue[idx]["scheduled_date"] = data["scheduled_date"]
+        if data.get("scheduled_time"):
+            queue[idx]["scheduled_time"] = data["scheduled_time"]
+        save_json(CONTENT_QUEUE_FILE, queue)
+        return jsonify({"status": "ok"})
+    return jsonify({"status": "error", "error": "Invalid index"}), 400
