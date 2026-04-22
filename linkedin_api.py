@@ -600,7 +600,7 @@ class LinkedInAPI:
         
         return result
 
-        def sync_all_posts(self) -> dict:
+    def sync_all_posts(self) -> dict:
         """Sync ALL LinkedIn posts (including manual ones) into post history.
         This makes the app a full social media manager, not just for auto-posted content."""
         from datetime import datetime, timezone
