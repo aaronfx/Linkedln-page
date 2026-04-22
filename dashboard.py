@@ -73,6 +73,9 @@ def require_auth():
     public_paths = ['/health', '/api/log-engagement', '/api/log-metrics', '/api/queue-context', '/api/engagement-stats']
     if any(request.path == p for p in public_paths):
         return
+    # Allow image serving without auth (loaded by <img> tags on authenticated pages)
+    if request.path.startswith('/images/'):
+        return
     auth = request.authorization
     if not auth or not check_auth(auth.username, auth.password):
         return authenticate()
@@ -1583,8 +1586,12 @@ def api_remove_image(post_index):
 @app.route("/images/<path:filename>")
 def serve_image(filename):
     """Serve generated images from IMAGES_DIR."""
-    from flask import send_from_directory
+    from flask import send_from_directory, abort
     from config import IMAGES_DIR
+    image_file = IMAGES_DIR / filename
+    if not image_file.exists():
+        logger.warning(f"Image not found: {image_file}  (IMAGES_DIR={IMAGES_DIR}, contents={list(IMAGES_DIR.iterdir()) if IMAGES_DIR.exists() else 'DIR_MISSING'})")
+        abort(404)
     return send_from_directory(str(IMAGES_DIR), filename)
 
 
