@@ -1,5 +1,5 @@
 """
-Content Engine â Intelligent Growth Machine Powered by Claude
+Content Engine Ã¢ÂÂ Intelligent Growth Machine Powered by Claude
 ==============================================================
 Generates LinkedIn posts, comment replies, and performance analysis
 using the Anthropic Claude API.
@@ -20,6 +20,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 from collections import Counter
 from anthropic import Anthropic
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from config import (
     ANTHROPIC_API_KEY, CLAUDE_SETTINGS, PROFILE,
     CONTENT_PILLARS, CONTENT_QUEUE_FILE, POST_HISTORY_FILE,
@@ -37,7 +38,83 @@ logger = logging.getLogger("content_engine")
 client = Anthropic(api_key=ANTHROPIC_API_KEY)
 
 
-# âââ Context Intelligence Layer ââââââââââââââââââââââââââââ
+# --- Retry-safe Claude API wrapper ---
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=2, min=4, max=30),
+    retry=retry_if_exception_type((Exception,)),
+    before_sleep=lambda retry_state: logger.warning(
+        f"Claude API call failed (attempt {retry_state.attempt_number}), retrying..."
+    ),
+)
+def _claude_call(messages, system=None, max_tokens=4096):
+    """Retry-safe wrapper around client.messages.create."""
+    kwargs = {
+        "model": CLAUDE_SETTINGS["model"],
+        "max_tokens": max_tokens,
+        "messages": messages,
+    }
+    if system:
+        kwargs["system"] = system
+    response = client.messages.create(**kwargs)
+    return response
+
+
+def validate_post_content(post_data: dict) -> dict:
+    """
+    Validate generated post content for quality gates.
+    Returns the post_data with a 'validation' field added.
+    """
+    text = post_data.get("text", "")
+    issues = []
+
+    # Length check (LinkedIn max is ~3000 chars, optimal is 800-1500)
+    if len(text) < 200:
+        issues.append("too_short")
+    if len(text) > 3000:
+        issues.append("too_long")
+        # Auto-trim to 3000 chars at last sentence boundary
+        trimmed = text[:3000]
+        last_period = trimmed.rfind(".")
+        if last_period > 2500:
+            text = trimmed[:last_period + 1]
+            post_data["text"] = text
+            issues.append("auto_trimmed")
+
+    # Hook check - first line should be compelling (< 100 chars, no hashtags)
+    first_line = text.split("\n")[0] if "\n" in text else text[:100]
+    if len(first_line) > 150:
+        issues.append("hook_too_long")
+
+    # Hashtag presence check
+    hashtag_count = text.count("#")
+    if hashtag_count == 0:
+        issues.append("no_hashtags")
+    elif hashtag_count > 10:
+        issues.append("too_many_hashtags")
+
+    # CTA check - should have a question or call to action
+    cta_indicators = ["?", "comment", "share", "follow", "tag", "what do you think",
+                       "agree", "disagree", "drop a", "let me know", "your thoughts"]
+    has_cta = any(ind in text.lower() for ind in cta_indicators)
+    if not has_cta:
+        issues.append("no_cta")
+
+    post_data["validation"] = {
+        "passed": len(issues) == 0,
+        "issues": issues,
+        "char_count": len(text),
+        "hashtag_count": hashtag_count,
+        "has_cta": has_cta,
+    }
+
+    if issues:
+        logger.warning(f"Content validation issues: {issues}")
+    
+    return post_data
+
+
+# Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Context Intelligence Layer Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 def _load_json_safe(path, default=None):
     """Safely load a JSON file, returning default on any error."""
@@ -82,7 +159,7 @@ def _build_duplicate_guard(existing_queue: list, post_history: list) -> str:
     seen_pillars_recent = []
     seen_templates = []
 
-    # From existing queue (not yet posted â highest priority to avoid)
+    # From existing queue (not yet posted Ã¢ÂÂ highest priority to avoid)
     for post in (existing_queue or []):
         hook = post.get("hook", "")
         if hook:
@@ -236,7 +313,7 @@ def _build_analytics_intelligence(analytics_data: dict, post_history: list) -> s
         if suggestions:
             context += "\nSUGGESTED TOPICS FROM ANALYTICS:\n"
             for s in suggestions[:3]:
-                context += f"  - [{s.get('pillar', '?')}] {s.get('topic_hint', '?')} â {s.get('why', '')}\n"
+                context += f"  - [{s.get('pillar', '?')}] {s.get('topic_hint', '?')} Ã¢ÂÂ {s.get('why', '')}\n"
 
     # Build pillar performance breakdown from history
     if post_history:
@@ -327,7 +404,7 @@ def _build_comment_intelligence(comment_log: list) -> str:
 
 def _select_smart_template(existing_queue: list, post_history: list, scheduled_day: str = None) -> dict:
     """
-    Select a viral template intelligently â preferring day-appropriate templates
+    Select a viral template intelligently Ã¢ÂÂ preferring day-appropriate templates
     and avoiding recently overused ones.
 
     The strategy document maps specific post types to days:
@@ -379,7 +456,7 @@ def _build_growth_phase_context(post_history: list) -> str:
     total_posts = len(post_history) if post_history else 0
 
     if total_posts < 30:
-        phase = "PHASE 1 â Foundation Building"
+        phase = "PHASE 1 Ã¢ÂÂ Foundation Building"
         guidance = (
             "You are in the FOUNDATION phase. Focus on:\n"
             "  - Establishing authority and voice consistency\n"
@@ -389,7 +466,7 @@ def _build_growth_phase_context(post_history: list) -> str:
             "  - Every post should introduce who you are and what you stand for"
         )
     elif total_posts < 80:
-        phase = "PHASE 2 â Viral Growth"
+        phase = "PHASE 2 Ã¢ÂÂ Viral Growth"
         guidance = (
             "You are in the VIRAL GROWTH phase. Focus on:\n"
             "  - Doubling down on top-performing pillars and hooks\n"
@@ -399,7 +476,7 @@ def _build_growth_phase_context(post_history: list) -> str:
             "  - Making every hook scroll-stopping"
         )
     else:
-        phase = "PHASE 3 â Authority & Scale"
+        phase = "PHASE 3 Ã¢ÂÂ Authority & Scale"
         guidance = (
             "You are in the AUTHORITY phase. Focus on:\n"
             "  - Thought leadership and original frameworks\n"
@@ -412,7 +489,7 @@ def _build_growth_phase_context(post_history: list) -> str:
     return f"\n\nGROWTH PHASE: {phase}\nTotal posts published: {total_posts}\n{guidance}\n"
 
 
-# âââ Post Generation ââââââââââââââââââââââââââââââââââââââââ
+# Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Post Generation Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 def generate_post(
     pillar: str = None,
@@ -434,7 +511,7 @@ def generate_post(
     else:
         pillar_obj = next((p for p in CONTENT_PILLARS if p["name"] == pillar), CONTENT_PILLARS[0])
 
-    # ââ Intelligence Layer: Build rich context ââ
+    # Ã¢ÂÂÃ¢ÂÂ Intelligence Layer: Build rich context Ã¢ÂÂÃ¢ÂÂ
     duplicate_guard = _build_duplicate_guard(existing_queue, post_history)
     analytics_context = _build_analytics_intelligence(analytics_data, post_history)
     comment_context = _build_comment_intelligence(comment_insights)
@@ -465,11 +542,11 @@ def generate_post(
 
     gopipways_rule = (
         "You MAY reference Gopipways briefly and naturally in this post (since it's a Personal Story or AI post). "
-        "But Gopipways should NEVER be the main topic â it's a supporting detail in a larger story."
+        "But Gopipways should NEVER be the main topic Ã¢ÂÂ it's a supporting detail in a larger story."
         if should_mention_gopipways else
         "DO NOT mention Gopipways, your company, or any product in this post. "
         "This post is purely about providing VALUE, sharing expertise, and building thought leadership. "
-        "You are Dr. Aaron Akwu the forex educator and thought leader â not a brand ambassador."
+        "You are Dr. Aaron Akwu the forex educator and thought leader Ã¢ÂÂ not a brand ambassador."
     )
 
     # Get pillar-specific topic suggestions from the strategy document
@@ -480,7 +557,7 @@ def generate_post(
         topic_suggestions_text = f"\n\nSUGGESTED TOPICS FOR THIS PILLAR (from the 20K Growth Strategy):\n"
         for i, topic in enumerate(topic_list, 1):
             topic_suggestions_text += f"  {i}. {topic}\n"
-        topic_suggestions_text += "\nUse these as INSPIRATION â adapt and create fresh angles, don't copy verbatim.\n"
+        topic_suggestions_text += "\nUse these as INSPIRATION Ã¢ÂÂ adapt and create fresh angles, don't copy verbatim.\n"
 
     # Get the day's recommended post type from the strategy
     import calendar
@@ -499,24 +576,24 @@ def generate_post(
     week_key = f"week_{week_num}"
     current_secondary_hashtags = HASHTAG_STRATEGY["secondary_rotation"].get(week_key, [])
 
-    system_prompt = f"""You are the LinkedIn ghostwriter for Dr. Aaron Akwu â Africa's leading forex educator.
+    system_prompt = f"""You are the LinkedIn ghostwriter for Dr. Aaron Akwu Ã¢ÂÂ Africa's leading forex educator.
 
-You are executing the "LinkedIn 20K Growth Strategy" â a detailed plan to grow Aaron's followers from 4,500 to 20,000+.
+You are executing the "LinkedIn 20K Growth Strategy" Ã¢ÂÂ a detailed plan to grow Aaron's followers from 4,500 to 20,000+.
 You have been TRAINED on this strategy document and the "LinkedIn 2-Week Posts" document containing 12 gold-standard example posts.
 Every post you generate must follow this plan precisely.
 
 YOUR MISSION:
 - VALUE FIRST. Every post must teach something, provoke thought, or share a genuine insight.
 - NOT a sales channel. This is NOT about promoting Gopipways. It's about building Aaron's personal authority.
-- Write like a respected thought leader who happens to teach forex â not like a company marketing page.
+- Write like a respected thought leader who happens to teach forex Ã¢ÂÂ not like a company marketing page.
 - The content should feel like it comes from a real person with real opinions, real experiences, and real data.
 - Follow the "hook + story/data + specific insight + CTA question" formula from the strategy.
 
 {BRAND_VOICE}
 
-âââââââââââââââââââââââââââââââââââââââââââââââ
-20K GROWTH STRATEGY â CORE PLAN
-âââââââââââââââââââââââââââââââââââââââââââââââ
+Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+20K GROWTH STRATEGY Ã¢ÂÂ CORE PLAN
+Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 {GROWTH_STRATEGY}
 
@@ -545,14 +622,14 @@ PROFILE:
 GOPIPWAYS RULE FOR THIS POST:
 {gopipways_rule}
 
-âââââââââââââââââââââââââââââââââââââââââââââââ
+Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 INTELLIGENCE BRIEFING (Real-time data)
-âââââââââââââââââââââââââââââââââââââââââââââââ
+Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 {duplicate_guard}
 {analytics_context}
 {comment_context}
 {optimization_context}
-âââââââââââââââââââââââââââââââââââââââââââââââ
+Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 VIRAL TEMPLATE TO USE (adapt creatively, don't copy verbatim):
 Template: "{template['name']}"
@@ -560,7 +637,7 @@ Formula: {template['formula']}
 Structure:
 {template['structure'][:500]}
 
-HASHTAG STRATEGY (This Week â Week {week_num} of 4-week rotation):
+HASHTAG STRATEGY (This Week Ã¢ÂÂ Week {week_num} of 4-week rotation):
 Rules: {json.dumps(HASHTAG_STRATEGY['rules'])}
 Primary hashtags (ALWAYS use 1): {', '.join(HASHTAG_STRATEGY['primary'])}
 This week's secondary rotation: {', '.join(current_secondary_hashtags)}
@@ -571,8 +648,8 @@ STYLE EXAMPLES FROM THE 12 GOLD-STANDARD POSTS (match this quality and tone):
 
 WRITING RULES (from the 20K Growth Strategy):
 1. Write in first person as Dr. Aaron Akwu
-2. Open with a scroll-stopping hook (first 2 lines show before "see more" â make them count)
-3. The hook MUST be unique â never repeat hooks from the Intelligence Briefing
+2. Open with a scroll-stopping hook (first 2 lines show before "see more" Ã¢ÂÂ make them count)
+3. The hook MUST be unique Ã¢ÂÂ never repeat hooks from the Intelligence Briefing
 4. Short paragraphs: 1-3 sentences max, generous line breaks for mobile readability
 5. Include ONE of: a personal anecdote, a data point, a student story (Emeka, Chioma, Tunde, Blessing, Chukwu), or a market insight
 6. End with a genuine question or CTA that invites comments (critical for engagement)
@@ -581,13 +658,13 @@ WRITING RULES (from the 20K Growth Strategy):
 9. NO emojis anywhere in the post (part of the brand voice)
 10. Write like a human thought leader, not a marketing bot
 11. Vary the energy: some posts should be bold/provocative, others reflective/thoughtful
-12. Reference specific numbers, names, timeframes â vague posts don't go viral
+12. Reference specific numbers, names, timeframes Ã¢ÂÂ vague posts don't go viral
 13. If the Intelligence Briefing shows audience questions, weave one into this post naturally
 14. NEVER reuse a hook, story, or angle from the Intelligence Briefing
-15. The CTA should be SPECIFIC ("Drop a PLAN in the comments", "Reply with your letter", "What's your daily loss limit?") â not generic ("Let me know what you think")
+15. The CTA should be SPECIFIC ("Drop a PLAN in the comments", "Reply with your letter", "What's your daily loss limit?") Ã¢ÂÂ not generic ("Let me know what you think")
 
 IMAGE PROMPT RULES:
-- Describe a PHOTOREALISTIC scene â like a real photograph taken by a professional photographer
+- Describe a PHOTOREALISTIC scene Ã¢ÂÂ like a real photograph taken by a professional photographer
 - Include specific details: camera model, lens, lighting, camera angle, setting, people, objects
 - Think "editorial photography" or "documentary photography" style
 - Examples of good prompts:
@@ -595,7 +672,7 @@ IMAGE PROMPT RULES:
   * "Wide shot of a modern co-working space in Lagos, young professionals at screens, golden hour light through floor-to-ceiling windows, photojournalistic style, Fuji X-T5"
   * "Portrait of focused trader studying multiple monitors showing candlestick charts, dramatic side lighting, dark background, editorial photography, Sony A7IV 35mm"
 - NEVER include text, words, watermarks, or logos in the image
-- NEVER use abstract/conceptual/surreal imagery â keep it grounded and real
+- NEVER use abstract/conceptual/surreal imagery Ã¢ÂÂ keep it grounded and real
 
 OUTPUT FORMAT (JSON):
 {{
@@ -603,7 +680,7 @@ OUTPUT FORMAT (JSON):
   "hook": "The opening 2 lines (for preview)",
   "pillar": "The content pillar used",
   "template_used": "{template['name']}",
-  "image_prompt": "A detailed PHOTOREALISTIC image prompt (describe a real scene with specific camera, lighting, setting, subjects, camera angle â editorial/documentary photography style, no text or logos)",
+  "image_prompt": "A detailed PHOTOREALISTIC image prompt (describe a real scene with specific camera, lighting, setting, subjects, camera angle Ã¢ÂÂ editorial/documentary photography style, no text or logos)",
   "hashtags": ["list", "of", "hashtags", "used"],
   "estimated_engagement": "low/medium/high based on content type and analytics patterns",
   "topic_summary": "One sentence describing the core topic (for future duplicate detection)",
@@ -617,16 +694,14 @@ Pillar description: {pillar_obj['description']}
 
 Today's date: {datetime.now().strftime('%A, %B %d, %Y')}
 
-IMPORTANT: Your post must be ORIGINAL. Check the Intelligence Briefing for hooks and topics already used â do NOT repeat them.
+IMPORTANT: Your post must be ORIGINAL. Check the Intelligence Briefing for hooks and topics already used Ã¢ÂÂ do NOT repeat them.
 
 Return ONLY valid JSON. No markdown code fences."""
 
-    response = client.messages.create(
-        model=CLAUDE_SETTINGS["model"],
-        max_tokens=CLAUDE_SETTINGS["max_tokens_post"],
-        temperature=CLAUDE_SETTINGS["temperature_post"],
-        system=system_prompt,
+    response = _claude_call(
         messages=[{"role": "user", "content": user_prompt}],
+        system=system_prompt,
+        max_tokens=CLAUDE_SETTINGS["max_tokens_post"],
     )
 
     result_text = response.content[0].text.strip()
@@ -655,10 +730,13 @@ Return ONLY valid JSON. No markdown code fences."""
     post_data["pillar"] = pillar
     post_data["template_used"] = template["name"]
     logger.info(f"Generated intelligent post for pillar: {pillar} | template: {template['name']}")
+
+    # Validate content quality
+    post_data = validate_post_content(post_data)
     return post_data
 
 
-# âââ Comment Reply Generation âââââââââââââââââââââââââââââââ
+# Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Comment Reply Generation Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 def generate_reply(
     comment_text: str,
@@ -683,12 +761,10 @@ Detected sentiment: {comment_sentiment}
 
 Write a reply. Return ONLY the reply text, nothing else."""
 
-    response = client.messages.create(
-        model=CLAUDE_SETTINGS["model"],
-        max_tokens=CLAUDE_SETTINGS["max_tokens_reply"],
-        temperature=CLAUDE_SETTINGS["temperature_reply"],
-        system=system_prompt,
+    response = _claude_call(
         messages=[{"role": "user", "content": user_prompt}],
+        system=system_prompt,
+        max_tokens=CLAUDE_SETTINGS["max_tokens_reply"],
     )
 
     reply = response.content[0].text.strip()
@@ -701,10 +777,8 @@ Write a reply. Return ONLY the reply text, nothing else."""
 
 def classify_comment(comment_text: str) -> dict:
     """Classify a comment's sentiment and priority using Claude."""
-    response = client.messages.create(
-        model=CLAUDE_SETTINGS["model"],
+    response = _claude_call(
         max_tokens=200,
-        temperature=0.1,
         messages=[{
             "role": "user",
             "content": f"""Classify this LinkedIn comment. Return JSON only:
@@ -729,7 +803,7 @@ JSON:"""
         return {"sentiment": "neutral", "priority": "medium", "category": "experience_share"}
 
 
-# âââ Performance Analysis ââââââââââââââââââââââââââââââââââ
+# Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Performance Analysis Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 def analyze_performance(posts_with_metrics: list) -> dict:
     """Analyze post performance and generate optimization recommendations."""
@@ -747,10 +821,8 @@ def analyze_performance(posts_with_metrics: list) -> dict:
         posts_summary += f"Engagement Rate: {post.get('engagement_rate', 'N/A')}%\n"
         posts_summary += f"Posted: {post.get('created_at', 'N/A')}\n"
 
-    response = client.messages.create(
-        model=CLAUDE_SETTINGS["model"],
+    response = _claude_call(
         max_tokens=CLAUDE_SETTINGS["max_tokens_analysis"],
-        temperature=CLAUDE_SETTINGS["temperature_analysis"],
         messages=[{
             "role": "user",
             "content": f"""Analyze these LinkedIn post performance metrics for {PROFILE['name']} ({PROFILE['title']}).
@@ -800,7 +872,7 @@ Return ONLY valid JSON."""
     return analysis
 
 
-# âââ Intelligent Content Queue Management ââââââââââââââââââ
+# Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Intelligent Content Queue Management Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 def load_full_context() -> dict:
     """Load ALL available context for intelligent content generation."""
@@ -810,7 +882,7 @@ def load_full_context() -> dict:
     comment_log = _load_json_safe(COMMENT_LOG_FILE, [])
 
     logger.info(
-        f"Context loaded â Queue: {len(existing_queue)} posts, "
+        f"Context loaded Ã¢ÂÂ Queue: {len(existing_queue)} posts, "
         f"History: {len(post_history)} posts, "
         f"Comments: {len(comment_log)} entries"
     )
@@ -871,7 +943,7 @@ def generate_weekly_content(optimize_from: list = None, progress_callback=None) 
     for idx, (day, schedule) in enumerate(schedule_items):
         post_num = idx + 1
         post_type = schedule.get("post_type", "")
-        _progress(f"Generating post {post_num}/{total}: {day.capitalize()} â {schedule['pillar_preference']} ({post_type})...")
+        _progress(f"Generating post {post_num}/{total}: {day.capitalize()} Ã¢ÂÂ {schedule['pillar_preference']} ({post_type})...")
 
         try:
             # Build a topic hint from the strategy's day-specific post type
@@ -891,7 +963,7 @@ def generate_weekly_content(optimize_from: list = None, progress_callback=None) 
                 scheduled_day=day,
             )
 
-            # ââ Assign REAL calendar dates ââ
+            # Ã¢ÂÂÃ¢ÂÂ Assign REAL calendar dates Ã¢ÂÂÃ¢ÂÂ
             post_date = _get_next_weekday(day)
             hour, minute = map(int, schedule["time"].split(":"))
             post_date = post_date.replace(hour=hour, minute=minute, second=0, microsecond=0)
@@ -905,7 +977,7 @@ def generate_weekly_content(optimize_from: list = None, progress_callback=None) 
             weekly_posts.append(post)
             running_queue.append(post)
 
-            _progress(f"Post {post_num}/{total} done: {post.get('pillar')} â {post.get('hook', '')[:50]}...")
+            _progress(f"Post {post_num}/{total} done: {post.get('pillar')} Ã¢ÂÂ {post.get('hook', '')[:50]}...")
 
         except Exception as e:
             logger.error(f"Failed to generate post {post_num}/{total} for {day}: {e}")
@@ -918,7 +990,7 @@ def generate_weekly_content(optimize_from: list = None, progress_callback=None) 
         _save_content_queue(weekly_posts)
 
     _progress(f"Done! Generated {len(weekly_posts)}/{total} posts.")
-    logger.info(f"Weekly content generation complete â {len(weekly_posts)} intelligent posts created")
+    logger.info(f"Weekly content generation complete Ã¢ÂÂ {len(weekly_posts)} intelligent posts created")
     return weekly_posts
 
 
