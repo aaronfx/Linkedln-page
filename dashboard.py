@@ -1650,15 +1650,14 @@ def api_queue_edit(index):
             return jsonify({"error": "Invalid post index"}), 400
         
         data = request.get_json()
-        new_date = data.get("scheduled_date")
-        new_time = data.get("scheduled_time")
-        
-        if not new_date or not new_time:
-            return jsonify({"error": "Date and time are required"}), 400
-        
+        new_date = data.get("scheduled_date", "").strip()
+        new_time = data.get("scheduled_time", "").strip()
+
         post = queue[index]
-        post["scheduled_date"] = new_date
-        post["scheduled_time"] = new_time
+        if new_date:
+            post["scheduled_date"] = new_date
+        if new_time:
+            post["scheduled_time"] = new_time
         # Also update content, pillar, image if provided
         new_content = (data.get("text") or data.get("content") or "").strip()
         if new_content:
@@ -1670,23 +1669,28 @@ def api_queue_edit(index):
         new_image = data.get("image_url", "").strip()
         if new_image:
             post["image_url"] = new_image
-        post["scheduled_datetime"] = f"{new_date}T{new_time}:00"
-        
-        # Rebuild display_date
-        from datetime import datetime as dt_cls
-        parsed = dt_cls.strptime(new_date, "%Y-%m-%d")
-        hour = int(new_time.split(":")[0])
-        minute = int(new_time.split(":")[1])
-        ampm = "AM" if hour < 12 else "PM"
-        display_hour = hour if hour <= 12 else hour - 12
-        if display_hour == 0:
-            display_hour = 12
-        post["display_date"] = parsed.strftime(f"%a, %b %d at {display_hour:02d}:{minute:02d} {ampm}")
-        post["scheduled_day"] = parsed.strftime("%A").lower()
-        
+        # Rebuild display date if both date and time are present
+        final_date = post.get("scheduled_date", "")
+        final_time = post.get("scheduled_time", "")
+        if final_date and final_time:
+            post["scheduled_datetime"] = f"{final_date}T{final_time}:00"
+            try:
+                from datetime import datetime as dt_cls
+                parsed = dt_cls.strptime(final_date, "%Y-%m-%d")
+                hour = int(final_time.split(":")[0])
+                minute = int(final_time.split(":")[1])
+                ampm = "AM" if hour < 12 else "PM"
+                display_hour = hour if hour <= 12 else hour - 12
+                if display_hour == 0:
+                    display_hour = 12
+                post["display_date"] = parsed.strftime(f"%a, %b %d at {display_hour:02d}:{minute:02d} {ampm}")
+                post["scheduled_day"] = parsed.strftime("%A").lower()
+            except Exception:
+                pass
+
         save_json(CONTENT_QUEUE_FILE, queue)
-        logger.info(f"Queue post {index} rescheduled to {new_date} {new_time}")
-        return jsonify({"status": "updated", "display_date": post["display_date"]})
+        logger.info(f"Queue post {index} updated")
+        return jsonify({"status": "ok", "message": "Post updated"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
