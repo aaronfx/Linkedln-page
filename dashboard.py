@@ -800,10 +800,35 @@ function loadHealth() {
 function runDebug() {
   const pre = document.getElementById('debug-output');
   pre.style.display = 'block';
-  pre.textContent = 'Running diagnostics...';
+  pre.innerHTML = '<span style="color:var(--text2);">Running diagnostics...</span>';
   apiCall('/api/debug', 'POST').then(d => {
-    pre.textContent = JSON.stringify(d, null, 2);
-  }).catch(e => { pre.textContent = 'Error: ' + e; });
+    let html = '';
+    if (d.error) { pre.innerHTML = '<span style="color:var(--red);">Error: ' + d.error + '</span>'; return; }
+    // Profile
+    if (d.profile) {
+      html += '<div style="margin-bottom:12px;"><strong style="color:var(--accent);">Profile</strong><br>';
+      html += 'Name: ' + (d.profile.name||'—') + '<br>';
+      html += 'Token: <span class="badge ' + (d.token==='present'?'badge-green':'badge-red') + '">' + (d.token||'unknown') + '</span>';
+      html += '</div>';
+    }
+    // Endpoints
+    if (d.endpoints) {
+      html += '<div><strong style="color:var(--accent);">API Endpoints</strong></div>';
+      for (const [name, info] of Object.entries(d.endpoints)) {
+        const ok = info.ok;
+        const icon = ok ? '✓' : '✗';
+        const color = ok ? 'var(--green)' : 'var(--red)';
+        html += '<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;">';
+        html += '<span style="color:' + color + ';font-weight:600;margin-right:6px;">' + icon + '</span>';
+        html += '<span style="color:var(--text1);">' + name + '</span>';
+        html += ' <span class="badge ' + (ok?'badge-green':'badge-red') + '" style="margin-left:8px;">' + (info.status||'?') + '</span>';
+        if (info.message) html += '<div style="color:var(--text3);font-size:11px;margin-top:2px;margin-left:20px;">' + info.message + '</div>';
+        if (info.error) html += '<div style="color:var(--red);font-size:11px;margin-top:2px;margin-left:20px;">' + info.error + '</div>';
+        html += '</div>';
+      }
+    }
+    pre.innerHTML = html || 'No diagnostic data returned.';
+  }).catch(e => { pre.innerHTML = '<span style="color:var(--red);">Error: ' + e + '</span>'; });
 }
 
 // Load health on page load
@@ -1065,12 +1090,46 @@ def api_add_post():
 
 @app.route("/api/debug", methods=["POST", "GET"])
 def api_debug():
-    """Deep diagnostic - test every LinkedIn API endpoint and return full error bodies."""
+    """Deep diagnostic - test LinkedIn API endpoints (sensitive data redacted)."""
     try:
         from linkedin_api import LinkedInAPI
         linkedin = LinkedInAPI()
-        results = linkedin.debug_api()
-        return jsonify(results)
+        raw = linkedin.debug_api()
+
+        # Redact sensitive fields
+        safe = {
+            "profile": {
+                "name": raw.get("token_info", {}).get("name", "unknown"),
+                "sub": raw.get("token_info", {}).get("sub", "unknown"),
+                "person_urn": (raw.get("person_urn", "")[:20] + "...") if raw.get("person_urn") else "not set",
+            },
+            "token": "present" if raw.get("headers_used", {}).get("Authorization") else "missing",
+            "endpoints": {}
+        }
+        for name, info in raw.get("endpoints", {}).items():
+            if isinstance(info, dict):
+                status = info.get("status", "?")
+                ok = status == 200 if isinstance(status, int) else False
+                entry = {"status": status, "ok": ok}
+                if info.get("error"):
+                    entry["error"] = str(info["error"])[:150]
+                elif not ok and info.get("body"):
+                    # Show brief error hint, not full body
+                    body = str(info["body"])
+                    if "serviceErrorCode" in body or "message" in body:
+                        try:
+                            import json as _j
+                            parsed = _j.loads(body)
+                            entry["message"] = parsed.get("message", body[:120])
+                        except Exception:
+                            entry["message"] = body[:120]
+                    else:
+                        entry["message"] = body[:120]
+                safe["endpoints"][name] = entry
+            else:
+                safe["endpoints"][name] = {"error": str(info)[:120]}
+
+        return jsonify(safe)
     except Exception as e:
         return jsonify({"error": str(e)})
 
