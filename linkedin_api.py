@@ -540,7 +540,67 @@ class LinkedInAPI:
             return []
 
 
-    def sync_all_posts(self) -> dict:
+    def get_follower_count(self) -> int:
+        """
+        Get the current follower count for the authenticated profile.
+        Uses the LinkedIn Community Management API networkSizes endpoint.
+        Returns 0 if the API call fails (best-effort).
+        """
+        try:
+            url = f"{self.api_base}/networkSizes/{self.person_urn}?edgeType=CompanyFollowedByMember"
+            resp = self._make_request("GET", url)
+            if resp and resp.get("firstDegreeSize"):
+                return resp["firstDegreeSize"]
+            
+            # Fallback: try connections count
+            url2 = f"{self.api_base}/connections?q=viewer&start=0&count=0"
+            resp2 = self._make_request("GET", url2)
+            if resp2 and resp2.get("paging", {}).get("total"):
+                return resp2["paging"]["total"]
+            
+            return 0
+        except Exception as e:
+            logger.warning(f"Failed to get follower count: {e}")
+            return 0
+
+    def check_token_health(self) -> dict:
+        """
+        Check if the access token is still valid and estimate expiry.
+        Returns a dict with 'valid', 'profile_name', and any warnings.
+        """
+        result = {"valid": False, "profile_name": None, "warning": None}
+        try:
+            profile = self.get_profile()
+            if profile:
+                result["valid"] = True
+                first = profile.get("localizedFirstName", "")
+                last = profile.get("localizedLastName", "")
+                result["profile_name"] = f"{first} {last}".strip()
+            
+            # Check if token expires soon (from config)
+            try:
+                from config import LINKEDIN_TOKEN_EXPIRES
+                if LINKEDIN_TOKEN_EXPIRES:
+                    from datetime import datetime, timezone
+                    expiry = datetime.fromisoformat(LINKEDIN_TOKEN_EXPIRES)
+                    now = datetime.now(timezone.utc)
+                    days_left = (expiry - now).days
+                    if days_left < 0:
+                        result["warning"] = f"Token expired {abs(days_left)} days ago!"
+                        result["valid"] = False
+                    elif days_left < 7:
+                        result["warning"] = f"Token expires in {days_left} days - refresh soon!"
+                    elif days_left < 30:
+                        result["warning"] = f"Token expires in {days_left} days"
+            except Exception:
+                pass
+                
+        except Exception as e:
+            result["warning"] = f"Token check failed: {str(e)}"
+        
+        return result
+
+        def sync_all_posts(self) -> dict:
         """Sync ALL LinkedIn posts (including manual ones) into post history.
         This makes the app a full social media manager, not just for auto-posted content."""
         from datetime import datetime, timezone
