@@ -731,10 +731,30 @@ async function apiCall(url, method, body) {
 
 function postNow(idx) {
   if (!confirm('Post this to LinkedIn now?')) return;
+
+  // Get the button element and disable it immediately
+  const buttons = document.getElementById('queue-' + idx).querySelectorAll('.btn-primary');
+  const postBtn = buttons[0];
+  postBtn.disabled = true;
+  postBtn.textContent = 'Publishing...';
+
   showToast('Publishing...', 'info');
   apiCall('/api/post-now', 'POST', {post_index: idx}).then(d => {
-    if (d.status === 'ok') { showToast('Posted successfully!', 'success'); setTimeout(() => location.reload(), 1000); }
-    else showToast('Error: ' + (d.error || 'Unknown'), 'error');
+    if (d.status === 'ok' || d.success) {
+      showToast('Posted successfully!', 'success');
+      setTimeout(() => location.reload(), 1000);
+    }
+    else {
+      showToast('Error: ' + (d.error || d.message || 'Unknown'), 'error');
+      // Re-enable button on error
+      postBtn.disabled = false;
+      postBtn.textContent = 'Post Now';
+    }
+  }).catch(err => {
+    showToast('Error: ' + err.message, 'error');
+    // Re-enable button on error
+    postBtn.disabled = false;
+    postBtn.textContent = 'Post Now';
   });
 }
 
@@ -1209,6 +1229,9 @@ def api_task_status(task_id):
 @app.route("/api/post-now", methods=["POST"])
 def api_post_now():
     try:
+        from filelock import FileLock
+        from config import POST_HISTORY_FILE
+
         # Check if queue has content first
         queue = load_json(CONTENT_QUEUE_FILE, [])
         if not queue:
@@ -1217,10 +1240,26 @@ def api_post_now():
                 "message": "Content queue is empty! Click 'Generate Week' first to create posts."
             })
 
+        # Check if the first post was already published
+        post_data = queue[0]
+        if post_data.get("published"):
+            return jsonify({
+                "success": False,
+                "message": "This post was already published. Remove it from queue and post another."
+            })
+
         from main import post_from_queue
         result = post_from_queue()
         if result:
-            return jsonify({"success": True, "message": f"Posted to LinkedIn! ID: {result.get('id', 'unknown')}"})
+            # Mark post as published in queue (for verification)
+            lock = FileLock(str(CONTENT_QUEUE_FILE) + ".lock", timeout=10)
+            with lock:
+                queue = load_json(CONTENT_QUEUE_FILE, [])
+                if queue and queue[0].get("id") == result.get("id"):
+                    queue[0]["published"] = True
+                    save_json(CONTENT_QUEUE_FILE, queue)
+
+            return jsonify({"status": "ok", "success": True, "message": f"Posted to LinkedIn! ID: {result.get('id', 'unknown')}"})
         else:
             return jsonify({"success": False, "message": "Queue empty --- click 'Generate Week' first"})
     except Exception as e:

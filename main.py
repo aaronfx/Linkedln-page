@@ -190,19 +190,23 @@ def post_from_queue():
         logger.warning("No content queue found. Run 'generate' first.")
         return None
 
-    with open(CONTENT_QUEUE_FILE) as f:
-        queue = json.load(f)
+    from filelock import FileLock
+    lock = FileLock(str(CONTENT_QUEUE_FILE) + ".lock", timeout=10)
 
-    if not queue:
-        logger.info("Content queue is empty. Run 'generate' to refill.")
-        return None
+    with lock:
+        with open(CONTENT_QUEUE_FILE) as f:
+            queue = json.load(f)
 
-    # Get the next post
-    post_data = queue.pop(0)
+        if not queue:
+            logger.info("Content queue is empty. Run 'generate' to refill.")
+            return None
 
-    # Save remaining queue
-    with open(CONTENT_QUEUE_FILE, "w") as f:
-        json.dump(queue, f, indent=2)
+        # Get the next post
+        post_data = queue.pop(0)
+
+        # Save remaining queue
+        with open(CONTENT_QUEUE_FILE, "w") as f:
+            json.dump(queue, f, indent=2)
 
     # Post it
     linkedin = LinkedInAPI()

@@ -35,22 +35,34 @@ CIRCUIT_BREAKER_THRESHOLD = 5    # Consecutive failures before circuit breaks
 CIRCUIT_BREAKER_RESET = 300      # Seconds to wait before retrying after circuit break
 
 def sanitize_post_text(text: str) -> str:
-    """Sanitize post text to prevent encoding issues on LinkedIn."""
+    """Sanitize post text to prevent encoding issues on LinkedIn.
+
+    Replaces problematic Unicode characters with ASCII equivalents while preserving:
+    - Common Unicode (emojis, accented characters, etc.)
+    - Smart quotes, em dashes, ellipses (converted to ASCII equivalents)
+    """
     if not text:
         return text
+
+    # Replace problematic Unicode characters with ASCII equivalents
     replacements = {
-        '\u2018': "'",
-        '\u2019': "'",
-        '\u201C': '"',
-        '\u201D': '"',
-        '\u2013': '-',
-        '\u2014': '--',
-        '\u2026': '...',
-        '\u00A0': ' ',
+        '\u2018': "'",   # Left single quotation mark
+        '\u2019': "'",   # Right single quotation mark
+        '\u201C': '"',   # Left double quotation mark
+        '\u201D': '"',   # Right double quotation mark
+        '\u2013': '-',   # En dash
+        '\u2014': '--',  # Em dash
+        '\u2026': '...',  # Ellipsis
+        '\u00A0': ' ',   # Non-breaking space
     }
     for char, replacement in replacements.items():
         text = text.replace(char, replacement)
+
+    # Widen filter to preserve common Unicode (emojis, accented chars, etc.)
+    # Keep: newlines, tabs, ASCII printable (32-126), and Unicode beyond 159
+    # This allows emojis, accented characters, and other common Unicode
     text = ''.join(c for c in text if c == '\n' or c == '\t' or (ord(c) >= 32 and ord(c) < 127) or ord(c) >= 160)
+
     logger.info(f"Post text sanitized: {len(text)} chars, preview: {text[:100]}...")
     return text
 
