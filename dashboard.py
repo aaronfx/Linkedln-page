@@ -119,7 +119,7 @@ DASHBOARD_HTML = """
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LinkedIn Autopilot</title>
+<title>Gopipways Social Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -182,10 +182,16 @@ DASHBOARD_HTML = """
   .post-card:hover { border-color:var(--accent); }
   .post-meta { display:flex; gap:12px; align-items:center; margin-bottom:10px; flex-wrap:wrap; }
   .post-pillar { font-size:11px; font-weight:600; padding:3px 10px; border-radius:20px; text-transform:uppercase; letter-spacing:0.3px; }
-  .post-pillar.education { background:rgba(43,180,168,0.15); color:var(--green); }
-  .post-pillar.authority { background:rgba(167,139,250,0.15); color:var(--purple); }
-  .post-pillar.storytelling { background:rgba(251,146,60,0.15); color:var(--orange); }
-  .post-pillar.engagement { background:rgba(27,143,239,0.15); color:var(--accent2); }
+  .post-pillar.education, .post-pillar.forexeducation { background:rgba(43,180,168,0.15); color:var(--green); }
+  .post-pillar.authority, .post-pillar.aiintrading { background:rgba(167,139,250,0.15); color:var(--purple); }
+  .post-pillar.storytelling, .post-pillar.personalstory, .post-pillar.personalstorybehind-the-scenes { background:rgba(251,146,60,0.15); color:var(--orange); }
+  .post-pillar.engagement, .post-pillar.industrycommentary { background:rgba(27,143,239,0.15); color:var(--accent2); }
+  .post-pillar.africanmarkets, .post-pillar.africanmarketsfinancialliteracy { background:rgba(45,212,168,0.15); color:#2dd4a8; }
+  .post-pillar.educate { background:rgba(124,58,237,0.15); color:#a78bfa; }
+  .post-pillar.prove { background:rgba(16,185,129,0.15); color:#10b981; }
+  .post-pillar.inspire { background:rgba(217,119,6,0.15); color:#d97706; }
+  .post-pillar.engage { background:rgba(27,143,239,0.15); color:var(--accent2); }
+  .post-pillar.convert { background:rgba(220,38,38,0.15); color:#dc2626; }
   .post-pillar.unknown { background:rgba(139,144,165,0.15); color:var(--text2); }
   .post-date { font-size:12px; color:var(--text2); }
   .post-content { font-size:13px; line-height:1.65; color:var(--text); white-space:pre-wrap; max-height:120px; overflow:hidden; position:relative; }
@@ -257,6 +263,8 @@ DASHBOARD_HTML = """
   .form-group { margin-bottom:16px; }
   
   .img-preview { max-width:100%; border-radius:8px; margin-top:8px; max-height:200px; object-fit:cover; }
+  .hook-item { padding:10px 14px; background:var(--surface2); border-radius:8px; margin-bottom:6px; font-size:13px; color:var(--text); cursor:pointer; transition:border-color .2s; border:1px solid transparent; }
+  .hook-item:hover { border-color:var(--accent); background:var(--surface); }
 
   /* ===== Mobile Responsive ===== */
   @media (max-width: 768px) {
@@ -333,7 +341,7 @@ DASHBOARD_HTML = """
 
 <!-- Topbar -->
 <div class="topbar">
-  <h1><span>LinkedIn</span> Autopilot</h1>
+  <h1><span>Gopipways</span> Social Hub</h1>
   <div style="display:flex;align-items:center;gap:16px;">
     <div style="font-size:13px;color:var(--text2);">
       <span class="status-dot online" id="statusDot"></span>
@@ -384,8 +392,14 @@ DASHBOARD_HTML = """
   <!-- Tab Navigation -->
   <div class="tabs">
     <button class="tab active" onclick="switchTab('queue')">Queue</button>
+    <button class="tab" onclick="switchTab('calendar')">Calendar</button>
+    <button class="tab" onclick="switchTab('writer')">AI Writer</button>
+    <button class="tab" onclick="switchTab('creative')">Creative Studio</button>
     <button class="tab" onclick="switchTab('history')">Post History</button>
     <button class="tab" onclick="switchTab('analytics')">Analytics</button>
+    <button class="tab" onclick="switchTab('brand')">Brand Review</button>
+    <button class="tab" onclick="switchTab('platforms')">Platforms</button>
+    <button class="tab" onclick="switchTab('hooks')">Hook Library</button>
     <button class="tab" onclick="switchTab('comments')">Comments</button>
     <button class="tab" onclick="switchTab('engagement')">Engagement</button>
     <button class="tab" onclick="switchTab('system')">System</button>
@@ -426,6 +440,170 @@ DASHBOARD_HTML = """
           <p>No posts in queue. Generate content or add a post manually.</p>
         </div>
         {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- CALENDAR PANEL -->
+  <div class="panel" id="panel-calendar">
+    <div class="card">
+      <div class="card-header">
+        <h3>Content Calendar</h3>
+        <div style="display:flex;gap:8px;">
+          <select class="form-control" id="calMonth" style="width:130px;">
+            <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+            <option value="4">April</option><option value="5" selected>May</option><option value="6">June</option>
+            <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+            <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+          </select>
+          <input type="number" class="form-control" id="calYear" value="2026" style="width:90px;">
+          <button class="btn btn-secondary btn-sm" onclick="loadCalendar()">Load</button>
+          <button class="btn btn-primary btn-sm" onclick="generateCalendar()">Generate New</button>
+        </div>
+      </div>
+      <div class="card-body" id="calendar-content">
+        <div class="empty-state"><p>Select month/year and click Load, or Generate a new calendar.</p></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;" id="calendar-summary-card" style="display:none;">
+      <div class="card-header"><h3>Calendar Summary</h3></div>
+      <div class="card-body" id="calendar-summary"></div>
+    </div>
+  </div>
+
+  <!-- AI WRITER PANEL -->
+  <div class="panel" id="panel-writer">
+    <div class="card">
+      <div class="card-header">
+        <h3>AI Content Writer</h3>
+      </div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Platform</label>
+            <select class="form-control" id="writerPlatform" onchange="updateWriterPillars()">
+              <option value="linkedin">LinkedIn (Personal Brand)</option>
+              <option value="whatsapp_status">WhatsApp Status (Company)</option>
+              <option value="instagram" disabled>Instagram (Coming Soon)</option>
+              <option value="x" disabled>X / Twitter (Coming Soon)</option>
+              <option value="threads" disabled>Threads (Coming Soon)</option>
+              <option value="facebook" disabled>Facebook (Coming Soon)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Content Pillar</label>
+            <select class="form-control" id="writerPillar">
+              <option value="">Auto-select</option>
+              <option value="Forex Education">Forex Education</option>
+              <option value="AI in Trading">AI in Trading</option>
+              <option value="African Markets & Financial Literacy">African Markets</option>
+              <option value="Personal Story & Behind-the-Scenes">Personal Story</option>
+              <option value="Industry Commentary">Industry Commentary</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Topic (optional — leave blank for AI to choose)</label>
+          <input type="text" class="form-control" id="writerTopic" placeholder="e.g. 3 mistakes beginners make with AI trading tools">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hook Style</label>
+          <select class="form-control" id="writerHook">
+            <option value="">Auto-select</option>
+            <option value="bold_claim">Bold Claim / Contrarian</option>
+            <option value="numbers">Numbers & Data</option>
+            <option value="story">Story Hook</option>
+            <option value="question">Question Hook</option>
+            <option value="how_to">How-To / Education</option>
+            <option value="urgency">Urgency / Timeliness</option>
+            <option value="authority">Authority / Experience</option>
+            <option value="african_market">African Market Specific</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="writerGenBtn" onclick="generatePost()">Generate Post</button>
+        <div id="writer-output" style="margin-top:20px;display:none;">
+          <div class="card" style="border-color:var(--accent);">
+            <div class="card-header"><h3>Generated Content</h3>
+              <div style="display:flex;gap:8px;">
+                <button class="btn btn-secondary btn-sm" onclick="copyGenerated()">Copy</button>
+                <button class="btn btn-primary btn-sm" onclick="addGeneratedToQueue()">Add to Queue</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div id="writer-platform-badge" style="margin-bottom:8px;"></div>
+              <pre id="writer-result" style="white-space:pre-wrap;font-family:inherit;font-size:13px;line-height:1.65;background:var(--surface2);padding:16px;border-radius:8px;max-height:400px;overflow-y:auto;"></pre>
+              <div id="writer-meta" style="margin-top:12px;font-size:12px;color:var(--text2);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CREATIVE STUDIO PANEL -->
+  <div class="panel" id="panel-creative">
+    <div class="card">
+      <div class="card-header">
+        <h3>Creative Studio</h3>
+      </div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Platform</label>
+            <select class="form-control" id="creativePlatform">
+              <option value="linkedin">LinkedIn (1200x627)</option>
+              <option value="whatsapp_status">WhatsApp Status (1080x1920)</option>
+              <option value="instagram">Instagram (1080x1350)</option>
+              <option value="x">X (1024x512)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Aspect Ratio</label>
+            <select class="form-control" id="creativeAspect">
+              <option value="landscape">Landscape</option>
+              <option value="square">Square</option>
+              <option value="portrait">Portrait</option>
+              <option value="story">Story (9:16)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Image Description</label>
+          <textarea class="form-control" id="creativePrompt" rows="3" placeholder="Describe the image you want. E.g.: African trader analyzing charts on dual monitors, warm office lighting, focused expression"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pillar Style</label>
+          <select class="form-control" id="creativePillar">
+            <option value="">General</option>
+            <option value="Forex Education">Forex Education — Trading screens, data</option>
+            <option value="AI in Trading">AI in Trading — Tech workspace, cool blue</option>
+            <option value="African Markets">African Markets — Vibrant city, professionals</option>
+            <option value="Personal Story">Personal Story — Warm, candid, documentary</option>
+            <option value="Industry Commentary">Industry Commentary — Financial district</option>
+            <option value="EDUCATE">EDUCATE — Classroom, learning</option>
+            <option value="PROVE">PROVE — Results, confident trader</option>
+            <option value="INSPIRE">INSPIRE — Success, sunrise</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary" id="creativeGenBtn" onclick="generateImage()">Generate Image (DALL-E)</button>
+          <button class="btn btn-secondary" onclick="generateQueueImages()">Generate All Queue Images</button>
+        </div>
+        <div id="creative-output" style="margin-top:20px;display:none;">
+          <div class="card" style="border-color:var(--green);">
+            <div class="card-header"><h3>Generated Image</h3></div>
+            <div class="card-body" style="text-align:center;">
+              <img id="creative-result-img" style="max-width:100%;border-radius:8px;max-height:500px;">
+              <div id="creative-result-meta" style="margin-top:12px;font-size:12px;color:var(--text2);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <div class="card-header"><h3>Visual Flag Queue</h3></div>
+      <div class="card-body" id="visual-flag-content">
+        <div class="empty-state"><p>Posts with [VISUAL FLAG] markers will appear here for image generation.</p></div>
       </div>
     </div>
   </div>
@@ -512,6 +690,274 @@ DASHBOARD_HTML = """
       </div>
       <div class="card-body" id="analytics-detail">
         <div class="empty-state"><p>Click "Refresh Analytics" to load detailed insights.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BRAND REVIEW PANEL -->
+  <div class="panel" id="panel-brand">
+    <div class="card">
+      <div class="card-header">
+        <h3>Brand Voice Review</h3>
+      </div>
+      <div class="card-body">
+        <div class="form-group">
+          <label class="form-label">Content to Review</label>
+          <textarea class="form-control" id="brandReviewText" rows="6" placeholder="Paste your post content here to check it against brand guidelines..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Platform</label>
+          <select class="form-control" id="brandReviewPlatform" style="width:200px;">
+            <option value="linkedin">LinkedIn</option>
+            <option value="whatsapp_status">WhatsApp Status</option>
+            <option value="instagram">Instagram</option>
+            <option value="x">X / Twitter</option>
+            <option value="threads">Threads</option>
+            <option value="facebook">Facebook</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary" onclick="reviewContent()">Quick Review</button>
+          <button class="btn btn-secondary" onclick="deepReviewContent()">AI Deep Review</button>
+        </div>
+        <div id="brand-review-output" style="margin-top:20px;display:none;">
+          <div class="card" id="brand-review-card">
+            <div class="card-header">
+              <h3>Review Results</h3>
+              <span class="badge" id="brand-score-badge">—</span>
+            </div>
+            <div class="card-body" id="brand-review-results"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <div class="card-header"><h3>Brand Guidelines Quick Ref</h3></div>
+      <div class="card-body" style="font-size:13px;line-height:1.7;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div>
+            <div style="font-weight:600;color:var(--green);margin-bottom:8px;">Words We Use</div>
+            <div style="color:var(--text2);">traders, edge, smarter, AI-powered, data-driven, practical, real results, community</div>
+          </div>
+          <div>
+            <div style="font-weight:600;color:var(--red);margin-bottom:8px;">Words We Avoid</div>
+            <div style="color:var(--text2);">guru, expert, master class, forex lifestyle, lambo, rich quick, guaranteed profits, easy money</div>
+          </div>
+        </div>
+        <div style="margin-top:16px;padding:12px;background:var(--surface2);border-radius:8px;">
+          <div style="font-weight:600;color:var(--orange);margin-bottom:4px;">Required Disclaimer (Signals/Trades)</div>
+          <div style="color:var(--text2);font-size:12px;">Trading involves risk. Past performance doesn't guarantee future results.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLATFORMS PANEL -->
+  <div class="panel" id="panel-platforms">
+    <div class="card">
+      <div class="card-header"><h3>Platform Management</h3></div>
+      <div class="card-body" id="platforms-content">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;">
+          <!-- LinkedIn -->
+          <div class="post-card" style="border-color:var(--accent);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <div style="font-size:16px;font-weight:700;color:var(--accent2);">LinkedIn</div>
+              <span class="badge badge-green">ACTIVE</span>
+            </div>
+            <div style="font-size:13px;color:var(--text2);line-height:1.6;">
+              <div><strong>Brand:</strong> Dr. Aaron Akwu (Personal)</div>
+              <div><strong>Voice:</strong> First-person ("I built...", "I learned...")</div>
+              <div><strong>Frequency:</strong> 6x/week (Mon-Sat)</div>
+              <div><strong>Posting:</strong> Auto via Railway API</div>
+              <div style="margin-top:8px;"><strong>Pillars:</strong></div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;">
+                <span class="badge badge-blue">Education 30%</span>
+                <span class="badge badge-blue">AI 20%</span>
+                <span class="badge badge-blue">Africa 20%</span>
+                <span class="badge badge-blue">Personal 15%</span>
+                <span class="badge badge-blue">Commentary 15%</span>
+              </div>
+            </div>
+          </div>
+          <!-- WhatsApp Status -->
+          <div class="post-card" style="border-color:var(--purple);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <div style="font-size:16px;font-weight:700;color:var(--purple);">WhatsApp Status</div>
+              <span class="badge badge-green">ACTIVE</span>
+            </div>
+            <div style="font-size:13px;color:var(--text2);line-height:1.6;">
+              <div><strong>Brand:</strong> Gopipways (Company)</div>
+              <div><strong>Voice:</strong> Company ("We help...", "Gopipways...")</div>
+              <div><strong>Frequency:</strong> 5x/week</div>
+              <div><strong>Posting:</strong> Manual (Download &amp; Post)</div>
+              <div style="margin-top:8px;"><strong>Pillars:</strong></div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;">
+                <span class="badge" style="background:rgba(124,58,237,0.15);color:var(--purple);">EDUCATE 35%</span>
+                <span class="badge" style="background:rgba(124,58,237,0.15);color:var(--purple);">PROVE 25%</span>
+                <span class="badge" style="background:rgba(124,58,237,0.15);color:var(--purple);">INSPIRE 15%</span>
+                <span class="badge" style="background:rgba(124,58,237,0.15);color:var(--purple);">ENGAGE 15%</span>
+                <span class="badge" style="background:rgba(124,58,237,0.15);color:var(--purple);">CONVERT 10%</span>
+              </div>
+            </div>
+          </div>
+          <!-- Instagram -->
+          <div class="post-card" style="opacity:0.6;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <div style="font-size:16px;font-weight:700;">Instagram</div>
+              <span class="badge badge-orange">COMING SOON</span>
+            </div>
+            <div style="font-size:13px;color:var(--text2);">Company brand @gopipways. Visual-first content, carousels, reels. Will activate when API connected.</div>
+          </div>
+          <!-- X -->
+          <div class="post-card" style="opacity:0.6;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <div style="font-size:16px;font-weight:700;">X / Twitter</div>
+              <span class="badge badge-orange">COMING SOON</span>
+            </div>
+            <div style="font-size:13px;color:var(--text2);">Company brand. Short punchy takes, threads. 280 char limit. Will activate when API connected.</div>
+          </div>
+          <!-- Threads -->
+          <div class="post-card" style="opacity:0.6;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <div style="font-size:16px;font-weight:700;">Threads</div>
+              <span class="badge badge-orange">COMING SOON</span>
+            </div>
+            <div style="font-size:13px;color:var(--text2);">Company brand. Opinion-driven, conversational. 500 char limit. Will activate when API connected.</div>
+          </div>
+          <!-- Facebook -->
+          <div class="post-card" style="opacity:0.6;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <div style="font-size:16px;font-weight:700;">Facebook</div>
+              <span class="badge badge-orange">COMING SOON</span>
+            </div>
+            <div style="font-size:13px;color:var(--text2);">Company brand Gopipways. Community-building, questions. Will activate when API connected.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <div class="card-header"><h3>Target Personas</h3></div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;">
+          <div style="background:var(--surface2);padding:16px;border-radius:8px;">
+            <div style="font-weight:600;color:var(--green);margin-bottom:8px;">Curious Beginner (18-28)</div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.6;">University students &amp; young professionals. "Where do I start?" Wants free education, scared of scams. Reaches via Instagram, TikTok, WhatsApp.</div>
+          </div>
+          <div style="background:var(--surface2);padding:16px;border-radius:8px;">
+            <div style="font-weight:600;color:var(--orange);margin-bottom:8px;">Struggling Intermediate (24-35)</div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.6;">Has traded 6-18 months, inconsistent results. "I keep making the same mistakes." Needs AI tools, structured approach. Active on Twitter/X, LinkedIn.</div>
+          </div>
+          <div style="background:var(--surface2);padding:16px;border-radius:8px;">
+            <div style="font-weight:600;color:var(--purple);margin-bottom:8px;">Aspiring Professional (28-45)</div>
+            <div style="font-size:12px;color:var(--text2);line-height:1.6;">Working professionals building a side income. "Is this real?" Wants proof, professional tools. Active on LinkedIn, YouTube, WhatsApp.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOOK LIBRARY PANEL -->
+  <div class="panel" id="panel-hooks">
+    <div class="card">
+      <div class="card-header">
+        <h3>Hook Library (58 Formulas)</h3>
+        <select class="form-control" id="hookFilter" style="width:200px;" onchange="filterHooks()">
+          <option value="all">All Categories</option>
+          <option value="bold">Bold Claims &amp; Contrarian</option>
+          <option value="numbers">Numbers &amp; Data</option>
+          <option value="story">Story Hooks</option>
+          <option value="question">Question Hooks</option>
+          <option value="howto">How-To &amp; Education</option>
+          <option value="urgency">Urgency &amp; Timeliness</option>
+          <option value="authority">Authority &amp; Experience</option>
+          <option value="african">African Market Specific</option>
+          <option value="engagement">Engagement Drivers</option>
+        </select>
+      </div>
+      <div class="card-body" id="hooks-content" style="max-height:600px;overflow-y:auto;">
+        <div class="hook-section" data-cat="bold">
+          <div style="font-weight:600;color:var(--accent2);margin-bottom:8px;font-size:14px;">Bold Claims &amp; Contrarian Takes</div>
+          <div class="hook-item">"[Common belief]" is wrong. Here's why.</div>
+          <div class="hook-item">Unpopular opinion: [contrarian statement].</div>
+          <div class="hook-item">Stop [common practice]. It's costing you [result].</div>
+          <div class="hook-item">I've [done X] for [N years]. Most advice about it is wrong.</div>
+          <div class="hook-item">The biggest lie in [industry]: [statement].</div>
+          <div class="hook-item">Everyone talks about [X]. Nobody talks about [Y].</div>
+          <div class="hook-item">[X] is overrated. Here's what actually works.</div>
+          <div class="hook-item">I used to believe [X]. Then I saw the data.</div>
+        </div>
+        <div class="hook-section" data-cat="numbers">
+          <div style="font-weight:600;color:var(--green);margin:16px 0 8px;font-size:14px;">Numbers &amp; Data</div>
+          <div class="hook-item">[Number]% of [group] make this mistake.</div>
+          <div class="hook-item">I analyzed [N] [things]. Here's what I found.</div>
+          <div class="hook-item">[X] went from [small] to [big] in [time]. Here's how.</div>
+          <div class="hook-item">The [industry] market is worth $[N]. Most people are ignoring [segment].</div>
+          <div class="hook-item">[Number] things I learned after [experience].</div>
+          <div class="hook-item">It took me [time] to learn what I'm about to tell you in [short time].</div>
+          <div class="hook-item">[Number] [things] that changed my [area] forever.</div>
+        </div>
+        <div class="hook-section" data-cat="story">
+          <div style="font-weight:600;color:var(--orange);margin:16px 0 8px;font-size:14px;">Story Hooks</div>
+          <div class="hook-item">3 years ago, I [situation]. Today, [result]. Here's what changed.</div>
+          <div class="hook-item">I almost [gave up/failed] at [thing]. Then [turning point].</div>
+          <div class="hook-item">The best [advice/lesson] I ever got came from [unexpected source].</div>
+          <div class="hook-item">Nobody tells you this about [career/industry]: [insight].</div>
+          <div class="hook-item">I made every mistake in the book with [X]. So you don't have to.</div>
+          <div class="hook-item">My first [X] was a disaster. My [Nth] one [result].</div>
+          <div class="hook-item">A client asked me [question]. My answer surprised them.</div>
+        </div>
+        <div class="hook-section" data-cat="question">
+          <div style="font-weight:600;color:var(--purple);margin:16px 0 8px;font-size:14px;">Question Hooks</div>
+          <div class="hook-item">What if everything you know about [X] is outdated?</div>
+          <div class="hook-item">Why do [group] keep [failing at X]?</div>
+          <div class="hook-item">Have you ever wondered why [observation]?</div>
+          <div class="hook-item">What's the one thing holding back your [goal]?</div>
+          <div class="hook-item">Which side do you want to be on?</div>
+          <div class="hook-item">What would you do differently if you could start over?</div>
+        </div>
+        <div class="hook-section" data-cat="howto">
+          <div style="font-weight:600;color:var(--accent);margin:16px 0 8px;font-size:14px;">How-To &amp; Education</div>
+          <div class="hook-item">How to [achieve result] without [common pain point].</div>
+          <div class="hook-item">The exact [process/system] I use to [result].</div>
+          <div class="hook-item">[X] in [time period]: A step-by-step breakdown.</div>
+          <div class="hook-item">The [adjective] guide to [topic] nobody asked for (but everyone needs).</div>
+          <div class="hook-item">I've helped [N]+ people [achieve X]. Here's the pattern I see.</div>
+          <div class="hook-item">The simple framework that [improved result by N%].</div>
+          <div class="hook-item">Most people overcomplicate [X]. Here's the simple version.</div>
+        </div>
+        <div class="hook-section" data-cat="urgency">
+          <div style="font-weight:600;color:var(--red);margin:16px 0 8px;font-size:14px;">Urgency &amp; Timeliness</div>
+          <div class="hook-item">The [industry] just changed. Here's what it means for you.</div>
+          <div class="hook-item">[Event/news] happened yesterday. Nobody's talking about [angle].</div>
+          <div class="hook-item">In [time], [prediction]. Are you ready?</div>
+          <div class="hook-item">This week I noticed something that concerns me about [industry].</div>
+          <div class="hook-item">[Breaking development] — and why it matters for [audience].</div>
+        </div>
+        <div class="hook-section" data-cat="authority">
+          <div style="font-weight:600;margin:16px 0 8px;font-size:14px;">Authority &amp; Experience</div>
+          <div class="hook-item">After [N] years in [industry], here's what I know for sure.</div>
+          <div class="hook-item">I've [specific experience]. Here's the one thing most people get wrong.</div>
+          <div class="hook-item">My team and I have helped [N]+ [clients] [result].</div>
+          <div class="hook-item">This is what separates [beginners] from [experts] in [field].</div>
+          <div class="hook-item">The hardest lesson [industry] taught me.</div>
+        </div>
+        <div class="hook-section" data-cat="african">
+          <div style="font-weight:600;color:var(--green);margin:16px 0 8px;font-size:14px;">African Market Specific</div>
+          <div class="hook-item">Africa's [industry] is worth $[N]. The opportunity is massive — and misunderstood.</div>
+          <div class="hook-item">What I wish I knew before starting [business] in [African country].</div>
+          <div class="hook-item">The biggest gap in [African industry] isn't talent — it's [X].</div>
+          <div class="hook-item">Why [African city/country] is becoming the [superlative] for [industry].</div>
+          <div class="hook-item">[Global trend] is hitting Africa differently. Here's why.</div>
+          <div class="hook-item">I hear this every week from African [traders/entrepreneurs]: "[quote]."</div>
+          <div class="hook-item">The future of [industry] in Africa isn't [X]. It's [Y].</div>
+        </div>
+        <div class="hook-section" data-cat="engagement">
+          <div style="font-weight:600;color:var(--accent2);margin:16px 0 8px;font-size:14px;">Engagement Drivers</div>
+          <div class="hook-item">Agree or disagree: [statement]. Tell me why.</div>
+          <div class="hook-item">Hot take: [opinion]. Change my mind.</div>
+          <div class="hook-item">I'll go first: [personal share]. Your turn.</div>
+          <div class="hook-item">What's your biggest [challenge/win] this [week/month]?</div>
+        </div>
       </div>
     </div>
   </div>
@@ -649,10 +1095,16 @@ DASHBOARD_HTML = """
       <div class="form-group">
         <label class="form-label">Content Pillar</label>
         <select class="form-control" id="postPillar">
-          <option value="Education">Education</option>
-          <option value="Authority">Authority</option>
-          <option value="Storytelling">Storytelling</option>
-          <option value="Engagement">Engagement</option>
+          <option value="Forex Education">Forex Education</option>
+          <option value="AI in Trading">AI in Trading</option>
+          <option value="African Markets & Financial Literacy">African Markets</option>
+          <option value="Personal Story & Behind-the-Scenes">Personal Story</option>
+          <option value="Industry Commentary">Industry Commentary</option>
+          <option value="EDUCATE">EDUCATE (WhatsApp)</option>
+          <option value="PROVE">PROVE (WhatsApp)</option>
+          <option value="INSPIRE">INSPIRE (WhatsApp)</option>
+          <option value="ENGAGE">ENGAGE (WhatsApp)</option>
+          <option value="CONVERT">CONVERT (WhatsApp)</option>
         </select>
       </div>
       <div class="form-group">
@@ -1087,6 +1539,226 @@ function loadEngagement() {
 loadEngagement();
 // Load health on page load
 loadHealth();
+
+// ========== CALENDAR TAB ==========
+function loadCalendar() {
+  const m = document.getElementById('calMonth').value;
+  const y = document.getElementById('calYear').value;
+  document.getElementById('calendar-content').innerHTML = '<p style="color:var(--text2);">Loading calendar...</p>';
+  apiCall('/api/calendar/' + y + '/' + m).then(d => {
+    if (!d.entries || !d.entries.length) {
+      document.getElementById('calendar-content').innerHTML = '<div class="empty-state"><p>No calendar found for this month. Click "Generate New" to create one.</p></div>';
+      return;
+    }
+    let html = '<table><thead><tr><th>#</th><th>Week</th><th>Day</th><th>Platform</th><th>Pillar</th><th>Format</th><th>Topic</th><th>Status</th></tr></thead><tbody>';
+    d.entries.forEach((e, i) => {
+      const statusClass = e.status === 'published' ? 'badge-green' : e.status === 'written' ? 'badge-blue' : e.status === 'scheduled' ? 'badge-orange' : 'badge-yellow';
+      html += '<tr><td>' + (i+1) + '</td><td>W' + (e.week||'?') + '</td><td>' + (e.day||'') + '</td>';
+      html += '<td>' + (e.platform||'') + '</td><td>' + (e.pillar||'') + '</td><td>' + (e.format||'text') + '</td>';
+      html += '<td style="max-width:250px;">' + (e.topic||'') + '</td>';
+      html += '<td><span class="badge ' + statusClass + '">' + (e.status||'planned') + '</span></td></tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('calendar-content').innerHTML = html;
+    // Summary
+    if (d.summary) {
+      const s = d.summary;
+      let sHtml = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;">';
+      sHtml += '<div style="text-align:center;"><div style="font-size:24px;font-weight:700;color:var(--accent2);">' + (s.total||0) + '</div><div style="font-size:12px;color:var(--text2);">Total Posts</div></div>';
+      if (s.by_platform) Object.entries(s.by_platform).forEach(([k,v]) => {
+        sHtml += '<div style="text-align:center;"><div style="font-size:20px;font-weight:600;">' + v + '</div><div style="font-size:12px;color:var(--text2);">' + k + '</div></div>';
+      });
+      sHtml += '</div>';
+      document.getElementById('calendar-summary').innerHTML = sHtml;
+    }
+  }).catch(e => {
+    document.getElementById('calendar-content').innerHTML = '<p style="color:var(--red);">Error loading calendar: ' + e + '</p>';
+  });
+}
+
+function generateCalendar() {
+  const m = document.getElementById('calMonth').value;
+  const y = document.getElementById('calYear').value;
+  if (!confirm('Generate a new content calendar for ' + y + '-' + m + '? This may take 30-60 seconds.')) return;
+  document.getElementById('calendar-content').innerHTML = '<p style="color:var(--text2);">Generating calendar with AI... This may take a minute.</p>';
+  apiCall('/api/calendar/generate', 'POST', {month: parseInt(m), year: parseInt(y)}).then(d => {
+    if (d.success) {
+      showToast('Calendar generated! ' + (d.count||0) + ' posts planned.', 'success');
+      loadCalendar();
+    } else {
+      showToast('Error: ' + (d.error || d.message || 'Unknown'), 'error');
+      document.getElementById('calendar-content').innerHTML = '<p style="color:var(--red);">Generation failed. Try again.</p>';
+    }
+  }).catch(e => showToast('Error: ' + e, 'error'));
+}
+
+// ========== AI WRITER TAB ==========
+let _lastGenerated = null;
+
+function updateWriterPillars() {
+  const platform = document.getElementById('writerPlatform').value;
+  const sel = document.getElementById('writerPillar');
+  if (platform === 'whatsapp_status') {
+    sel.innerHTML = '<option value="">Auto-select</option><option value="EDUCATE">EDUCATE</option><option value="PROVE">PROVE</option><option value="INSPIRE">INSPIRE</option><option value="ENGAGE">ENGAGE</option><option value="CONVERT">CONVERT</option>';
+  } else {
+    sel.innerHTML = '<option value="">Auto-select</option><option value="Forex Education">Forex Education</option><option value="AI in Trading">AI in Trading</option><option value="African Markets & Financial Literacy">African Markets</option><option value="Personal Story & Behind-the-Scenes">Personal Story</option><option value="Industry Commentary">Industry Commentary</option>';
+  }
+}
+
+function generatePost() {
+  const btn = document.getElementById('writerGenBtn');
+  btn.disabled = true; btn.textContent = 'Generating...';
+  const data = {
+    platform: document.getElementById('writerPlatform').value,
+    pillar: document.getElementById('writerPillar').value,
+    topic: document.getElementById('writerTopic').value,
+    hook_style: document.getElementById('writerHook').value
+  };
+  apiCall('/api/writer/generate', 'POST', data).then(d => {
+    btn.disabled = false; btn.textContent = 'Generate Post';
+    if (d.success && d.post) {
+      _lastGenerated = d.post;
+      document.getElementById('writer-output').style.display = 'block';
+      document.getElementById('writer-result').textContent = d.post.text || d.post.content || '';
+      const plat = d.post.platform || data.platform;
+      document.getElementById('writer-platform-badge').innerHTML = '<span class="badge badge-blue">' + plat + '</span> <span class="badge badge-green">' + (d.post.pillar||'') + '</span>';
+      let meta = '';
+      if (d.post.char_count) meta += d.post.char_count + ' chars';
+      if (d.post.hook) meta += ' | Hook: ' + d.post.hook;
+      if (d.post.visual_direction) meta += ' | Visual: ' + d.post.visual_direction;
+      document.getElementById('writer-meta').textContent = meta;
+    } else {
+      showToast('Error: ' + (d.error || 'Generation failed'), 'error');
+    }
+  }).catch(e => { btn.disabled = false; btn.textContent = 'Generate Post'; showToast('Error: ' + e, 'error'); });
+}
+
+function copyGenerated() {
+  const text = document.getElementById('writer-result').textContent;
+  navigator.clipboard.writeText(text).then(() => showToast('Copied!', 'success'));
+}
+
+function addGeneratedToQueue() {
+  if (!_lastGenerated) { showToast('Nothing to add', 'error'); return; }
+  const data = {
+    content: _lastGenerated.text || _lastGenerated.content,
+    pillar: _lastGenerated.pillar || 'General',
+    platform: _lastGenerated.platform || 'linkedin',
+    image_prompt: _lastGenerated.image_prompt || _lastGenerated.visual_direction || ''
+  };
+  apiCall('/api/add-post', 'POST', data).then(d => {
+    if (d.status === 'ok') showToast('Added to queue!', 'success');
+    else showToast('Error: ' + (d.error || 'Unknown'), 'error');
+  });
+}
+
+// ========== CREATIVE STUDIO TAB ==========
+function generateImage() {
+  const btn = document.getElementById('creativeGenBtn');
+  btn.disabled = true; btn.textContent = 'Generating...';
+  const data = {
+    prompt: document.getElementById('creativePrompt').value,
+    platform: document.getElementById('creativePlatform').value,
+    aspect: document.getElementById('creativeAspect').value,
+    pillar: document.getElementById('creativePillar').value
+  };
+  if (!data.prompt.trim()) { showToast('Enter an image description', 'error'); btn.disabled = false; btn.textContent = 'Generate Image (DALL-E)'; return; }
+  apiCall('/api/creative/generate', 'POST', data).then(d => {
+    btn.disabled = false; btn.textContent = 'Generate Image (DALL-E)';
+    if (d.success && d.image_path) {
+      document.getElementById('creative-output').style.display = 'block';
+      const fname = d.image_path.split('/').pop();
+      document.getElementById('creative-result-img').src = '/images/' + fname;
+      document.getElementById('creative-result-meta').textContent = 'Platform: ' + data.platform + ' | Size: ' + (d.size||'auto') + ' | Pillar: ' + (data.pillar||'general');
+    } else {
+      showToast('Error: ' + (d.error || 'Image generation failed'), 'error');
+    }
+  }).catch(e => { btn.disabled = false; btn.textContent = 'Generate Image (DALL-E)'; showToast('Error: ' + e, 'error'); });
+}
+
+function generateQueueImages() {
+  showToast('Generating images for queue...', 'info');
+  apiCall('/api/generate-images', 'POST').then(d => {
+    if (d.success) showToast('Image generation started! Check System tab for progress.', 'success');
+    else showToast('Error: ' + (d.message || 'Unknown'), 'error');
+  });
+}
+
+// ========== BRAND REVIEW TAB ==========
+function reviewContent() {
+  const text = document.getElementById('brandReviewText').value;
+  const platform = document.getElementById('brandReviewPlatform').value;
+  if (!text.trim()) { showToast('Enter content to review', 'error'); return; }
+  apiCall('/api/brand/review', 'POST', {text, platform}).then(d => {
+    if (d.success) showBrandResults(d.review);
+    else showToast('Error: ' + (d.error || 'Review failed'), 'error');
+  });
+}
+
+function deepReviewContent() {
+  const text = document.getElementById('brandReviewText').value;
+  const platform = document.getElementById('brandReviewPlatform').value;
+  if (!text.trim()) { showToast('Enter content to review', 'error'); return; }
+  showToast('Running AI deep review...', 'info');
+  apiCall('/api/brand/deep-review', 'POST', {text, platform}).then(d => {
+    if (d.success) showBrandResults(d.review);
+    else showToast('Error: ' + (d.error || 'Review failed'), 'error');
+  });
+}
+
+function showBrandResults(r) {
+  document.getElementById('brand-review-output').style.display = 'block';
+  const scoreBadge = document.getElementById('brand-score-badge');
+  const score = r.score || 0;
+  scoreBadge.textContent = score + '/100';
+  scoreBadge.className = 'badge ' + (score >= 80 ? 'badge-green' : score >= 60 ? 'badge-orange' : 'badge-red');
+  let html = '';
+  // Issues
+  if (r.issues && r.issues.length) {
+    html += '<div style="margin-bottom:16px;"><div style="font-weight:600;margin-bottom:8px;">Issues Found</div>';
+    r.issues.forEach(iss => {
+      const col = iss.severity === 'high' ? 'var(--red)' : iss.severity === 'medium' ? 'var(--orange)' : 'var(--text2)';
+      html += '<div style="padding:10px;background:var(--surface2);border-radius:8px;margin-bottom:6px;border-left:3px solid ' + col + ';">';
+      html += '<span class="badge" style="background:rgba(248,113,113,0.1);color:' + col + ';">' + (iss.severity||'info') + '</span> ';
+      html += '<span style="font-size:13px;">' + (iss.detail || iss.type || '') + '</span>';
+      if (iss.suggestion) html += '<div style="font-size:12px;color:var(--text2);margin-top:4px;">Suggestion: ' + iss.suggestion + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+  // Strengths
+  if (r.strengths && r.strengths.length) {
+    html += '<div style="margin-bottom:16px;"><div style="font-weight:600;margin-bottom:8px;">Strengths</div>';
+    r.strengths.forEach(s => {
+      html += '<div style="padding:8px 12px;background:rgba(45,212,168,0.1);border-radius:8px;margin-bottom:4px;font-size:13px;color:var(--green);">' + s + '</div>';
+    });
+    html += '</div>';
+  }
+  // Meta
+  html += '<div style="display:flex;gap:16px;font-size:12px;color:var(--text2);flex-wrap:wrap;">';
+  html += '<span>Platform fit: <strong>' + (r.platform_fit||'—') + '</strong></span>';
+  html += '<span>Chars: <strong>' + (r.char_count||0) + '</strong></span>';
+  html += '<span>Within limit: <strong>' + (r.within_limit ? 'Yes' : 'No') + '</strong></span>';
+  html += '<span>Has CTA: <strong>' + (r.has_cta ? 'Yes' : 'No') + '</strong></span>';
+  html += '<span>Readability: <strong>' + (r.readability||'—') + '</strong></span>';
+  html += '</div>';
+  document.getElementById('brand-review-results').innerHTML = html;
+}
+
+// ========== HOOK LIBRARY TAB ==========
+function filterHooks() {
+  const cat = document.getElementById('hookFilter').value;
+  document.querySelectorAll('.hook-section').forEach(s => {
+    s.style.display = (cat === 'all' || s.dataset.cat === cat) ? 'block' : 'none';
+  });
+}
+
+// Click hook to copy
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('hook-item')) {
+    navigator.clipboard.writeText(e.target.textContent.trim()).then(() => showToast('Hook copied!', 'success'));
+  }
+});
 </script>
 </body>
 </html>
@@ -2239,4 +2911,304 @@ def api_engagement_stats():
         })
     except Exception as e:
         logger.error(f"Engagement stats failed: {e}")
+        return jsonify({"success": False, "error": str(e)})
+
+
+# ═══════════════════════════════════════════════════════════════
+# SOCIAL HUB API — Calendar, AI Writer, Creative Studio, Brand Review
+# ═══════════════════════════════════════════════════════════════
+
+# --- Calendar API ---
+
+@app.route("/api/calendar/<int:year>/<int:month>", methods=["GET"])
+def api_calendar_load(year, month):
+    """Load content calendar for a given month/year."""
+    try:
+        from calendar_manager import load_calendar, get_calendar_summary
+        entries = load_calendar(month, year)
+        summary = get_calendar_summary(month, year)
+        return jsonify({
+            "success": True,
+            "entries": entries,
+            "summary": summary,
+            "month": month,
+            "year": year
+        })
+    except Exception as e:
+        logger.error(f"Calendar load failed: {e}")
+        return jsonify({"success": False, "error": str(e), "entries": [], "summary": {}})
+
+
+@app.route("/api/calendar/generate", methods=["POST"])
+def api_calendar_generate():
+    """Generate a new content calendar using AI."""
+    try:
+        data = request.json or {}
+        month = data.get("month", 5)
+        year = data.get("year", 2026)
+        platforms = data.get("platforms", ["linkedin", "whatsapp_status"])
+        goal = data.get("goal", "engagement")
+
+        from calendar_manager import create_monthly_calendar, save_calendar, get_calendar_summary
+        entries = create_monthly_calendar(month, year, platforms=platforms, goal=goal)
+        save_calendar(month, year, entries)
+        summary = get_calendar_summary(month, year)
+
+        return jsonify({
+            "success": True,
+            "count": len(entries),
+            "summary": summary,
+            "message": f"Generated {len(entries)} posts for {month}/{year}"
+        })
+    except Exception as e:
+        logger.error(f"Calendar generation failed: {e}")
+        return jsonify({"success": False, "error": str(e)})
+
+
+@app.route("/api/calendar/entry/<entry_id>", methods=["POST"])
+def api_calendar_update_entry(entry_id):
+    """Update a calendar entry."""
+    try:
+        data = request.json or {}
+        month = data.pop("month", 5)
+        year = data.pop("year", 2026)
+
+        from calendar_manager import update_entry
+        success = update_entry(month, year, entry_id, data)
+        if success:
+            return jsonify({"success": True, "message": f"Entry {entry_id} updated"})
+        else:
+            return jsonify({"success": False, "error": "Entry not found"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+
+# --- AI Writer API ---
+
+@app.route("/api/writer/generate", methods=["POST"])
+def api_writer_generate():
+    """Generate a single post using AI for any platform."""
+    try:
+        data = request.json or {}
+        platform = data.get("platform", "linkedin")
+        pillar = data.get("pillar", "")
+        topic = data.get("topic", "")
+        hook_style = data.get("hook_style", "")
+
+        if platform == "whatsapp_status":
+            from platform_manager import generate_whatsapp_status
+            result = generate_whatsapp_status(pillar=pillar or None, topic=topic or None)
+            if result:
+                return jsonify({
+                    "success": True,
+                    "post": {
+                        "text": result.get("text", ""),
+                        "platform": "whatsapp_status",
+                        "pillar": result.get("pillar", pillar),
+                        "visual_direction": result.get("visual_direction", ""),
+                        "hashtags": result.get("hashtags", []),
+                        "char_count": len(result.get("text", "")),
+                        "hook": result.get("hook", ""),
+                    }
+                })
+            else:
+                return jsonify({"success": False, "error": "WhatsApp generation failed"})
+
+        elif platform == "linkedin":
+            # Use existing content engine for LinkedIn
+            from content_engine import generate_post, load_full_context
+            context = load_full_context()
+
+            post_data = generate_post(
+                pillar=pillar or None,
+                optimize_from=None,
+                existing_queue=context.get("existing_queue", []),
+                post_history=context.get("post_history", []),
+                analytics_data=context.get("analytics_data", {}),
+                comment_insights=context.get("comment_insights", ""),
+            )
+
+            if post_data:
+                text = post_data.get("text", "")
+                return jsonify({
+                    "success": True,
+                    "post": {
+                        "text": text,
+                        "platform": "linkedin",
+                        "pillar": post_data.get("pillar", pillar),
+                        "hook": post_data.get("hook", ""),
+                        "image_prompt": post_data.get("image_prompt", ""),
+                        "visual_direction": post_data.get("image_prompt", ""),
+                        "hashtags": post_data.get("hashtags", []),
+                        "char_count": len(text),
+                        "template_used": post_data.get("template_used", ""),
+                    }
+                })
+            else:
+                return jsonify({"success": False, "error": "LinkedIn generation failed"})
+        else:
+            return jsonify({"success": False, "error": f"Platform '{platform}' is Coming Soon — not yet active"})
+
+    except Exception as e:
+        logger.error(f"Writer generate failed: {e}")
+        return jsonify({"success": False, "error": str(e)})
+
+
+# --- Creative Studio API ---
+
+@app.route("/api/creative/generate", methods=["POST"])
+def api_creative_generate():
+    """Generate an image using DALL-E for any platform."""
+    try:
+        data = request.json or {}
+        prompt = data.get("prompt", "")
+        platform = data.get("platform", "linkedin")
+        aspect = data.get("aspect", "landscape")
+        pillar = data.get("pillar", "")
+
+        if not prompt.strip():
+            return jsonify({"success": False, "error": "Image prompt is required"})
+
+        from creative_studio import generate_image
+        result = generate_image(prompt, platform=platform, aspect=aspect, pillar=pillar)
+
+        if result and result.get("path"):
+            return jsonify({
+                "success": True,
+                "image_path": result["path"],
+                "prompt_used": result.get("prompt_used", prompt),
+                "platform": platform,
+                "size": str(result.get("size", ""))
+            })
+        else:
+            return jsonify({"success": False, "error": "Image generation failed — check OPENAI_API_KEY"})
+
+    except Exception as e:
+        logger.error(f"Creative generate failed: {e}")
+        return jsonify({"success": False, "error": str(e)})
+
+
+@app.route("/api/creative/visual-flags", methods=["GET"])
+def api_visual_flags():
+    """Get posts that have [VISUAL FLAG] markers and need images."""
+    try:
+        queue = load_json(CONTENT_QUEUE_FILE, [])
+        flagged = []
+        for i, post in enumerate(queue):
+            text = post.get("text", post.get("content", ""))
+            has_flag = "[VISUAL FLAG]" in text or "[visual flag]" in text.lower()
+            no_image = not post.get("image_path")
+            if has_flag and no_image:
+                flagged.append({
+                    "index": i,
+                    "pillar": post.get("pillar", ""),
+                    "text_preview": text[:150],
+                    "image_prompt": post.get("image_prompt", ""),
+                })
+        return jsonify({"success": True, "flagged": flagged, "count": len(flagged)})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+
+# --- Brand Review API ---
+
+@app.route("/api/brand/review", methods=["POST"])
+def api_brand_review():
+    """Quick brand review (rule-based)."""
+    try:
+        data = request.json or {}
+        text = data.get("text", "")
+        platform = data.get("platform", "linkedin")
+
+        if not text.strip():
+            return jsonify({"success": False, "error": "Text is required"})
+
+        from brand_reviewer import review_content
+        result = review_content(text, platform)
+
+        # Convert dataclass to dict if needed
+        if hasattr(result, '__dict__'):
+            review_dict = {}
+            for key in ['score', 'platform_fit', 'voice_match', 'word_count',
+                        'char_count', 'within_limit', 'hashtag_count', 'has_cta', 'readability']:
+                val = getattr(result, key, None)
+                if val is not None:
+                    # Convert enums to strings
+                    review_dict[key] = val.value if hasattr(val, 'value') else val
+            # Handle issues and strengths
+            issues = getattr(result, 'issues', [])
+            review_dict['issues'] = []
+            for iss in issues:
+                if hasattr(iss, '__dict__'):
+                    d = {}
+                    for k in ['severity', 'type', 'detail', 'suggestion']:
+                        v = getattr(iss, k, '')
+                        d[k] = v.value if hasattr(v, 'value') else str(v)
+                    review_dict['issues'].append(d)
+                else:
+                    review_dict['issues'].append(iss)
+            review_dict['strengths'] = list(getattr(result, 'strengths', []))
+        else:
+            review_dict = result
+
+        return jsonify({"success": True, "review": review_dict})
+    except Exception as e:
+        logger.error(f"Brand review failed: {e}")
+        return jsonify({"success": False, "error": str(e)})
+
+
+@app.route("/api/brand/deep-review", methods=["POST"])
+def api_brand_deep_review():
+    """AI-powered deep brand review using Claude."""
+    try:
+        data = request.json or {}
+        text = data.get("text", "")
+        platform = data.get("platform", "linkedin")
+
+        if not text.strip():
+            return jsonify({"success": False, "error": "Text is required"})
+
+        from brand_reviewer import deep_review
+        result = deep_review(text, platform)
+
+        # Convert to dict
+        if hasattr(result, '__dict__'):
+            review_dict = {}
+            for key in ['score', 'platform_fit', 'voice_match', 'word_count',
+                        'char_count', 'within_limit', 'hashtag_count', 'has_cta', 'readability']:
+                val = getattr(result, key, None)
+                if val is not None:
+                    review_dict[key] = val.value if hasattr(val, 'value') else val
+            issues = getattr(result, 'issues', [])
+            review_dict['issues'] = []
+            for iss in issues:
+                if hasattr(iss, '__dict__'):
+                    d = {}
+                    for k in ['severity', 'type', 'detail', 'suggestion']:
+                        v = getattr(iss, k, '')
+                        d[k] = v.value if hasattr(v, 'value') else str(v)
+                    review_dict['issues'].append(d)
+                else:
+                    review_dict['issues'].append(iss)
+            review_dict['strengths'] = list(getattr(result, 'strengths', []))
+        else:
+            review_dict = result
+
+        return jsonify({"success": True, "review": review_dict})
+    except Exception as e:
+        logger.error(f"Deep brand review failed: {e}")
+        return jsonify({"success": False, "error": str(e)})
+
+
+# --- Platform API ---
+
+@app.route("/api/platforms", methods=["GET"])
+def api_platforms():
+    """Get all platform configurations."""
+    try:
+        from platform_manager import get_all_platforms, get_platform_summary
+        platforms = get_all_platforms()
+        summary = get_platform_summary()
+        return jsonify({"success": True, "platforms": platforms, "summary": summary})
+    except Exception as e:
         return jsonify({"success": False, "error": str(e)})
