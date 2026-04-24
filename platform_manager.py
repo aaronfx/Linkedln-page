@@ -379,7 +379,7 @@ def generate_whatsapp_status(
             logger.warning("config.py not found, using provided API key or environment")
             effective_api_key = api_key
             claude_settings = {
-                "model": "claude-3-5-sonnet-20241022",
+                "model": "claude-sonnet-4-20250514",
                 "max_tokens": 1000,
                 "temperature": 0.8,
             }
@@ -435,7 +435,7 @@ Hashtags should be 3-5 relevant tags for WhatsApp.
 
         # Call Claude API
         response = client.messages.create(
-            model=claude_settings.get("model", "claude-3-5-sonnet-20241022"),
+            model=claude_settings.get("model", "claude-sonnet-4-20250514"),
             max_tokens=claude_settings.get("max_tokens", 1000),
             temperature=claude_settings.get("temperature", 0.8),
             messages=[

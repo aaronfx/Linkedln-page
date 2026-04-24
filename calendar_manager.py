@@ -184,17 +184,18 @@ Return ONLY a valid JSON array of calendar entries following the schema above. N
         client = _get_client()
         response = client.messages.create(
             model=CLAUDE_SETTINGS["model"],
-            max_tokens=CLAUDE_SETTINGS.get("max_tokens_analysis", 4000),
+            max_tokens=8000,  # Needs to be large enough for full month of posts as JSON
             temperature=CLAUDE_SETTINGS.get("temperature_analysis", 0.3),
             messages=[{"role": "user", "content": prompt}],
         )
 
         response_text = response.content[0].text
+        logger.info(f"Claude response length: {len(response_text)} chars, stop_reason: {response.stop_reason}")
 
         # Try to extract JSON from response
         json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
         if not json_match:
-            logger.error(f"Could not find JSON array in Claude response: {response_text[:200]}")
+            logger.error(f"Could not find JSON array in Claude response: {response_text[:500]}")
             raise ValueError("Claude response did not contain valid JSON array")
 
         entries = json.loads(json_match.group())
@@ -207,6 +208,7 @@ Return ONLY a valid JSON array of calendar entries following the schema above. N
 
     except json.JSONDecodeError as e:
         logger.error(f"Failed to parse Claude response as JSON: {e}")
+        logger.error(f"Raw response (first 500 chars): {response_text[:500]}")
         raise
     except Exception as e:
         logger.error(f"Error calling Claude API: {e}")
@@ -471,10 +473,12 @@ def _validate_entry(entry: Dict[str, Any]) -> Dict[str, Any]:
     """
     validated = {}
 
-    # ID validation
-    if "id" not in entry or not entry["id"]:
-        raise ValueError("Entry missing required 'id' field")
-    validated["id"] = entry["id"]
+    # ID validation — auto-generate if missing
+    entry_id = entry.get("id", "")
+    if not entry_id:
+        import uuid
+        entry_id = f"post_{uuid.uuid4().hex[:6]}"
+    validated["id"] = entry_id
 
     # Week validation
     week = entry.get("week", 1)
@@ -517,10 +521,10 @@ def _validate_entry(entry: Dict[str, Any]) -> Dict[str, Any]:
         objective = "engagement"
     validated["objective"] = objective
 
-    # Topic validation
+    # Topic validation — use fallback if missing
     topic = entry.get("topic", "").strip()
     if not topic:
-        raise ValueError("Entry missing required 'topic' field")
+        topic = f"{validated.get('pillar', 'General')} post"
     validated["topic"] = topic
 
     # Angle validation
