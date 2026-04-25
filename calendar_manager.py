@@ -79,11 +79,18 @@ def _get_pillar_names(platform: str) -> List[str]:
     if platform == "linkedin":
         return [p["name"] for p in CONTENT_PILLARS]
     elif platform == "whatsapp_status":
-        # WhatsApp uses different pillar framework
         return ["Educate", "Prove", "Inspire", "Engage", "Convert"]
+    elif platform in ("instagram", "facebook"):
+        return [
+            "Education / Trading Tips",
+            "African Markets / Financial Literacy",
+            "AI in Trading / Product",
+            "Behind the Scenes / Personal Brand",
+            "Social Proof / Results",
+            "Engagement / Community",
+        ]
     else:
         return [p["name"] for p in CONTENT_PILLARS]
-
 
 def _generate_calendar_with_claude(
     month: int, year: int, platforms: List[str], goal: Optional[str]
@@ -139,6 +146,46 @@ def _generate_calendar_with_claude(
             "notes": "Short, snappy content. 15-30 seconds when read. Use emojis.",
         })
 
+    if "instagram" in platforms:
+        instagram_pillars = _get_pillar_names("instagram")
+        platform_specs.append({
+            "platform": "instagram",
+            "voice": "Company (Gopipways brand — 'We help traders...', 'At Gopipways...')",
+            "format": "Short visual caption (150-280 chars) + 6-10 hashtags. Hook on first line. One CTA. Needs an image.",
+            "frequency": "4x per week",
+            "pillars": instagram_pillars,
+            "pillar_weights": {
+                "Education / Trading Tips": "35%",
+                "African Markets / Financial Literacy": "20%",
+                "AI in Trading / Product": "15%",
+                "Behind the Scenes / Personal Brand": "15%",
+                "Social Proof / Results": "10%",
+                "Engagement / Community": "5%",
+            },
+            "char_limit": 2200,
+            "notes": "Visual platform — each entry needs an image_prompt for AI image generation. Caption sits under the visual.",
+        })
+
+    if "facebook" in platforms:
+        facebook_pillars = _get_pillar_names("facebook")
+        platform_specs.append({
+            "platform": "facebook",
+            "voice": "Company (Gopipways brand — conversational, community-building tone)",
+            "format": "300-600 char post. Conversational prose. Always ends with a question to drive comments. 2-4 hashtags only.",
+            "frequency": "4x per week",
+            "pillars": facebook_pillars,
+            "pillar_weights": {
+                "Education / Trading Tips": "35%",
+                "African Markets / Financial Literacy": "20%",
+                "AI in Trading / Product": "15%",
+                "Behind the Scenes / Personal Brand": "15%",
+                "Social Proof / Results": "10%",
+                "Engagement / Community": "5%",
+            },
+            "char_limit": 63206,
+            "notes": "Can be text-only (no image needed). More room than Instagram but still keep it under 600 chars for best engagement.",
+        })
+
     prompt = f"""Generate a complete monthly content calendar for {month}/{year}.
 
 PROFILE:
@@ -157,19 +204,21 @@ REQUIREMENTS:
 2. Distribute across all platforms specified
 3. Spread pillars evenly - NO clustering of same pillar on consecutive days
 4. For each entry, assign a specific day (Monday-Saturday for LinkedIn, 5 days/week for WhatsApp)
-5. LinkedIn: 6 posts/week, WhatsApp: 5 posts/week
+5. LinkedIn: 6 posts/week, WhatsApp: 5 posts/week, Instagram: 4 posts/week, Facebook: 4 posts/week
 6. Cross-platform coordination: When the same topic appears on multiple platforms, use different angles
 7. Each entry must include:
    - Unique ID (post_001, post_002, etc.)
    - Week (1-4)
    - Day (Monday, Tuesday, etc.)
-   - Platform (linkedin or whatsapp_status)
+   - Platform (linkedin, instagram, facebook, or whatsapp_status)
    - Pillar (from the specified list)
    - Format (text, image, carousel, reel, thread, poll)
    - Objective (awareness, engagement, enquiries, authority)
    - Topic (2-10 words describing the topic)
    - Angle (Hook or unique angle - 1 sentence)
    - Visual direction (Only if format is image/carousel/reel)
+   - Image prompt (DALL-E prompt for AI image generation — Instagram entries only, empty string for other platforms)
+   - Image URL (empty string — filled when image is actually generated)
    - Cross-platform (Array of related post IDs on other platforms)
    - Status (always "planned" for new entries)
    - Content (empty string for new entries)
@@ -242,7 +291,7 @@ def create_monthly_calendar(
         raise ValueError(f"Invalid year: {year}")
 
     if platforms is None:
-        platforms = ["linkedin", "whatsapp_status"]
+        platforms = ["linkedin", "instagram", "facebook", "whatsapp_status"]
 
     # Generate entries with Claude
     entries = _generate_calendar_with_claude(month, year, platforms, goal)
