@@ -20,11 +20,17 @@ LINKEDIN_CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET", "your-client-secret
 LINKEDIN_ACCESS_TOKEN = os.getenv("LINKEDIN_ACCESS_TOKEN", "your-access-token-here")
 LINKEDIN_PERSON_URN = os.getenv("LINKEDIN_PERSON_URN", "your-person-urn-here")  # e.g., "urn:li:person:ABC123"
 
+# Facebook Graph API credentials
+# Get these from https://developers.facebook.com/tools/explorer/
+FACEBOOK_PAGE_ACCESS_TOKEN = os.getenv("FACEBOOK_PAGE_ACCESS_TOKEN", "your-fb-page-token-here")
+FACEBOOK_PAGE_ID = os.getenv("FACEBOOK_PAGE_ID", "516456828208394")  # Gopipways page
+
+# ─── Profile Configuration ──────────────────────────────────
+
 # Dashboard Authentication (set DASHBOARD_PASSWORD env var on Railway)
 DASHBOARD_USERNAME = os.getenv("DASHBOARD_USERNAME", "admin")
 DASHBOARD_PASSWORD = os.getenv("DASHBOARD_PASSWORD", "")  # Empty = no auth (dev mode)
 
-# Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Profile Configuration Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 PROFILE = {
     "name": "Dr. Aaron Akwu",
     "title": "Forex Educator | Built Africa's #1 AI-Powered Forex Academy",

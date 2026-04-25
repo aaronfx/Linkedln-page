@@ -2126,6 +2126,103 @@ def api_oauth_callback():
         return jsonify({"success": True, "access_token": new_token, "expires_in": token_data.get("expires_in"), "person_sub": me_data.get("sub"), "name": me_data.get("name"), "instructions": "Update LINKEDIN_ACCESS_TOKEN in Railway with this new token."})
     return jsonify({"error": "Token exchange failed", "details": token_data})
 
+@app.route("/api/post-facebook", methods=["POST"])
+def api_post_facebook():
+    """Post next item from the Facebook content queue."""
+    try:
+        from facebook_api import FacebookAPI
+        from config import FACEBOOK_PAGE_ACCESS_TOKEN, DATA_DIR
+        import json as _json
+        from pathlib import Path as _Path
+
+        if not FACEBOOK_PAGE_ACCESS_TOKEN or FACEBOOK_PAGE_ACCESS_TOKEN == "your-fb-page-token-here":
+            return jsonify({"success": False, "message": "Facebook not configured — add FACEBOOK_PAGE_ACCESS_TOKEN env var"})
+
+        data = request.json or {}
+        message = data.get("message", "")
+
+        if not message:
+            # Post from Facebook-specific queue
+            fb_queue_file = DATA_DIR / "fb_content_queue.json"
+            fb_queue = load_json(fb_queue_file, [])
+            if not fb_queue:
+                return jsonify({"success": False, "message": "Facebook queue is empty. Add Facebook-native posts first."})
+
+            post_data = fb_queue.pop(0)
+            save_json(fb_queue_file, fb_queue)
+            message = post_data.get("text", "")
+            image_path = post_data.get("image_path", "")
+        else:
+            image_path = data.get("image_path", "")
+
+        fb = FacebookAPI()
+        if image_path and _Path(image_path).exists():
+            result = fb.create_image_post(message, image_path)
+        else:
+            result = fb.create_text_post(message)
+
+        return jsonify({
+            "success": True,
+            "message": f"Posted to Facebook! ID: {result.get('id', 'unknown')}",
+            "post_id": result.get("id")
+        })
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)})
+
+
+@app.route("/api/fb-queue", methods=["GET"])
+def api_fb_queue():
+    """View the Facebook content queue."""
+    from config import DATA_DIR
+    fb_queue = load_json(DATA_DIR / "fb_content_queue.json", [])
+    return jsonify({"queue": fb_queue, "count": len(fb_queue)})
+
+
+@app.route("/api/fb-queue/add", methods=["POST"])
+def api_fb_queue_add():
+    """Add a post to the Facebook content queue."""
+    from config import DATA_DIR
+    data = request.json or {}
+    text = data.get("text", "")
+    if not text:
+        return jsonify({"success": False, "message": "Post text is required"})
+
+    fb_queue_file = DATA_DIR / "fb_content_queue.json"
+    fb_queue = load_json(fb_queue_file, [])
+    fb_queue.append({
+        "text": text,
+        "pillar": data.get("pillar", ""),
+        "image_path": data.get("image_path", ""),
+        "image_prompt": data.get("image_prompt", ""),
+        "platform": "facebook",
+        "added_at": datetime.now(timezone.utc).isoformat(),
+    })
+    save_json(fb_queue_file, fb_queue)
+    return jsonify({"success": True, "message": f"Added to Facebook queue ({len(fb_queue)} total)"})
+
+
+@app.route("/api/facebook-status", methods=["GET"])
+def api_facebook_status():
+    """Check Facebook integration status."""
+    try:
+        from facebook_api import FacebookAPI
+        from config import FACEBOOK_PAGE_ACCESS_TOKEN
+
+        if not FACEBOOK_PAGE_ACCESS_TOKEN or FACEBOOK_PAGE_ACCESS_TOKEN == "your-fb-page-token-here":
+            return jsonify({"connected": False, "message": "Token not configured"})
+
+        fb = FacebookAPI()
+        info = fb.get_page_info()
+        return jsonify({
+            "connected": True,
+            "page_name": info.get("name"),
+            "page_id": info.get("id"),
+            "followers": info.get("followers_count", 0),
+            "fans": info.get("fan_count", 0),
+        })
+    except Exception as e:
+        return jsonify({"connected": False, "message": str(e)})
+
 
 @app.route("/api/check-comments", methods=["POST"])
 def api_check_comments():

@@ -170,6 +170,45 @@ def create_and_post(pillar=None):
         post_id = result.get("id", "unknown")
         logger.info(f"Post published ({source}): {post_id} | Pillar: {post_data.get('pillar', '?')}")
 
+        # ── Step 4b: Post to Facebook (from separate FB queue) ──
+        try:
+            from facebook_api import FacebookAPI
+            from config import FACEBOOK_PAGE_ACCESS_TOKEN, DATA_DIR
+            fb_queue_file = DATA_DIR / "fb_content_queue.json"
+
+            if FACEBOOK_PAGE_ACCESS_TOKEN and FACEBOOK_PAGE_ACCESS_TOKEN != "your-fb-page-token-here":
+                fb_queue = []
+                if fb_queue_file.exists():
+                    try:
+                        with open(fb_queue_file) as f:
+                            fb_queue = json.load(f)
+                    except (json.JSONDecodeError, IOError):
+                        fb_queue = []
+
+                if fb_queue:
+                    fb_post_data = fb_queue.pop(0)
+                    with open(fb_queue_file, "w") as f:
+                        json.dump(fb_queue, f, indent=2)
+
+                    fb = FacebookAPI()
+                    fb_text = fb_post_data.get("text", "")
+                    fb_image = fb_post_data.get("image_path", "")
+
+                    if fb_image and Path(fb_image).exists():
+                        fb_result = fb.create_image_post(fb_text, fb_image)
+                    else:
+                        fb_result = fb.create_text_post(fb_text)
+
+                    fb_post_id = fb_result.get("id", "unknown")
+                    logger.info(f"Facebook post published from FB queue ({len(fb_queue)} remaining): {fb_post_id}")
+                else:
+                    logger.info("Facebook queue empty — skipping FB post this cycle")
+            else:
+                logger.info("Facebook posting skipped — no token configured")
+        except Exception as fb_err:
+            logger.warning(f"Facebook post failed (non-blocking): {fb_err}")
+
+        # ── Step 5: Save to post history for future intelligence ──
         # —— Step 5: SUCCESS — NOW pop from queue (safe) ——
         if queue_index is not None:
             queue = _safe_read_json(CONTENT_QUEUE_FILE)
