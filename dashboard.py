@@ -3174,7 +3174,7 @@ def api_calendar_generate():
         data = request.json or {}
         month = data.get("month", 5)
         year = data.get("year", 2026)
-        platforms = data.get("platforms", ["linkedin", "whatsapp_status"])
+        platforms = data.get("platforms", ["linkedin", "instagram", "facebook", "whatsapp_status"])
         goal = data.get("goal", "engagement")
 
         from calendar_manager import create_monthly_calendar, save_calendar, get_calendar_summary
@@ -3195,19 +3195,102 @@ def api_calendar_generate():
 
 @app.route("/api/calendar/entry/<entry_id>", methods=["POST"])
 def api_calendar_update_entry(entry_id):
-    """Update a calendar entry."""
+    """
+    Update a calendar entry.
+
+    Calendar → Queue Bridge:
+    When an entry's status is set to "approved" or "scheduled",
+    it is automatically pushed into the correct platform posting queue
+    so the worker can pick it up and post at the right time.
+
+    Platform routing:
+    - linkedin    → data/content_queue.json
+    - instagram   → data/ig_content_queue.json
+    - facebook    → data/fb_content_queue.json
+    - whatsapp_status → no queue (manual posting, skipped)
+    """
     try:
         data = request.json or {}
         month = data.pop("month", 5)
         year = data.pop("year", 2026)
 
-        from calendar_manager import update_entry
+        from calendar_manager import update_entry, load_calendar
         success = update_entry(month, year, entry_id, data)
-        if success:
-            return jsonify({"success": True, "message": f"Entry {entry_id} updated"})
-        else:
+
+        if not success:
             return jsonify({"success": False, "error": "Entry not found"})
+
+        # ── Calendar → Queue Bridge ─────────────────────────────────────
+        new_status = data.get("status", "")
+        if new_status in ("approved", "scheduled"):
+            entries = load_calendar(month, year)
+            entry = next((e for e in entries if str(e.get("id")) == str(entry_id)), None)
+
+            if entry:
+                entry_platform = str(entry.get("platform", "")).lower().replace(" ", "_")
+                content = entry.get("content", entry.get("text", ""))
+                pillar = entry.get("pillar", "")
+                image_url = entry.get("image_url", "")
+                scheduled_date = entry.get("date", "")
+
+                if entry_platform == "instagram" and content:
+                    ig_queue_file = DATA_DIR / "ig_content_queue.json"
+                    ig_queue = load_json(ig_queue_file, [])
+                    ig_queue.append({
+                        "caption": content,
+                        "text": content,
+                        "pillar": pillar,
+                        "image_url": image_url,
+                        "image_prompt": entry.get("image_prompt", ""),
+                        "platform": "instagram",
+                        "source": "calendar",
+                        "calendar_entry_id": entry_id,
+                        "scheduled_date": scheduled_date,
+                        "added_at": datetime.now(timezone.utc).isoformat(),
+                    })
+                    save_json(ig_queue_file, ig_queue)
+                    logger.info(f"Calendar entry {entry_id} → Instagram queue ({len(ig_queue)} total)")
+
+                elif entry_platform == "facebook" and content:
+                    fb_queue_file = DATA_DIR / "fb_content_queue.json"
+                    fb_queue = load_json(fb_queue_file, [])
+                    fb_queue.append({
+                        "message": content,
+                        "text": content,
+                        "pillar": pillar,
+                        "platform": "facebook",
+                        "source": "calendar",
+                        "calendar_entry_id": entry_id,
+                        "scheduled_date": scheduled_date,
+                        "added_at": datetime.now(timezone.utc).isoformat(),
+                    })
+                    save_json(fb_queue_file, fb_queue)
+                    logger.info(f"Calendar entry {entry_id} → Facebook queue ({len(fb_queue)} total)")
+
+                elif entry_platform == "linkedin" and content:
+                    queue = load_json(CONTENT_QUEUE_FILE, [])
+                    queue.append({
+                        "text": content,
+                        "pillar": pillar,
+                        "platform": "linkedin",
+                        "source": "calendar",
+                        "calendar_entry_id": entry_id,
+                        "scheduled_date": scheduled_date,
+                        "added_at": datetime.now(timezone.utc).isoformat(),
+                    })
+                    save_json(CONTENT_QUEUE_FILE, queue)
+                    logger.info(f"Calendar entry {entry_id} → LinkedIn queue ({len(queue)} total)")
+
+                # whatsapp_status: manual posting only, no queue
+
+        return jsonify({
+            "success": True,
+            "message": f"Entry {entry_id} updated"
+            + (f" and pushed to {data.get('platform', 'platform')} queue" if new_status in ("approved", "scheduled") else ""),
+        })
+
     except Exception as e:
+        logger.error(f"Calendar entry update failed: {e}")
         return jsonify({"success": False, "error": str(e)})
 
 
@@ -3274,6 +3357,26 @@ def api_writer_generate():
                 })
             else:
                 return jsonify({"success": False, "error": "LinkedIn generation failed"})
+        elif platform == "instagram":
+            from content_engine import generate_instagram_post
+            context = load_full_context()
+            result = generate_instagram_post(
+                pillar=pillar or None,
+                topic_hint=topic or None,
+                post_history=context.get("post_history", []),
+            )
+            return jsonify({"success": True, "post": result})
+
+        elif platform == "facebook":
+            from content_engine import generate_facebook_post
+            context = load_full_context()
+            result = generate_facebook_post(
+                pillar=pillar or None,
+                topic_hint=topic or None,
+                post_history=context.get("post_history", []),
+            )
+            return jsonify({"success": True, "post": result})
+
         else:
             return jsonify({"success": False, "error": f"Platform '{platform}' is Coming Soon — not yet active"})
 
