@@ -208,6 +208,43 @@ def create_and_post(pillar=None):
         except Exception as fb_err:
             logger.warning(f"Facebook post failed (non-blocking): {fb_err}")
 
+        # ── Step 4c: Post to Instagram (from separate IG queue) ──
+        try:
+            from instagram_api import InstagramAPI
+            from config import INSTAGRAM_BUSINESS_ACCOUNT_ID, DATA_DIR
+            ig_queue_file = DATA_DIR / "ig_content_queue.json"
+
+            if INSTAGRAM_BUSINESS_ACCOUNT_ID and INSTAGRAM_BUSINESS_ACCOUNT_ID != "your-ig-account-id-here":
+                ig_queue = []
+                if ig_queue_file.exists():
+                    try:
+                        with open(ig_queue_file) as f:
+                            ig_queue = json.load(f)
+                    except (json.JSONDecodeError, IOError):
+                        ig_queue = []
+
+                if ig_queue:
+                    ig_post_data = ig_queue.pop(0)
+                    with open(ig_queue_file, "w") as f:
+                        json.dump(ig_queue, f, indent=2)
+
+                    ig = InstagramAPI()
+                    ig_caption = ig_post_data.get("caption", ig_post_data.get("text", ""))
+                    ig_image_url = ig_post_data.get("image_url", "")
+
+                    if ig_image_url:
+                        ig_result = ig.create_image_post(ig_image_url, ig_caption)
+                        ig_post_id = ig_result.get("id", "unknown")
+                        logger.info(f"Instagram post published from IG queue ({len(ig_queue)} remaining): {ig_post_id}")
+                    else:
+                        logger.info("Instagram post skipped — no image URL (Instagram requires images)")
+                else:
+                    logger.info("Instagram queue empty — skipping IG post this cycle")
+            else:
+                logger.info("Instagram posting skipped — no account ID configured")
+        except Exception as ig_err:
+            logger.warning(f"Instagram post failed (non-blocking): {ig_err}")
+
         # ── Step 5: Save to post history for future intelligence ──
         # —— Step 5: SUCCESS — NOW pop from queue (safe) ——
         if queue_index is not None:

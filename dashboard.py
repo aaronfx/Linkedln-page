@@ -484,10 +484,10 @@ DASHBOARD_HTML = """
             <select class="form-control" id="writerPlatform" onchange="updateWriterPillars()">
               <option value="linkedin">LinkedIn (Personal Brand)</option>
               <option value="whatsapp_status">WhatsApp Status (Company)</option>
-              <option value="instagram" disabled>Instagram (Coming Soon)</option>
+              <option value="instagram">Instagram (Company)</option>
+              <option value="facebook">Facebook (Company)</option>
               <option value="x" disabled>X / Twitter (Coming Soon)</option>
               <option value="threads" disabled>Threads (Coming Soon)</option>
-              <option value="facebook" disabled>Facebook (Coming Soon)</option>
             </select>
           </div>
           <div class="form-group">
@@ -801,12 +801,26 @@ DASHBOARD_HTML = """
             </div>
           </div>
           <!-- Instagram -->
-          <div class="post-card" style="opacity:0.6;">
+          <div class="post-card" style="border-color:#E4405F;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-              <div style="font-size:16px;font-weight:700;">Instagram</div>
-              <span class="badge badge-orange">COMING SOON</span>
+              <div style="font-size:16px;font-weight:700;color:#E4405F;">Instagram</div>
+              <span class="badge badge-green">ACTIVE</span>
             </div>
-            <div style="font-size:13px;color:var(--text2);">Company brand @gopipways. Visual-first content, carousels, reels. Will activate when API connected.</div>
+            <div style="font-size:13px;color:var(--text2);line-height:1.6;">
+              <div><strong>Brand:</strong> Gopipways @gopipways (Company)</div>
+              <div><strong>Voice:</strong> Company ("We help...", "Gopipways...")</div>
+              <div><strong>Frequency:</strong> 4x/week</div>
+              <div><strong>Posting:</strong> Auto via Instagram Graph API</div>
+              <div style="margin-top:8px;"><strong>Pillars:</strong></div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;">
+                <span class="badge" style="background:rgba(228,64,95,0.15);color:#E4405F;">Education 35%</span>
+                <span class="badge" style="background:rgba(228,64,95,0.15);color:#E4405F;">AI/Product 15%</span>
+                <span class="badge" style="background:rgba(228,64,95,0.15);color:#E4405F;">Africa 20%</span>
+                <span class="badge" style="background:rgba(228,64,95,0.15);color:#E4405F;">Personal 15%</span>
+                <span class="badge" style="background:rgba(228,64,95,0.15);color:#E4405F;">Social Proof 10%</span>
+                <span class="badge" style="background:rgba(228,64,95,0.15);color:#E4405F;">Community 5%</span>
+              </div>
+            </div>
           </div>
           <!-- X -->
           <div class="post-card" style="opacity:0.6;">
@@ -825,12 +839,26 @@ DASHBOARD_HTML = """
             <div style="font-size:13px;color:var(--text2);">Company brand. Opinion-driven, conversational. 500 char limit. Will activate when API connected.</div>
           </div>
           <!-- Facebook -->
-          <div class="post-card" style="opacity:0.6;">
+          <div class="post-card" style="border-color:#1877F2;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-              <div style="font-size:16px;font-weight:700;">Facebook</div>
-              <span class="badge badge-orange">COMING SOON</span>
+              <div style="font-size:16px;font-weight:700;color:#1877F2;">Facebook</div>
+              <span class="badge badge-green">ACTIVE</span>
             </div>
-            <div style="font-size:13px;color:var(--text2);">Company brand Gopipways. Community-building, questions. Will activate when API connected.</div>
+            <div style="font-size:13px;color:var(--text2);line-height:1.6;">
+              <div><strong>Brand:</strong> Gopipways (Company)</div>
+              <div><strong>Voice:</strong> Company ("We help...", "Gopipways...")</div>
+              <div><strong>Frequency:</strong> 4x/week</div>
+              <div><strong>Posting:</strong> Auto via Railway API</div>
+              <div style="margin-top:8px;"><strong>Pillars:</strong></div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;">
+                <span class="badge" style="background:rgba(24,119,242,0.15);color:#1877F2;">Education 35%</span>
+                <span class="badge" style="background:rgba(24,119,242,0.15);color:#1877F2;">AI/Product 15%</span>
+                <span class="badge" style="background:rgba(24,119,242,0.15);color:#1877F2;">Africa 20%</span>
+                <span class="badge" style="background:rgba(24,119,242,0.15);color:#1877F2;">Personal 15%</span>
+                <span class="badge" style="background:rgba(24,119,242,0.15);color:#1877F2;">Social Proof 10%</span>
+                <span class="badge" style="background:rgba(24,119,242,0.15);color:#1877F2;">Community 5%</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -2219,6 +2247,109 @@ def api_facebook_status():
             "page_id": info.get("id"),
             "followers": info.get("followers_count", 0),
             "fans": info.get("fan_count", 0),
+        })
+    except Exception as e:
+        return jsonify({"connected": False, "message": str(e)})
+
+
+# ─── Instagram API Endpoints ──────────────────────────────────
+
+@app.route("/api/post-instagram", methods=["POST"])
+def api_post_instagram():
+    """Post next item from the Instagram content queue."""
+    try:
+        from instagram_api import InstagramAPI
+        from config import INSTAGRAM_BUSINESS_ACCOUNT_ID, DATA_DIR
+        import json as _json
+        from pathlib import Path as _Path
+
+        if not INSTAGRAM_BUSINESS_ACCOUNT_ID or INSTAGRAM_BUSINESS_ACCOUNT_ID == "your-ig-account-id-here":
+            return jsonify({"success": False, "message": "Instagram not configured — add INSTAGRAM_BUSINESS_ACCOUNT_ID env var"})
+
+        data = request.json or {}
+        caption = data.get("caption", "")
+        image_url = data.get("image_url", "")
+
+        if not caption and not image_url:
+            # Post from Instagram-specific queue
+            ig_queue_file = DATA_DIR / "ig_content_queue.json"
+            ig_queue = load_json(ig_queue_file, [])
+            if not ig_queue:
+                return jsonify({"success": False, "message": "Instagram queue is empty. Add Instagram-native posts first."})
+
+            post_data = ig_queue.pop(0)
+            save_json(ig_queue_file, ig_queue)
+            caption = post_data.get("caption", post_data.get("text", ""))
+            image_url = post_data.get("image_url", "")
+
+        if not image_url:
+            return jsonify({"success": False, "message": "Instagram requires an image URL. Text-only posts are not supported."})
+
+        ig = InstagramAPI()
+        result = ig.create_image_post(image_url, caption)
+
+        return jsonify({
+            "success": True,
+            "message": f"Posted to Instagram! ID: {result.get('id', 'unknown')}",
+            "post_id": result.get("id")
+        })
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)})
+
+
+@app.route("/api/ig-queue", methods=["GET"])
+def api_ig_queue():
+    """View the Instagram content queue."""
+    from config import DATA_DIR
+    ig_queue = load_json(DATA_DIR / "ig_content_queue.json", [])
+    return jsonify({"queue": ig_queue, "count": len(ig_queue)})
+
+
+@app.route("/api/ig-queue/add", methods=["POST"])
+def api_ig_queue_add():
+    """Add a post to the Instagram content queue."""
+    from config import DATA_DIR
+    data = request.json or {}
+    caption = data.get("caption", data.get("text", ""))
+    image_url = data.get("image_url", "")
+    if not caption:
+        return jsonify({"success": False, "message": "Caption text is required"})
+
+    ig_queue_file = DATA_DIR / "ig_content_queue.json"
+    ig_queue = load_json(ig_queue_file, [])
+    ig_queue.append({
+        "caption": caption,
+        "text": caption,
+        "pillar": data.get("pillar", ""),
+        "image_url": image_url,
+        "image_path": data.get("image_path", ""),
+        "image_prompt": data.get("image_prompt", ""),
+        "media_type": data.get("media_type", "IMAGE"),
+        "platform": "instagram",
+        "added_at": datetime.now(timezone.utc).isoformat(),
+    })
+    save_json(ig_queue_file, ig_queue)
+    return jsonify({"success": True, "message": f"Added to Instagram queue ({len(ig_queue)} total)"})
+
+
+@app.route("/api/instagram-status", methods=["GET"])
+def api_instagram_status():
+    """Check Instagram integration status."""
+    try:
+        from instagram_api import InstagramAPI
+        from config import INSTAGRAM_BUSINESS_ACCOUNT_ID
+
+        if not INSTAGRAM_BUSINESS_ACCOUNT_ID or INSTAGRAM_BUSINESS_ACCOUNT_ID == "your-ig-account-id-here":
+            return jsonify({"connected": False, "message": "Instagram Business Account ID not configured"})
+
+        ig = InstagramAPI()
+        info = ig.get_account_info()
+        return jsonify({
+            "connected": True,
+            "username": info.get("username"),
+            "name": info.get("name"),
+            "followers": info.get("followers_count", 0),
+            "media_count": info.get("media_count", 0),
         })
     except Exception as e:
         return jsonify({"connected": False, "message": str(e)})

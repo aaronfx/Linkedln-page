@@ -25,6 +25,10 @@ LINKEDIN_PERSON_URN = os.getenv("LINKEDIN_PERSON_URN", "your-person-urn-here")  
 FACEBOOK_PAGE_ACCESS_TOKEN = os.getenv("FACEBOOK_PAGE_ACCESS_TOKEN", "your-fb-page-token-here")
 FACEBOOK_PAGE_ID = os.getenv("FACEBOOK_PAGE_ID", "516456828208394")  # Gopipways page
 
+# Instagram Graph API credentials (uses Facebook Page token)
+# Instagram Business Account ID is linked to the Facebook Page
+INSTAGRAM_BUSINESS_ACCOUNT_ID = os.getenv("INSTAGRAM_BUSINESS_ACCOUNT_ID", "your-ig-account-id-here")
+
 # ─── Profile Configuration ──────────────────────────────────
 
 # Dashboard Authentication (set DASHBOARD_PASSWORD env var on Railway)
