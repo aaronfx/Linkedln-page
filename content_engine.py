@@ -16,6 +16,7 @@ INTELLIGENCE FEATURES:
 
 import json
 import random
+import re
 import logging
 from datetime import datetime, timedelta, timezone
 from collections import Counter
@@ -1009,3 +1010,213 @@ def _save_content_queue(posts: list):
         json.dump(existing, f, indent=2)
 
     logger.info(f"Content queue updated: {len(existing)} total posts queued")
+
+
+def generate_instagram_post(
+    pillar: str = None,
+    topic_hint: str = None,
+    post_history: list = None,
+) -> dict:
+    """
+    Generate an Instagram caption using Claude.
+
+    Instagram-specific rules (from platform_manager.py PLATFORM_CONFIGS):
+    - Voice: Company ("We", "Gopipways") — NOT first-person like LinkedIn
+    - Brand: Gopipways @gopipways
+    - Char limit: 2,200 (but optimal caption is 150-300 chars)
+    - Auto posting: True via Instagram Graph API
+    - Pillars: Education/Tips 35%, Africa/Literacy 20%, AI/Product 15%,
+               Behind Scenes 15%, Social Proof 10%, Engagement 5%
+
+    Returns:
+        dict with keys: caption, hashtags, text (caption + hashtags),
+                        visual_direction, image_prompt, pillar, platform
+    """
+    # Weighted pillar selection matching PLATFORM_CONFIGS["Instagram"].pillars
+    ig_pillars = {
+        "Education / Trading Tips": 0.35,
+        "African Markets / Financial Literacy": 0.20,
+        "AI in Trading / Product": 0.15,
+        "Behind the Scenes / Personal Brand": 0.15,
+        "Social Proof / Results": 0.10,
+        "Engagement / Community": 0.05,
+    }
+
+    if pillar is None:
+        pillar = random.choices(
+            list(ig_pillars.keys()),
+            weights=list(ig_pillars.values()),
+        )[0]
+
+    # Build recent-post guard to avoid repetition
+    history_note = ""
+    if post_history:
+        recent = [
+            p.get("caption", p.get("text", ""))[:120]
+            for p in (post_history or [])[-6:]
+        ]
+        history_note = "\n\nRecent Instagram posts (DO NOT repeat these angles):\n" + "\n".join(
+            f"- {r}" for r in recent if r
+        )
+
+    system_prompt = (
+        "You are the Instagram content writer for Gopipways — Africa's leading "
+        "forex education platform.\n\n"
+        "BRAND RULES:\n"
+        "- Voice: Company (\"We help traders...\", \"At Gopipways...\")\n"
+        "- NOT first-person. This is the Gopipways company account, not Aaron personally.\n"
+        "- Mission: Democratise forex education, empower retail traders with AI insights\n"
+        "- Audience: African retail traders, aged 18-45\n\n"
+        "INSTAGRAM FORMAT RULES:\n"
+        "- Caption body: 150-280 characters (SHORT — sits under a visual)\n"
+        "- First line = the hook — must stop the scroll instantly\n"
+        "- End with ONE clear CTA (follow, comment below, save this, link in bio)\n"
+        "- Add 6-10 relevant hashtags on a NEW LINE after the caption body\n"
+        "- Max 2 emojis — not excessive\n"
+        "- NO long paragraphs. 2 lines max.\n"
+        "- The visual does the heavy lifting — caption supports it\n"
+    )
+
+    user_prompt = (
+        f'Write an Instagram caption for the "{pillar}" content pillar.\n'
+        + (f"Topic: {topic_hint}\n" if topic_hint else "")
+        + history_note
+        + "\n\nReturn ONLY valid JSON (no markdown, no explanation):\n"
+        '{\n'
+        '  "caption": "150-280 char caption body only, no hashtags here",\n'
+        '  "hashtags": ["ForexTrading", "Gopipways", ...],\n'
+        '  "visual_direction": "brief description of what the image should show",\n'
+        '  "image_prompt": "detailed DALL-E/SDXL prompt for AI image generation",\n'
+        f'  "pillar": "{pillar}"\n'
+        '}'
+    )
+
+    response = _claude_call(
+        messages=[{"role": "user", "content": user_prompt}],
+        system=system_prompt,
+        max_tokens=800,
+    )
+
+    raw = response.content[0].text.strip()
+    match = re.search(r"\{.*\}", raw, re.DOTALL)
+    if not match:
+        raise ValueError(f"Instagram post: could not parse JSON from response: {raw[:300]}")
+
+    result = json.loads(match.group())
+    hashtags_str = " ".join(
+        f"#{h.lstrip('#')}" for h in result.get("hashtags", [])
+    )
+    result["text"] = result["caption"] + "\n\n" + hashtags_str
+    result["platform"] = "instagram"
+    result.setdefault("pillar", pillar)
+
+    logger.info(
+        f"Instagram post generated | pillar={pillar} | "
+        f"caption_len={len(result['caption'])}"
+    )
+    return result
+
+def generate_facebook_post(
+    pillar: str = None,
+    topic_hint: str = None,
+    post_history: list = None,
+) -> dict:
+    """
+    Generate a Facebook Page post using Claude.
+
+    Facebook-specific rules (from platform_manager.py PLATFORM_CONFIGS):
+    - Voice: Company ("We", "Gopipways") — same brand as Instagram but different format
+    - Brand: Gopipways Company Page
+    - Char limit: 63,206 (but optimal is 300-600 for engagement)
+    - Auto posting: True via Graph API
+    - Pillars: same distribution as Instagram
+
+    Key difference from Instagram:
+    - NO image required (text posts perform well on Facebook)
+    - More conversational, community-building tone
+    - Ends with a question to drive comments
+    - 2-4 hashtags only (Facebook doesn't reward hashtag stuffing)
+    - Can be slightly longer than Instagram (300-600 chars)
+
+    Returns:
+        dict with keys: message, hashtags, text, pillar, platform, has_question
+    """
+    fb_pillars = {
+        "Education / Trading Tips": 0.35,
+        "African Markets / Financial Literacy": 0.20,
+        "AI in Trading / Product": 0.15,
+        "Behind the Scenes / Personal Brand": 0.15,
+        "Social Proof / Results": 0.10,
+        "Engagement / Community": 0.05,
+    }
+
+    if pillar is None:
+        pillar = random.choices(
+            list(fb_pillars.keys()),
+            weights=list(fb_pillars.values()),
+        )[0]
+
+    history_note = ""
+    if post_history:
+        recent = [
+            p.get("message", p.get("text", ""))[:120]
+            for p in (post_history or [])[-6:]
+        ]
+        history_note = "\n\nRecent Facebook posts (DO NOT repeat these angles):\n" + "\n".join(
+            f"- {r}" for r in recent if r
+        )
+
+    system_prompt = (
+        "You are the Facebook content writer for Gopipways — Africa's leading "
+        "forex education platform.\n\n"
+        "BRAND RULES:\n"
+        "- Voice: Company (\"We help traders...\", \"At Gopipways...\")\n"
+        "- NOT first-person. This is the Gopipways company Page.\n"
+        "- Mission: Democratise forex education, empower retail traders\n"
+        "- Audience: African retail traders, aged 18-45, Facebook community\n\n"
+        "FACEBOOK FORMAT RULES:\n"
+        "- Length: 300-600 characters (more room than Instagram, but still concise)\n"
+        "- Tone: Conversational, warm, community-focused — like talking to a group\n"
+        "- ALWAYS end with a question to drive comments (\"What's your take?\", "
+        "\"Have you experienced this?\", \"Drop your answer below\")\n"
+        "- 2-4 hashtags ONLY — placed at the very end\n"
+        "- Max 2 emojis\n"
+        "- Can stand alone without a photo — write it so it works as text\n"
+        "- NO bullet points or line breaks (Facebook prose format)\n"
+    )
+
+    user_prompt = (
+        f'Write a Facebook post for the "{pillar}" content pillar.\n'
+        + (f"Topic: {topic_hint}\n" if topic_hint else "")
+        + history_note
+        + "\n\nReturn ONLY valid JSON (no markdown, no explanation):\n"
+        '{\n'
+        '  "message": "the full post text including hashtags at the end",\n'
+        '  "hashtags": ["ForexTrading", "Gopipways"],\n'
+        '  "has_question": true,\n'
+        f'  "pillar": "{pillar}"\n'
+        '}'
+    )
+
+    response = _claude_call(
+        messages=[{"role": "user", "content": user_prompt}],
+        system=system_prompt,
+        max_tokens=800,
+    )
+
+    raw = response.content[0].text.strip()
+    match = re.search(r"\{.*\}", raw, re.DOTALL)
+    if not match:
+        raise ValueError(f"Facebook post: could not parse JSON from response: {raw[:300]}")
+
+    result = json.loads(match.group())
+    result["text"] = result["message"]
+    result["platform"] = "facebook"
+    result.setdefault("pillar", pillar)
+    result.setdefault("has_question", True)
+
+    logger.info(
+        f"Facebook post generated | pillar={pillar} | "
+        f"length={len(result['message'])}"
+    )
+    return result
