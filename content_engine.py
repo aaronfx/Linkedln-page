@@ -1,5 +1,5 @@
 """
-Content Engine Ã¢ÂÂ Intelligent Growth Machine Powered by Claude
+Content Engine ÃÂ¢ÃÂÃÂ Intelligent Growth Machine Powered by Claude
 ==============================================================
 Generates LinkedIn posts, comment replies, and performance analysis
 using the Anthropic Claude API.
@@ -115,7 +115,7 @@ def validate_post_content(post_data: dict) -> dict:
     return post_data
 
 
-# Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Context Intelligence Layer Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+# ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Context Intelligence Layer ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 
 def _load_json_safe(path, default=None):
     """Safely load a JSON file, returning default on any error."""
@@ -160,7 +160,7 @@ def _build_duplicate_guard(existing_queue: list, post_history: list) -> str:
     seen_pillars_recent = []
     seen_templates = []
 
-    # From existing queue (not yet posted Ã¢ÂÂ highest priority to avoid)
+    # From existing queue (not yet posted ÃÂ¢ÃÂÃÂ highest priority to avoid)
     for post in (existing_queue or []):
         hook = post.get("hook", "")
         if hook:
@@ -314,7 +314,7 @@ def _build_analytics_intelligence(analytics_data: dict, post_history: list) -> s
         if suggestions:
             context += "\nSUGGESTED TOPICS FROM ANALYTICS:\n"
             for s in suggestions[:3]:
-                context += f"  - [{s.get('pillar', '?')}] {s.get('topic_hint', '?')} Ã¢ÂÂ {s.get('why', '')}\n"
+                context += f"  - [{s.get('pillar', '?')}] {s.get('topic_hint', '?')} ÃÂ¢ÃÂÃÂ {s.get('why', '')}\n"
 
     # Build pillar performance breakdown from history
     if post_history:
@@ -405,7 +405,7 @@ def _build_comment_intelligence(comment_log: list) -> str:
 
 def _select_smart_template(existing_queue: list, post_history: list, scheduled_day: str = None) -> dict:
     """
-    Select a viral template intelligently Ã¢ÂÂ preferring day-appropriate templates
+    Select a viral template intelligently ÃÂ¢ÃÂÃÂ preferring day-appropriate templates
     and avoiding recently overused ones.
 
     The strategy document maps specific post types to days:
@@ -457,7 +457,7 @@ def _build_growth_phase_context(post_history: list) -> str:
     total_posts = len(post_history) if post_history else 0
 
     if total_posts < 30:
-        phase = "PHASE 1 Ã¢ÂÂ Foundation Building"
+        phase = "PHASE 1 ÃÂ¢ÃÂÃÂ Foundation Building"
         guidance = (
             "You are in the FOUNDATION phase. Focus on:\n"
             "  - Establishing authority and voice consistency\n"
@@ -467,7 +467,7 @@ def _build_growth_phase_context(post_history: list) -> str:
             "  - Every post should introduce who you are and what you stand for"
         )
     elif total_posts < 80:
-        phase = "PHASE 2 Ã¢ÂÂ Viral Growth"
+        phase = "PHASE 2 ÃÂ¢ÃÂÃÂ Viral Growth"
         guidance = (
             "You are in the VIRAL GROWTH phase. Focus on:\n"
             "  - Doubling down on top-performing pillars and hooks\n"
@@ -477,7 +477,7 @@ def _build_growth_phase_context(post_history: list) -> str:
             "  - Making every hook scroll-stopping"
         )
     else:
-        phase = "PHASE 3 Ã¢ÂÂ Authority & Scale"
+        phase = "PHASE 3 ÃÂ¢ÃÂÃÂ Authority & Scale"
         guidance = (
             "You are in the AUTHORITY phase. Focus on:\n"
             "  - Thought leadership and original frameworks\n"
@@ -490,7 +490,7 @@ def _build_growth_phase_context(post_history: list) -> str:
     return f"\n\nGROWTH PHASE: {phase}\nTotal posts published: {total_posts}\n{guidance}\n"
 
 
-# Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Post Generation Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+# ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Post Generation ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 
 def generate_post(
     pillar: str = None,
@@ -512,7 +512,7 @@ def generate_post(
     else:
         pillar_obj = next((p for p in CONTENT_PILLARS if p["name"] == pillar), CONTENT_PILLARS[0])
 
-    # Ã¢ÂÂÃ¢ÂÂ Intelligence Layer: Build rich context Ã¢ÂÂÃ¢ÂÂ
+    # ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Intelligence Layer: Build rich context ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
     duplicate_guard = _build_duplicate_guard(existing_queue, post_history)
     analytics_context = _build_analytics_intelligence(analytics_data, post_history)
     comment_context = _build_comment_intelligence(comment_insights)
@@ -543,11 +543,11 @@ def generate_post(
 
     gopipways_rule = (
         "You MAY reference Gopipways briefly and naturally in this post (since it's a Personal Story or AI post). "
-        "But Gopipways should NEVER be the main topic Ã¢ÂÂ it's a supporting detail in a larger story."
+        "But Gopipways should NEVER be the main topic ÃÂ¢ÃÂÃÂ it's a supporting detail in a larger story."
         if should_mention_gopipways else
         "DO NOT mention Gopipways, your company, or any product in this post. "
         "This post is purely about providing VALUE, sharing expertise, and building thought leadership. "
-        "You are Dr. Aaron Akwu the forex educator and thought leader Ã¢ÂÂ not a brand ambassador."
+        "You are Dr. Aaron Akwu the forex educator and thought leader ÃÂ¢ÃÂÃÂ not a brand ambassador."
     )
 
     # Get pillar-specific topic suggestions from the strategy document
@@ -558,7 +558,7 @@ def generate_post(
         topic_suggestions_text = f"\n\nSUGGESTED TOPICS FOR THIS PILLAR (from the 20K Growth Strategy):\n"
         for i, topic in enumerate(topic_list, 1):
             topic_suggestions_text += f"  {i}. {topic}\n"
-        topic_suggestions_text += "\nUse these as INSPIRATION Ã¢ÂÂ adapt and create fresh angles, don't copy verbatim.\n"
+        topic_suggestions_text += "\nUse these as INSPIRATION ÃÂ¢ÃÂÃÂ adapt and create fresh angles, don't copy verbatim.\n"
 
     # Get the day's recommended post type from the strategy
     import calendar
@@ -577,24 +577,24 @@ def generate_post(
     week_key = f"week_{week_num}"
     current_secondary_hashtags = HASHTAG_STRATEGY["secondary_rotation"].get(week_key, [])
 
-    system_prompt = f"""You are the LinkedIn ghostwriter for Dr. Aaron Akwu Ã¢ÂÂ Africa's leading forex educator.
+    system_prompt = f"""You are the LinkedIn ghostwriter for Dr. Aaron Akwu ÃÂ¢ÃÂÃÂ Africa's leading forex educator.
 
-You are executing the "LinkedIn 20K Growth Strategy" Ã¢ÂÂ a detailed plan to grow Aaron's followers from 4,500 to 20,000+.
+You are executing the "LinkedIn 20K Growth Strategy" ÃÂ¢ÃÂÃÂ a detailed plan to grow Aaron's followers from 4,500 to 20,000+.
 You have been TRAINED on this strategy document and the "LinkedIn 2-Week Posts" document containing 12 gold-standard example posts.
 Every post you generate must follow this plan precisely.
 
 YOUR MISSION:
 - VALUE FIRST. Every post must teach something, provoke thought, or share a genuine insight.
 - NOT a sales channel. This is NOT about promoting Gopipways. It's about building Aaron's personal authority.
-- Write like a respected thought leader who happens to teach forex Ã¢ÂÂ not like a company marketing page.
+- Write like a respected thought leader who happens to teach forex ÃÂ¢ÃÂÃÂ not like a company marketing page.
 - The content should feel like it comes from a real person with real opinions, real experiences, and real data.
 - Follow the "hook + story/data + specific insight + CTA question" formula from the strategy.
 
 {BRAND_VOICE}
 
-Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
-20K GROWTH STRATEGY Ã¢ÂÂ CORE PLAN
-Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
+20K GROWTH STRATEGY ÃÂ¢ÃÂÃÂ CORE PLAN
+ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 
 {GROWTH_STRATEGY}
 
@@ -623,14 +623,14 @@ PROFILE:
 GOPIPWAYS RULE FOR THIS POST:
 {gopipways_rule}
 
-Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 INTELLIGENCE BRIEFING (Real-time data)
-Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 {duplicate_guard}
 {analytics_context}
 {comment_context}
 {optimization_context}
-Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 
 VIRAL TEMPLATE TO USE (adapt creatively, don't copy verbatim):
 Template: "{template['name']}"
@@ -638,7 +638,7 @@ Formula: {template['formula']}
 Structure:
 {template['structure'][:500]}
 
-HASHTAG STRATEGY (This Week Ã¢ÂÂ Week {week_num} of 4-week rotation):
+HASHTAG STRATEGY (This Week ÃÂ¢ÃÂÃÂ Week {week_num} of 4-week rotation):
 Rules: {json.dumps(HASHTAG_STRATEGY['rules'])}
 Primary hashtags (ALWAYS use 1): {', '.join(HASHTAG_STRATEGY['primary'])}
 This week's secondary rotation: {', '.join(current_secondary_hashtags)}
@@ -649,8 +649,8 @@ STYLE EXAMPLES FROM THE 12 GOLD-STANDARD POSTS (match this quality and tone):
 
 WRITING RULES (from the 20K Growth Strategy):
 1. Write in first person as Dr. Aaron Akwu
-2. Open with a scroll-stopping hook (first 2 lines show before "see more" Ã¢ÂÂ make them count)
-3. The hook MUST be unique Ã¢ÂÂ never repeat hooks from the Intelligence Briefing
+2. Open with a scroll-stopping hook (first 2 lines show before "see more" ÃÂ¢ÃÂÃÂ make them count)
+3. The hook MUST be unique ÃÂ¢ÃÂÃÂ never repeat hooks from the Intelligence Briefing
 4. Short paragraphs: 1-3 sentences max, generous line breaks for mobile readability
 5. Include ONE of: a personal anecdote, a data point, a student story (Emeka, Chioma, Tunde, Blessing, Chukwu), or a market insight
 6. End with a genuine question or CTA that invites comments (critical for engagement)
@@ -659,13 +659,13 @@ WRITING RULES (from the 20K Growth Strategy):
 9. NO emojis anywhere in the post (part of the brand voice)
 10. Write like a human thought leader, not a marketing bot
 11. Vary the energy: some posts should be bold/provocative, others reflective/thoughtful
-12. Reference specific numbers, names, timeframes Ã¢ÂÂ vague posts don't go viral
+12. Reference specific numbers, names, timeframes ÃÂ¢ÃÂÃÂ vague posts don't go viral
 13. If the Intelligence Briefing shows audience questions, weave one into this post naturally
 14. NEVER reuse a hook, story, or angle from the Intelligence Briefing
-15. The CTA should be SPECIFIC ("Drop a PLAN in the comments", "Reply with your letter", "What's your daily loss limit?") Ã¢ÂÂ not generic ("Let me know what you think")
+15. The CTA should be SPECIFIC ("Drop a PLAN in the comments", "Reply with your letter", "What's your daily loss limit?") ÃÂ¢ÃÂÃÂ not generic ("Let me know what you think")
 
 IMAGE PROMPT RULES:
-- Describe a PHOTOREALISTIC scene Ã¢ÂÂ like a real photograph taken by a professional photographer
+- Describe a PHOTOREALISTIC scene ÃÂ¢ÃÂÃÂ like a real photograph taken by a professional photographer
 - Include specific details: camera model, lens, lighting, camera angle, setting, people, objects
 - Think "editorial photography" or "documentary photography" style
 - Examples of good prompts:
@@ -673,7 +673,7 @@ IMAGE PROMPT RULES:
   * "Wide shot of a modern co-working space in Lagos, young professionals at screens, golden hour light through floor-to-ceiling windows, photojournalistic style, Fuji X-T5"
   * "Portrait of focused trader studying multiple monitors showing candlestick charts, dramatic side lighting, dark background, editorial photography, Sony A7IV 35mm"
 - NEVER include text, words, watermarks, or logos in the image
-- NEVER use abstract/conceptual/surreal imagery Ã¢ÂÂ keep it grounded and real
+- NEVER use abstract/conceptual/surreal imagery ÃÂ¢ÃÂÃÂ keep it grounded and real
 
 OUTPUT FORMAT (JSON):
 {{
@@ -681,7 +681,7 @@ OUTPUT FORMAT (JSON):
   "hook": "The opening 2 lines (for preview)",
   "pillar": "The content pillar used",
   "template_used": "{template['name']}",
-  "image_prompt": "A detailed PHOTOREALISTIC image prompt (describe a real scene with specific camera, lighting, setting, subjects, camera angle Ã¢ÂÂ editorial/documentary photography style, no text or logos)",
+  "image_prompt": "A detailed PHOTOREALISTIC image prompt (describe a real scene with specific camera, lighting, setting, subjects, camera angle ÃÂ¢ÃÂÃÂ editorial/documentary photography style, no text or logos)",
   "hashtags": ["list", "of", "hashtags", "used"],
   "estimated_engagement": "low/medium/high based on content type and analytics patterns",
   "topic_summary": "One sentence describing the core topic (for future duplicate detection)",
@@ -695,7 +695,7 @@ Pillar description: {pillar_obj['description']}
 
 Today's date: {datetime.now().strftime('%A, %B %d, %Y')}
 
-IMPORTANT: Your post must be ORIGINAL. Check the Intelligence Briefing for hooks and topics already used Ã¢ÂÂ do NOT repeat them.
+IMPORTANT: Your post must be ORIGINAL. Check the Intelligence Briefing for hooks and topics already used ÃÂ¢ÃÂÃÂ do NOT repeat them.
 
 Return ONLY valid JSON. No markdown code fences."""
 
@@ -737,7 +737,7 @@ Return ONLY valid JSON. No markdown code fences."""
     return post_data
 
 
-# Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Comment Reply Generation Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+# ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Comment Reply Generation ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 
 def generate_reply(
     comment_text: str,
@@ -804,7 +804,7 @@ JSON:"""
         return {"sentiment": "neutral", "priority": "medium", "category": "experience_share"}
 
 
-# Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Performance Analysis Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+# ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Performance Analysis ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 
 def analyze_performance(posts_with_metrics: list) -> dict:
     """Analyze post performance and generate optimization recommendations."""
@@ -873,7 +873,7 @@ Return ONLY valid JSON."""
     return analysis
 
 
-# Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Intelligent Content Queue Management Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+# ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Intelligent Content Queue Management ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 
 def load_full_context() -> dict:
     """Load ALL available context for intelligent content generation."""
@@ -883,7 +883,7 @@ def load_full_context() -> dict:
     comment_log = _load_json_safe(COMMENT_LOG_FILE, [])
 
     logger.info(
-        f"Context loaded Ã¢ÂÂ Queue: {len(existing_queue)} posts, "
+        f"Context loaded ÃÂ¢ÃÂÃÂ Queue: {len(existing_queue)} posts, "
         f"History: {len(post_history)} posts, "
         f"Comments: {len(comment_log)} entries"
     )
@@ -944,7 +944,7 @@ def generate_weekly_content(optimize_from: list = None, progress_callback=None) 
     for idx, (day, schedule) in enumerate(schedule_items):
         post_num = idx + 1
         post_type = schedule.get("post_type", "")
-        _progress(f"Generating post {post_num}/{total}: {day.capitalize()} Ã¢ÂÂ {schedule['pillar_preference']} ({post_type})...")
+        _progress(f"Generating post {post_num}/{total}: {day.capitalize()} ÃÂ¢ÃÂÃÂ {schedule['pillar_preference']} ({post_type})...")
 
         try:
             # Build a topic hint from the strategy's day-specific post type
@@ -964,7 +964,7 @@ def generate_weekly_content(optimize_from: list = None, progress_callback=None) 
                 scheduled_day=day,
             )
 
-            # Ã¢ÂÂÃ¢ÂÂ Assign REAL calendar dates Ã¢ÂÂÃ¢ÂÂ
+            # ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Assign REAL calendar dates ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
             post_date = _get_next_weekday(day)
             hour, minute = map(int, schedule["time"].split(":"))
             post_date = post_date.replace(hour=hour, minute=minute, second=0, microsecond=0)
@@ -978,7 +978,7 @@ def generate_weekly_content(optimize_from: list = None, progress_callback=None) 
             weekly_posts.append(post)
             running_queue.append(post)
 
-            _progress(f"Post {post_num}/{total} done: {post.get('pillar')} Ã¢ÂÂ {post.get('hook', '')[:50]}...")
+            _progress(f"Post {post_num}/{total} done: {post.get('pillar')} ÃÂ¢ÃÂÃÂ {post.get('hook', '')[:50]}...")
 
         except Exception as e:
             logger.error(f"Failed to generate post {post_num}/{total} for {day}: {e}")
@@ -991,7 +991,7 @@ def generate_weekly_content(optimize_from: list = None, progress_callback=None) 
         _save_content_queue(weekly_posts)
 
     _progress(f"Done! Generated {len(weekly_posts)}/{total} posts.")
-    logger.info(f"Weekly content generation complete Ã¢ÂÂ {len(weekly_posts)} intelligent posts created")
+    logger.info(f"Weekly content generation complete ÃÂ¢ÃÂÃÂ {len(weekly_posts)} intelligent posts created")
     return weekly_posts
 
 
@@ -1021,7 +1021,7 @@ def generate_instagram_post(
     Generate an Instagram caption using Claude.
 
     Instagram-specific rules (from platform_manager.py PLATFORM_CONFIGS):
-    - Voice: Company ("We", "Gopipways") — NOT first-person like LinkedIn
+    - Voice: Company ("We", "Gopipways") â NOT first-person like LinkedIn
     - Brand: Gopipways @gopipways
     - Char limit: 2,200 (but optimal caption is 150-300 chars)
     - Auto posting: True via Instagram Graph API
@@ -1060,7 +1060,7 @@ def generate_instagram_post(
         )
 
     system_prompt = (
-        "You are the Instagram content writer for Gopipways — Africa's leading "
+        "You are the Instagram content writer for Gopipways â Africa's leading "
         "forex education platform.\n\n"
         "BRAND RULES:\n"
         "- Voice: Company (\"We help traders...\", \"At Gopipways...\")\n"
@@ -1068,13 +1068,13 @@ def generate_instagram_post(
         "- Mission: Democratise forex education, empower retail traders with AI insights\n"
         "- Audience: African retail traders, aged 18-45\n\n"
         "INSTAGRAM FORMAT RULES:\n"
-        "- Caption body: 150-280 characters (SHORT — sits under a visual)\n"
-        "- First line = the hook — must stop the scroll instantly\n"
+        "- Caption body: 150-280 characters (SHORT â sits under a visual)\n"
+        "- First line = the hook â must stop the scroll instantly\n"
         "- End with ONE clear CTA (follow, comment below, save this, link in bio)\n"
         "- Add 6-10 relevant hashtags on a NEW LINE after the caption body\n"
-        "- Max 2 emojis — not excessive\n"
+        "- Max 2 emojis â not excessive\n"
         "- NO long paragraphs. 2 lines max.\n"
-        "- The visual does the heavy lifting — caption supports it\n"
+        "- The visual does the heavy lifting â caption supports it\n"
     )
 
     user_prompt = (
@@ -1125,7 +1125,7 @@ def generate_facebook_post(
     Generate a Facebook Page post using Claude.
 
     Facebook-specific rules (from platform_manager.py PLATFORM_CONFIGS):
-    - Voice: Company ("We", "Gopipways") — same brand as Instagram but different format
+    - Voice: Company ("We", "Gopipways") â same brand as Instagram but different format
     - Brand: Gopipways Company Page
     - Char limit: 63,206 (but optimal is 300-600 for engagement)
     - Auto posting: True via Graph API
@@ -1167,7 +1167,7 @@ def generate_facebook_post(
         )
 
     system_prompt = (
-        "You are the Facebook content writer for Gopipways — Africa's leading "
+        "You are the Facebook content writer for Gopipways â Africa's leading "
         "forex education platform.\n\n"
         "BRAND RULES:\n"
         "- Voice: Company (\"We help traders...\", \"At Gopipways...\")\n"
@@ -1176,12 +1176,12 @@ def generate_facebook_post(
         "- Audience: African retail traders, aged 18-45, Facebook community\n\n"
         "FACEBOOK FORMAT RULES:\n"
         "- Length: 300-600 characters (more room than Instagram, but still concise)\n"
-        "- Tone: Conversational, warm, community-focused — like talking to a group\n"
+        "- Tone: Conversational, warm, community-focused â like talking to a group\n"
         "- ALWAYS end with a question to drive comments (\"What's your take?\", "
         "\"Have you experienced this?\", \"Drop your answer below\")\n"
-        "- 2-4 hashtags ONLY — placed at the very end\n"
+        "- 2-4 hashtags ONLY â placed at the very end\n"
         "- Max 2 emojis\n"
-        "- Can stand alone without a photo — write it so it works as text\n"
+        "- Can stand alone without a photo â write it so it works as text\n"
         "- NO bullet points or line breaks (Facebook prose format)\n"
     )
 
@@ -1220,3 +1220,108 @@ def generate_facebook_post(
         f"length={len(result['message'])}"
     )
     return result
+
+
+def generate_threads_post(
+    pillar: str = None,
+    topic_hint: str = None,
+    post_history: list = None,
+) -> dict:
+    """
+    Generate a Threads post for Gopipways using Claude.
+
+    Threads rules:
+    - Voice: Company but conversational — sounds like a smart human, not a brand account
+    - Length: 280-500 characters total (including hashtags)
+    - Max 3 hashtags. Often 0-1 is better.
+    - End with a question OR a bold statement to drive replies
+    - No buzzword-heavy corporate language
+    - 1-3 emojis max
+    - Occasionally reference African markets, Nigerian/Kenyan traders, WAT timezone
+
+    Returns:
+        dict with keys: text, hashtags, pillar, platform, image_prompt, visual_direction
+    """
+    import json as _json
+    import random as _random
+    import re as _re
+    from datetime import datetime, timezone
+
+    threads_pillars = {
+        "Forex Education": 0.25,
+        "AI in Trading / Product": 0.20,
+        "African Markets / Financial Literacy": 0.20,
+        "Social Proof / Results": 0.15,
+        "Engagement / Community": 0.10,
+        "Personal Story / Growth": 0.10,
+    }
+
+    threads_schedule = {
+        "monday":    "Forex Education",
+        "tuesday":   "AI in Trading / Product",
+        "thursday":  "African Markets / Financial Literacy",
+        "friday":    "Social Proof / Results",
+        "saturday":  "Engagement / Community",
+    }
+
+    if pillar is None:
+        today = datetime.now().strftime("%A").lower()
+        pillar = threads_schedule.get(today, _random.choices(
+            list(threads_pillars.keys()),
+            weights=list(threads_pillars.values())
+        )[0])
+
+    history_snippet = ""
+    if post_history:
+        recent = [p.get("text", "")[:80] for p in post_history[-10:] if p.get("text")]
+        if recent:
+            history_snippet = "\n\nRecent posts (avoid repeating these angles):\n" + "\n".join(
+                f"- {t}" for t in recent
+            )
+
+    topic_line = f"\n\nFocus: {topic_hint}" if topic_hint else ""
+
+    system_prompt = (
+        "You are the Threads content writer for Gopipways — Africa's leading forex education platform. "
+        "Gopipways helps Africans learn forex trading, understand financial markets, and use AI tools to trade smarter.\n\n"
+        "BRAND RULES:\n"
+        "- Voice: Company but sound like a real, smart human — not a brand account\n"
+        "- Mission: Democratise forex education, empower African retail traders\n"
+        "- Audience: African retail traders aged 18-45, especially Nigeria, Kenya, Ghana\n\n"
+        "THREADS FORMAT RULES:\n"
+        "- Total length: 280-500 characters (including hashtags)\n"
+        "- Tone: Conversational, direct, slightly edgy — like a sharp trader sharing an insight\n"
+        "- ALWAYS end with a question OR a bold contrarian statement to spark replies\n"
+        "- Max 3 hashtags. Usually 1 is enough. Sometimes 0 is better.\n"
+        "- 1-3 emojis max. Use them sparingly.\n"
+        "- No corporate buzzwords. No 'excited to announce'. No 'game-changer'.\n"
+        "- Occasionally reference WAT timezone, African market hours, or specific countries\n"
+        "- Short punchy sentences. Line breaks for readability.\n\n"
+        "Respond with JSON only. No markdown, no preamble.\n"
+        "Schema:\n"
+        "{\n"
+        '  "text": "<full post including any hashtags>",\n'
+        '  "hashtags": ["ForexAfrica"],\n'
+        '  "image_prompt": "<optional: describe a visual — leave empty if text-only works best>",\n'
+        '  "visual_direction": "<brief style note if image_prompt set>"\n'
+        "}"
+    )
+
+    user_prompt = f"Write a Threads post for the '{pillar}' content pillar.{topic_line}{history_snippet}"
+
+    raw = _claude_call(system_prompt, user_prompt)
+    match = _re.search(r"\{.*\}", raw, _re.DOTALL)
+    if not match:
+        raise ValueError(f"No JSON in Threads response: {raw[:200]}")
+
+    data = _json.loads(match.group())
+
+    return {
+        "platform": "threads",
+        "pillar": pillar,
+        "text": data.get("text", ""),
+        "hashtags": data.get("hashtags", []),
+        "image_prompt": data.get("image_prompt", ""),
+        "visual_direction": data.get("visual_direction", ""),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+    }
