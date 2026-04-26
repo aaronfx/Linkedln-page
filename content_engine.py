@@ -664,6 +664,58 @@ WRITING RULES (from the 20K Growth Strategy):
 14. NEVER reuse a hook, story, or angle from the Intelligence Briefing
 15. The CTA should be SPECIFIC ("Drop a PLAN in the comments", "Reply with your letter", "What's your daily loss limit?") ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ not generic ("Let me know what you think")
 
+
+MOM TEST WRITING FRAMEWORK (Apply to every post — non-negotiable):
+Based on Rob Fitzpatrick's "The Mom Test": people lie to protect your feelings. Posts that ask about YOUR idea get flattery. Posts that talk about THEIR life get truth — and comments.
+
+RULE A — TALK ABOUT THE TRADER'S LIFE, NOT AARON'S KNOWLEDGE
+Posts that win: 80% trader experience, 20% Aaron's insight.
+Posts that flop: 80% what Aaron knows, 20% what the trader feels.
+The Emeka/Chukwuemeka formula works because it starts with the student's pain, not Aaron's solution.
+Before writing: ask "Is this post about THEIR life or MY idea?" If it's about your idea, rewrite.
+
+RULE B — ANCHOR QUESTIONS AS HOOKS
+Every post hook should secretly be one of these Mom Test questions:
+- "What's the hardest part of [this trading situation]?"
+- "Tell me about the last time [this happened to you]"
+- "What have you tried to fix it? What didn't work?"
+The multiple-choice quiz format IS this rule — it makes traders reflect on specific past behaviour, not give opinions.
+
+RULE C — COMMENTS ARE COMMITMENTS. REACTIONS ARE COMPLIMENTS.
+Design every post to generate COMMENTS, not just reactions.
+Reactions = compliments = noise. Comments = commitments = reach + intelligence.
+A post with 15 comments beats a post with 100 reactions every time.
+End every post with a question that is slightly uncomfortable to answer honestly:
+BAD: "Let me know your thoughts."
+GOOD: "What does your current risk per trade look like? Be honest."
+GOOD: "Reply with your letter — what was YOUR biggest mistake early on?"
+GOOD: "Drop your answer below — most traders won't."
+
+RULE D — SPECIFIC PAST BEHAVIOUR, NOT GENERIC OPINIONS
+Never ask: "Would you use this?" "Do you think this matters?" "Does this resonate?"
+Always ask about: what they did last time, how they handled it, what they tried and failed at.
+"When you enter a trade, what dominates your thinking?" = past behaviour = comments.
+"Do you think discipline matters in trading?" = generic opinion = reactions only.
+
+RULE E — NEVER MIX DISCOVERY AND PITCHING
+Posts are discovery conversations at scale. They must NEVER feel promotional.
+No Gopipways mentions. No "this is why I built X." No product hints. No soft CTAs to any platform.
+Aaron the educator IS the brand right now. Product comes after authority is built.
+If a post could end with "which is why you should check out Gopipways" — delete that ending and replace with a trader-facing question.
+
+RULE F — MINE COMMENTS FOR NEXT WEEK'S HOOKS
+After each post, the language traders use in comments = next post's hook.
+If three people say "nobody teaches position sizing properly" — that IS next week's Unpopular Opinion, written in their exact words.
+Trader language is always better than expert language for hooks.
+
+REAL PERFORMANCE INTELLIGENCE (Week Apr 20–26, 2026 — 6,806 total impressions):
+- #1 REACH: Personal student story "Emeka style" — 1,799 impressions. Formula: specific name + year + real dialogue + mindset shift + lesson. NO product CTA.
+- #1 COMMENTS: "Unpopular opinion: Africa forex education problem isn't scammers, it's silence" — 27 comments. Formula: controversial but defensible + Africa in hook + "let me explain" + invite debate.
+- BEST ENG RATE: "90% of retail traders lose money..." statistic hook — 5.6% rate. Hard data resonates with loyal audience.
+- STRONG: Multiple-choice question — 15 comments. Easy to engage, algorithm fuel.
+- AVOID: Reactive AI/tech posts without personal stake — 0 comments, 205 impressions.
+
+
 IMAGE PROMPT RULES:
 - Describe a PHOTOREALISTIC scene ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ like a real photograph taken by a professional photographer
 - Include specific details: camera model, lens, lighting, camera angle, setting, people, objects
