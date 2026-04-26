@@ -1,5 +1,5 @@
 """
-Threads API — Meta Threads Graph API v1.0
+Threads API â Meta Threads Graph API v1.0
 ==========================================
 Handles all Threads publishing, insights, and reply monitoring.
 
@@ -28,8 +28,8 @@ class ThreadsAPI:
     Threads Graph API client.
 
     Required env vars:
-        THREADS_ACCESS_TOKEN  — long-lived Threads user token
-        THREADS_USER_ID       — your Threads user ID (numeric)
+        THREADS_ACCESS_TOKEN  â long-lived Threads user token
+        THREADS_USER_ID       â your Threads user ID (numeric)
     """
 
     def __init__(self):
@@ -43,7 +43,7 @@ class ThreadsAPI:
                 "Threads posting will fail."
             )
 
-    # ── Core publishing ────────────────────────────────────────────────────────
+    # ââ Core publishing ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
     def create_text_post(self, text: str) -> dict:
         """
@@ -97,7 +97,7 @@ class ThreadsAPI:
             "posted_at": datetime.now(timezone.utc).isoformat(),
         }
 
-    # ── Analytics ─────────────────────────────────────────────────────────────
+    # ââ Analytics âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
     def get_post_insights(self, post_id: str) -> dict:
         """Get engagement metrics for a specific Threads post."""
@@ -142,7 +142,7 @@ class ThreadsAPI:
         )
         return resp.get("data", [])
 
-    # ── Reply monitoring ───────────────────────────────────────────────────────
+    # ââ Reply monitoring âââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
     def get_replies(self, post_id: str, limit: int = 50) -> list:
         """Fetch replies to a Threads post."""
@@ -171,7 +171,7 @@ class ThreadsAPI:
             "text": text,
         }
 
-    # ── Private helpers ────────────────────────────────────────────────────────
+    # ââ Private helpers ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
     def _create_container(
         self,
@@ -259,3 +259,24 @@ class ThreadsAPI:
                 raise ValueError(f"Threads API error {code}: {msg}")
             except (json.JSONDecodeError, AttributeError):
                 resp.raise_for_status()
+
+    def get_replies(self, thread_id: str) -> list:
+        """Fetch replies on a Threads post."""
+        try:
+            resp = self._make_request("GET", f"{thread_id}/replies",
+                params={"fields": "id,text,username,timestamp"})
+            return resp.get("data", [])
+        except Exception as e:
+            logger.warning(f"Could not fetch replies for {thread_id}: {e}")
+            return []
+
+    def reply_to_thread(self, thread_id: str, reply_text: str) -> dict:
+        """Reply to a Threads post."""
+        # Step 1: create reply container
+        container = self._make_request("POST", f"{self.user_id}/threads",
+            params={"media_type": "TEXT", "text": reply_text, "reply_to_id": thread_id})
+        container_id = container.get("id")
+        # Step 2: publish
+        return self._make_request("POST", f"{self.user_id}/threads_publish",
+            params={"creation_id": container_id})
+
