@@ -1063,7 +1063,7 @@ DASHBOARD_HTML = """
     <!-- Company Comments (IG / Facebook / Threads) -->
     <div class="card" style="margin-top:16px">
       <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-        <h3 style="margin:0">&#128172; Company Comments â IG / Facebook / Threads</h3>
+        <h3 style="margin:0">&#128172; Company Comments  -  IG / Facebook / Threads</h3>
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <select id="company-comments-platform" style="padding:5px 12px;border-radius:6px;border:1px solid #ccc;font-size:13px;background:#fff">
             <option value="all">All Platforms</option>
@@ -1416,7 +1416,7 @@ function checkCompanyComments() {
     html += '<table style="width:100%;border-collapse:collapse;font-size:12px">';
     html += '<thead><tr style="background:#f5f5f5"><th style="padding:6px 8px;text-align:left">Platform</th><th style="padding:6px 8px;text-align:left">User</th><th style="padding:6px 8px;text-align:left">Comment</th><th style="padding:6px 8px;text-align:left">Auto-Reply</th><th style="padding:6px 8px;text-align:center">Replied</th></tr></thead><tbody>';
     for (const cm of comments) {
-      const replied = cm.replied ? '<span style="color:green">&#10003;</span>' : '<span style="color:#aaa">â</span>';
+      const replied = cm.replied ? '<span style="color:green">&#10003;</span>' : '<span style="color:#aaa"> - </span>';
       html += '<tr style="border-bottom:1px solid #eee">';
       html += '<td style="padding:6px 8px;text-transform:capitalize;font-size:11px">' + (cm.platform || '') + '</td>';
       html += '<td style="padding:6px 8px;font-weight:600">@' + (cm.username || cm.name || '?') + '</td>';
