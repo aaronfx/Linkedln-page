@@ -95,7 +95,7 @@ def _safe_write_json(filepath, data):
 def wat_to_utc(time_str):
     """
     Convert a WAT (UTC+1) time string to UTC.
-    Example: "08:00" WAT → "07:00" UTC
+    Example: "08:00" WAT â "07:00" UTC
     """
     h, m = map(int, time_str.split(":"))
     wat = datetime.now(timezone.utc).replace(hour=h, minute=m, second=0)
@@ -106,7 +106,7 @@ def wat_to_utc(time_str):
 
 def create_and_post(pillar=None):
     """
-    Post to LinkedIn — QUEUE-FIRST strategy with retry safety.
+    Post to LinkedIn â QUEUE-FIRST strategy with retry safety.
 
     Critical fix: Queue pop happens AFTER successful post, not before.
     Failed posts go to dead-letter queue for retry or manual review.
@@ -120,7 +120,7 @@ def create_and_post(pillar=None):
         source = "queue"
         queue_index = None
 
-        # —— Step 1: Try to post from queue (READ without popping) ——
+        # ââ Step 1: Try to post from queue (READ without popping) ââ
         queue = _safe_read_json(CONTENT_QUEUE_FILE)
 
         if queue:
@@ -128,7 +128,7 @@ def create_and_post(pillar=None):
             queue_index = 0
             logger.info(f"Posting from queue ({len(queue)} total): {post_data.get('pillar', '?')}")
         else:
-            # —— Step 2: Queue empty — generate fresh content ——
+            # ââ Step 2: Queue empty â generate fresh content ââ
             source = "generated"
             analytics = AnalyticsEngine(linkedin)
             top_posts = analytics.get_top_posts(5, 30)
@@ -139,7 +139,7 @@ def create_and_post(pillar=None):
             # Inject learning engine insights into generation
             learning_summary = _learning.get_learning_summary()
 
-            logger.info(f"Queue empty — generating fresh intelligent post for pillar: {pillar}")
+            logger.info(f"Queue empty â generating fresh intelligent post for pillar: {pillar}")
             post_data = generate_post(
                 pillar=pillar,
                 optimize_from=top_posts,
@@ -149,7 +149,7 @@ def create_and_post(pillar=None):
                 comment_insights=context["comment_insights"],
             )
 
-        # —— Step 3: Generate image if needed and not already present ——
+        # ââ Step 3: Generate image if needed and not already present ââ
         post_text = post_data["text"]
         image_path = post_data.get("image_path", "")
         image_prompt = post_data.get("image_prompt", "")
@@ -161,7 +161,7 @@ def create_and_post(pillar=None):
                 logger.warning(f"Image generation failed, posting text-only: {img_err}")
                 image_path = ""
 
-        # —— Step 4: Post to LinkedIn ——
+        # ââ Step 4: Post to LinkedIn ââ
         if image_path and Path(image_path).exists():
             result = linkedin.create_image_post(post_text, image_path)
         else:
@@ -170,7 +170,7 @@ def create_and_post(pillar=None):
         post_id = result.get("id", "unknown")
         logger.info(f"Post published ({source}): {post_id} | Pillar: {post_data.get('pillar', '?')}")
 
-        # ── Step 4b: Post to Facebook (from separate FB queue) ──
+        # ââ Step 4b: Post to Facebook (from separate FB queue) ââ
         try:
             from facebook_api import FacebookAPI
             from config import FACEBOOK_PAGE_ACCESS_TOKEN, DATA_DIR
@@ -202,13 +202,13 @@ def create_and_post(pillar=None):
                     fb_post_id = fb_result.get("id", "unknown")
                     logger.info(f"Facebook post published from FB queue ({len(fb_queue)} remaining): {fb_post_id}")
                 else:
-                    logger.info("Facebook queue empty — skipping FB post this cycle")
+                    logger.info("Facebook queue empty â skipping FB post this cycle")
             else:
-                logger.info("Facebook posting skipped — no token configured")
+                logger.info("Facebook posting skipped â no token configured")
         except Exception as fb_err:
             logger.warning(f"Facebook post failed (non-blocking): {fb_err}")
 
-        # ── Step 4c: Post to Instagram (from separate IG queue) ──
+        # ââ Step 4c: Post to Instagram (from separate IG queue) ââ
         try:
             from instagram_api import InstagramAPI
             from config import INSTAGRAM_BUSINESS_ACCOUNT_ID, DATA_DIR
@@ -237,16 +237,16 @@ def create_and_post(pillar=None):
                         ig_post_id = ig_result.get("id", "unknown")
                         logger.info(f"Instagram post published from IG queue ({len(ig_queue)} remaining): {ig_post_id}")
                     else:
-                        logger.info("Instagram post skipped — no image URL (Instagram requires images)")
+                        logger.info("Instagram post skipped â no image URL (Instagram requires images)")
                 else:
-                    logger.info("Instagram queue empty — skipping IG post this cycle")
+                    logger.info("Instagram queue empty â skipping IG post this cycle")
             else:
-                logger.info("Instagram posting skipped — no account ID configured")
+                logger.info("Instagram posting skipped â no account ID configured")
         except Exception as ig_err:
             logger.warning(f"Instagram post failed (non-blocking): {ig_err}")
 
-        # ── Step 5: Save to post history for future intelligence ──
-        # —— Step 5: SUCCESS — NOW pop from queue (safe) ——
+        # ââ Step 5: Save to post history for future intelligence ââ
+        # ââ Step 5: SUCCESS â NOW pop from queue (safe) ââ
         if queue_index is not None:
             queue = _safe_read_json(CONTENT_QUEUE_FILE)
             if queue:
@@ -254,7 +254,7 @@ def create_and_post(pillar=None):
                 _safe_write_json(CONTENT_QUEUE_FILE, queue)
                 logger.info(f"Queue post consumed. {len(queue)} remaining.")
 
-        # —— Step 6: Save to post history ——
+        # ââ Step 6: Save to post history ââ
         from config import POST_HISTORY_FILE
         history = _safe_read_json(POST_HISTORY_FILE)
 
@@ -274,7 +274,7 @@ def create_and_post(pillar=None):
         history.append(post_record)
         _safe_write_json(POST_HISTORY_FILE, history)
 
-        # —— Step 7: Record in learning engine ——
+        # ââ Step 7: Record in learning engine ââ
         _learning.record_post_result(
             post_id=post_id,
             pillar=post_data.get("pillar", "unknown"),
@@ -479,70 +479,447 @@ def _handle_shutdown(signum, frame):
 
 
 def run_scheduler():
-    """Background thread: runs the scheduled automation tasks."""
+    """Background thread: runs the scheduled automation tasks for ALL platforms."""
     _health["scheduler_alive"] = True
-    logger.info("Scheduler starting...")
-    logger.info(f"Config timezone: {TIMEZONE} (WAT = UTC+1)")
-    logger.info(f"Server timezone: UTC (Railway default)")
-    logger.info("Converting all scheduled times from WAT to UTC...")
+    logger.info("Scheduler starting — LinkedIn (personal) + Gopipways company platforms...")
 
-    # Schedule posts for each day — convert WAT times to UTC
+    from config import (
+        INSTAGRAM_POSTING_SCHEDULE, FACEBOOK_POSTING_SCHEDULE, THREADS_POSTING_SCHEDULE
+    )
+
+    # ── LinkedIn — Aaron's personal brand (unchanged, always first) ───────────
     for day, config in POSTING_SCHEDULE.items():
-        wat_time = config["time"]
-        utc_time = wat_to_utc(wat_time)
+        utc_time = wat_to_utc(config["time"])
         pillar = config["pillar_preference"]
-        getattr(sched_lib.every(), day).at(utc_time).do(
-            create_and_post, pillar=pillar
-        )
-        logger.info(f"Scheduled post: {day} at {wat_time} WAT ({utc_time} UTC) — {pillar}")
+        getattr(sched_lib.every(), day).at(utc_time).do(create_and_post, pillar=pillar)
+        logger.info(f"[LinkedIn] {day} {config['time']} WAT -> {utc_time} UTC | {pillar}")
 
-    # Comment monitoring every 2 hours
+    # ── Instagram — Gopipways company brand ───────────────────────────────────
+    for day, config in INSTAGRAM_POSTING_SCHEDULE.items():
+        utc_time = wat_to_utc(config["time"])
+        pillar = config["pillar_preference"]
+        getattr(sched_lib.every(), day).at(utc_time).do(create_and_post_instagram, pillar=pillar)
+        logger.info(f"[Instagram] {day} {config['time']} WAT -> {utc_time} UTC | {pillar}")
+
+    # ── Facebook — Gopipways company brand ────────────────────────────────────
+    for day, config in FACEBOOK_POSTING_SCHEDULE.items():
+        utc_time = wat_to_utc(config["time"])
+        pillar = config["pillar_preference"]
+        getattr(sched_lib.every(), day).at(utc_time).do(create_and_post_facebook, pillar=pillar)
+        logger.info(f"[Facebook] {day} {config['time']} WAT -> {utc_time} UTC | {pillar}")
+
+    # ── Threads — Gopipways company brand ─────────────────────────────────────
+    for day, config in THREADS_POSTING_SCHEDULE.items():
+        utc_time = wat_to_utc(config["time"])
+        pillar = config["pillar_preference"]
+        getattr(sched_lib.every(), day).at(utc_time).do(create_and_post_threads, pillar=pillar)
+        logger.info(f"[Threads] {day} {config['time']} WAT -> {utc_time} UTC | {pillar}")
+
+    # ── Comment monitoring — all platforms every 2 hours ─────────────────────
     sched_lib.every(2).hours.do(check_comments)
+    sched_lib.every(2).hours.do(check_comments_instagram)
+    sched_lib.every(2).hours.do(check_comments_facebook)
+    sched_lib.every(2).hours.do(check_comments_threads)
 
-    # Analytics collection every 12 hours
+    # ── Analytics — all platforms every 12 hours ──────────────────────────────
     sched_lib.every(12).hours.do(collect_metrics)
+    sched_lib.every(12).hours.do(collect_metrics_instagram)
+    sched_lib.every(12).hours.do(collect_metrics_facebook)
+    sched_lib.every(12).hours.do(collect_metrics_threads)
 
-    # Weekly report
-    report_day = ANALYTICS_SETTINGS["report_day"]
-    report_time_wat = ANALYTICS_SETTINGS["report_time"]
-    report_time_utc = wat_to_utc(report_time_wat)
-    getattr(sched_lib.every(), report_day).at(report_time_utc).do(weekly_report)
+    # ── Learning + intelligence loop every 6 hours ────────────────────────────
+    sched_lib.every(6).hours.do(detect_and_learn)
 
-    # Performance monitoring every 6 hours
-    sched_lib.every(6).hours.do(monitor_recent_posts)
-    logger.info("Scheduled: monitor_recent_posts every 6 hours")
+    # ── Dead letter retry every hour ─────────────────────────────────────────
+    sched_lib.every(1).hours.do(retry_dead_letter)
 
-    # Daily intelligence loop at 22:00 UTC (23:00 WAT)
-    sched_lib.every().day.at("22:00").do(detect_and_learn)
-    logger.info("Scheduled: detect_and_learn daily at 22:00 UTC")
+    # ── Weekly report ─────────────────────────────────────────────────────────
+    report_day = ANALYTICS_SETTINGS.get("report_day", "sunday")
+    report_time = wat_to_utc(ANALYTICS_SETTINGS.get("report_time", "20:00"))
+    getattr(sched_lib.every(), report_day).at(report_time).do(weekly_report)
 
-    # Queue refill check daily at 23:00 UTC (midnight WAT)
-    sched_lib.every().day.at("23:00").do(refill_queue)
-
-    # Dead-letter retry every 4 hours
-    sched_lib.every(4).hours.do(retry_dead_letter)
-    logger.info("Scheduled: retry_dead_letter every 4 hours")
-
-    logger.info("All tasks scheduled. Running loop...")
+    logger.info("All platform schedulers active. Running loop...")
     while not _shutdown_event.is_set():
         sched_lib.run_pending()
-        # Use event wait instead of sleep for faster shutdown response
-        _shutdown_event.wait(timeout=30)
+        time.sleep(30)
 
-    logger.info("Scheduler loop exited (shutdown requested).")
+    logger.info("Scheduler stopped.")
     _health["scheduler_alive"] = False
 
 
-if __name__ == "__main__":
-    # Register graceful shutdown handlers
-    signal.signal(signal.SIGTERM, _handle_shutdown)
-    signal.signal(signal.SIGINT, _handle_shutdown)
+# ═══════════════════════════════════════════════════════════════════════════════
+# GOPIPWAYS COMPANY PLATFORM AUTOMATION — Instagram, Facebook, Threads
+# LinkedIn (Aaron's personal brand) uses the existing create_and_post() above.
+# ═══════════════════════════════════════════════════════════════════════════════
 
-    # Start scheduler in background thread
-    scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
-    scheduler_thread.start()
-    logger.info("Scheduler thread started")
+def _safe_read_json(path, default=None):
+    """Thread-safe JSON read with fallback."""
+    if default is None:
+        default = []
+    try:
+        from pathlib import Path
+        p = Path(path)
+        if p.exists():
+            import json as _j
+            return _j.loads(p.read_text())
+    except Exception:
+        pass
+    return default
 
-    # Run dashboard in main thread (Railway needs this for the PORT)
-    logger.info("Starting dashboard...")
-    run_dashboard()
+
+def _safe_write_json(path, data):
+    """Thread-safe JSON write."""
+    try:
+        from pathlib import Path
+        import json as _j
+        Path(path).write_text(_j.dumps(data, indent=2, default=str))
+    except Exception as e:
+        logger.error(f"_safe_write_json error: {e}")
+
+
+# ── Instagram Posting ─────────────────────────────────────────────────────────
+
+def create_and_post_instagram(pillar=None):
+    """Queue-first Instagram posting using generate_company_post()."""
+    try:
+        from config import IG_QUEUE_FILE, IG_HISTORY_FILE, IG_DEAD_LETTER_FILE, IMAGES_DIR
+        from instagram_api import InstagramAPI
+
+        queue = _safe_read_json(IG_QUEUE_FILE)
+        if not queue:
+            from content_engine import generate_company_post
+            history = _safe_read_json(IG_HISTORY_FILE)
+            company = generate_company_post(pillar=pillar, post_history=history[-20:] if history else [])
+            ig_post = company.get("instagram", {})
+            caption = ig_post.get("caption", "")
+            tags = " ".join(ig_post.get("hashtags", []))
+            if tags:
+                caption = caption.rstrip() + "\n" + tags
+            queue = [{"caption": caption, "pillar": company.get("pillar",""), "type":"company",
+                      "core_hook": company.get("core_hook",""), "generated_at": company.get("generated_at","")}]
+
+        entry = queue[0]
+        caption = entry.get("caption", entry.get("text", ""))
+        image_url = entry.get("image_url", "")
+
+        if not caption:
+            logger.warning("Instagram: empty caption, skipping")
+            return
+
+        api = InstagramAPI()
+        if image_url:
+            result = api.create_image_post(image_url=image_url, caption=caption)
+        else:
+            result = api.create_image_post(image_url="", caption=caption)
+
+        if result.get("id") or result.get("success"):
+            queue.pop(0)
+            _safe_write_json(IG_QUEUE_FILE, queue)
+            history = _safe_read_json(IG_HISTORY_FILE)
+            history.append({**entry, "post_id": result.get("id",""), "posted_at": datetime.now(timezone.utc).isoformat(), "platform": "instagram"})
+            _safe_write_json(IG_HISTORY_FILE, history)
+            _health["last_ig_post"] = datetime.now(timezone.utc).isoformat()
+            logger.info(f"Instagram posted: {result.get('id')}")
+        else:
+            raise ValueError(f"Instagram post failed: {result}")
+
+    except Exception as e:
+        logger.error(f"Instagram posting error: {e}")
+        try:
+            from config import IG_DEAD_LETTER_FILE
+            dead = _safe_read_json(IG_DEAD_LETTER_FILE)
+            dead.append({"error": str(e), "failed_at": datetime.now(timezone.utc).isoformat()})
+            _safe_write_json(IG_DEAD_LETTER_FILE, dead)
+        except Exception:
+            pass
+
+
+# ── Facebook Posting ──────────────────────────────────────────────────────────
+
+def create_and_post_facebook(pillar=None):
+    """Queue-first Facebook posting using generate_company_post()."""
+    try:
+        from config import FB_QUEUE_FILE, FB_HISTORY_FILE, FB_DEAD_LETTER_FILE
+        from facebook_api import FacebookAPI
+
+        queue = _safe_read_json(FB_QUEUE_FILE)
+        if not queue:
+            from content_engine import generate_company_post
+            history = _safe_read_json(FB_HISTORY_FILE)
+            company = generate_company_post(pillar=pillar, post_history=history[-20:] if history else [])
+            fb_post = company.get("facebook", {})
+            text = fb_post.get("text", "")
+            tags = " ".join(fb_post.get("hashtags", []))
+            if tags:
+                text = text.rstrip() + "\n" + tags
+            queue = [{"text": text, "pillar": company.get("pillar",""), "type":"company",
+                      "core_hook": company.get("core_hook",""), "generated_at": company.get("generated_at","")}]
+
+        entry = queue[0]
+        text = entry.get("text", entry.get("caption", ""))
+        if not text:
+            logger.warning("Facebook: empty text, skipping")
+            return
+
+        api = FacebookAPI()
+        result = api.create_text_post(text)
+
+        if result.get("post_id") or result.get("success"):
+            queue.pop(0)
+            _safe_write_json(FB_QUEUE_FILE, queue)
+            history = _safe_read_json(FB_HISTORY_FILE)
+            history.append({**entry, "post_id": result.get("post_id",""), "posted_at": datetime.now(timezone.utc).isoformat(), "platform": "facebook"})
+            _safe_write_json(FB_HISTORY_FILE, history)
+            _health["last_fb_post"] = datetime.now(timezone.utc).isoformat()
+            logger.info(f"Facebook posted: {result.get('post_id')}")
+        else:
+            raise ValueError(f"Facebook post failed: {result}")
+
+    except Exception as e:
+        logger.error(f"Facebook posting error: {e}")
+        try:
+            from config import FB_DEAD_LETTER_FILE
+            dead = _safe_read_json(FB_DEAD_LETTER_FILE)
+            dead.append({"error": str(e), "failed_at": datetime.now(timezone.utc).isoformat()})
+            _safe_write_json(FB_DEAD_LETTER_FILE, dead)
+        except Exception:
+            pass
+
+
+# ── Threads Posting ───────────────────────────────────────────────────────────
+
+def create_and_post_threads(pillar=None):
+    """Queue-first Threads posting using generate_company_post()."""
+    try:
+        from config import THREADS_QUEUE_FILE, THREADS_HISTORY_FILE, THREADS_DEAD_LETTER_FILE
+        from threads_api import ThreadsAPI
+
+        queue = _safe_read_json(THREADS_QUEUE_FILE)
+        if not queue:
+            from content_engine import generate_company_post
+            history = _safe_read_json(THREADS_HISTORY_FILE)
+            company = generate_company_post(pillar=pillar, post_history=history[-20:] if history else [])
+            th_post = company.get("threads", {})
+            text = th_post.get("text", "")
+            tags = " ".join(th_post.get("hashtags", []))
+            if tags:
+                text = text.rstrip() + "\n" + tags
+            queue = [{"text": text, "pillar": company.get("pillar",""), "type":"company",
+                      "core_hook": company.get("core_hook",""), "generated_at": company.get("generated_at","")}]
+
+        entry = queue[0]
+        text = entry.get("text", "")
+        if not text:
+            logger.warning("Threads: empty text, skipping")
+            return
+
+        api = ThreadsAPI()
+        result = api.create_text_post(text)
+
+        if result.get("post_id") or result.get("success"):
+            queue.pop(0)
+            _safe_write_json(THREADS_QUEUE_FILE, queue)
+            history = _safe_read_json(THREADS_HISTORY_FILE)
+            history.append({**entry, "post_id": result.get("post_id",""), "posted_at": datetime.now(timezone.utc).isoformat(), "platform": "threads"})
+            _safe_write_json(THREADS_HISTORY_FILE, history)
+            _health["last_threads_post"] = datetime.now(timezone.utc).isoformat()
+            logger.info(f"Threads posted: {result.get('post_id')}")
+        else:
+            raise ValueError(f"Threads post failed: {result}")
+
+    except Exception as e:
+        logger.error(f"Threads posting error: {e}")
+        try:
+            from config import THREADS_DEAD_LETTER_FILE
+            dead = _safe_read_json(THREADS_DEAD_LETTER_FILE)
+            dead.append({"error": str(e), "failed_at": datetime.now(timezone.utc).isoformat()})
+            _safe_write_json(THREADS_DEAD_LETTER_FILE, dead)
+        except Exception:
+            pass
+
+
+# ── Comment Monitoring — Company Platforms ────────────────────────────────────
+
+def check_comments_instagram():
+    """Check and log comments on recent Instagram posts."""
+    try:
+        from config import IG_HISTORY_FILE, IG_COMMENT_LOG_FILE
+        from instagram_api import InstagramAPI
+        api = InstagramAPI()
+        history = _safe_read_json(IG_HISTORY_FILE)
+        if not history:
+            return
+        comment_log = _safe_read_json(IG_COMMENT_LOG_FILE)
+        seen = {c.get("comment_id") for c in comment_log}
+        for post in history[-5:]:
+            pid = post.get("post_id","")
+            if not pid:
+                continue
+            try:
+                for c in api.get_comments(pid):
+                    cid = c.get("id","")
+                    if cid and cid not in seen:
+                        comment_log.append({"comment_id": cid, "post_id": pid, "platform": "instagram",
+                            "text": c.get("text",""), "username": c.get("username",""),
+                            "timestamp": c.get("timestamp",""), "replied": False})
+                        seen.add(cid)
+            except Exception as e:
+                logger.debug(f"IG comments error {pid}: {e}")
+        _safe_write_json(IG_COMMENT_LOG_FILE, comment_log)
+        logger.info(f"Instagram comments: {len(comment_log)} total")
+    except Exception as e:
+        logger.error(f"check_comments_instagram error: {e}")
+
+
+def check_comments_facebook():
+    """Check and log comments on recent Facebook posts."""
+    try:
+        from config import FB_HISTORY_FILE, FB_COMMENT_LOG_FILE
+        from facebook_api import FacebookAPI
+        api = FacebookAPI()
+        history = _safe_read_json(FB_HISTORY_FILE)
+        if not history:
+            return
+        comment_log = _safe_read_json(FB_COMMENT_LOG_FILE)
+        seen = {c.get("comment_id") for c in comment_log}
+        for post in history[-5:]:
+            pid = post.get("post_id","")
+            if not pid:
+                continue
+            try:
+                for c in api.get_post_comments(pid):
+                    cid = c.get("id","")
+                    if cid and cid not in seen:
+                        comment_log.append({"comment_id": cid, "post_id": pid, "platform": "facebook",
+                            "text": c.get("message",""), "username": c.get("from",{}).get("name",""),
+                            "timestamp": c.get("created_time",""), "replied": False})
+                        seen.add(cid)
+            except Exception as e:
+                logger.debug(f"FB comments error {pid}: {e}")
+        _safe_write_json(FB_COMMENT_LOG_FILE, comment_log)
+        logger.info(f"Facebook comments: {len(comment_log)} total")
+    except Exception as e:
+        logger.error(f"check_comments_facebook error: {e}")
+
+
+def check_comments_threads():
+    """Check and log replies on recent Threads posts."""
+    try:
+        from config import THREADS_HISTORY_FILE, THREADS_COMMENT_LOG_FILE
+        from threads_api import ThreadsAPI
+        api = ThreadsAPI()
+        history = _safe_read_json(THREADS_HISTORY_FILE)
+        if not history:
+            return
+        comment_log = _safe_read_json(THREADS_COMMENT_LOG_FILE)
+        seen = {c.get("comment_id") for c in comment_log}
+        for post in history[-5:]:
+            pid = post.get("post_id","")
+            if not pid:
+                continue
+            try:
+                for r in api.get_replies(pid):
+                    rid = r.get("id","")
+                    if rid and rid not in seen:
+                        comment_log.append({"comment_id": rid, "post_id": pid, "platform": "threads",
+                            "text": r.get("text",""), "username": r.get("username",""),
+                            "timestamp": r.get("timestamp",""), "replied": False})
+                        seen.add(rid)
+            except Exception as e:
+                logger.debug(f"Threads replies error {pid}: {e}")
+        _safe_write_json(THREADS_COMMENT_LOG_FILE, comment_log)
+        logger.info(f"Threads replies: {len(comment_log)} total")
+    except Exception as e:
+        logger.error(f"check_comments_threads error: {e}")
+
+
+# ── Analytics Collection — Company Platforms ──────────────────────────────────
+
+def collect_metrics_instagram():
+    """Collect Instagram post and account insights."""
+    try:
+        from config import IG_HISTORY_FILE, IG_ANALYTICS_FILE
+        from instagram_api import InstagramAPI
+        api = InstagramAPI()
+        account = {}
+        try:
+            account = api.get_account_insights()
+        except Exception:
+            pass
+        history = _safe_read_json(IG_HISTORY_FILE)
+        post_metrics = []
+        for post in history[-10:]:
+            pid = post.get("post_id","")
+            if not pid:
+                continue
+            try:
+                ins = api.get_post_insights(pid)
+                post_metrics.append({"post_id": pid, "pillar": post.get("pillar",""),
+                    "posted_at": post.get("posted_at",""), **ins})
+            except Exception as e:
+                logger.debug(f"IG insights error {pid}: {e}")
+        analytics = _safe_read_json(IG_ANALYTICS_FILE)
+        analytics.append({"collected_at": datetime.now(timezone.utc).isoformat(),
+            "account": account, "posts": post_metrics})
+        _safe_write_json(IG_ANALYTICS_FILE, analytics[-30:])
+        logger.info(f"Instagram analytics collected")
+    except Exception as e:
+        logger.error(f"collect_metrics_instagram error: {e}")
+
+
+def collect_metrics_facebook():
+    """Collect Facebook post insights."""
+    try:
+        from config import FB_HISTORY_FILE, FB_ANALYTICS_FILE
+        from facebook_api import FacebookAPI
+        api = FacebookAPI()
+        history = _safe_read_json(FB_HISTORY_FILE)
+        post_metrics = []
+        for post in history[-10:]:
+            pid = post.get("post_id","")
+            if not pid:
+                continue
+            try:
+                ins = api.get_post_insights(pid)
+                post_metrics.append({"post_id": pid, "pillar": post.get("pillar",""),
+                    "posted_at": post.get("posted_at",""), **ins})
+            except Exception as e:
+                logger.debug(f"FB insights error {pid}: {e}")
+        analytics = _safe_read_json(FB_ANALYTICS_FILE)
+        analytics.append({"collected_at": datetime.now(timezone.utc).isoformat(), "posts": post_metrics})
+        _safe_write_json(FB_ANALYTICS_FILE, analytics[-30:])
+        logger.info(f"Facebook analytics collected")
+    except Exception as e:
+        logger.error(f"collect_metrics_facebook error: {e}")
+
+
+def collect_metrics_threads():
+    """Collect Threads post and account insights."""
+    try:
+        from config import THREADS_HISTORY_FILE, THREADS_ANALYTICS_FILE
+        from threads_api import ThreadsAPI
+        api = ThreadsAPI()
+        account = {}
+        try:
+            account = api.get_account_insights()
+        except Exception:
+            pass
+        history = _safe_read_json(THREADS_HISTORY_FILE)
+        post_metrics = []
+        for post in history[-10:]:
+            pid = post.get("post_id","")
+            if not pid:
+                continue
+            try:
+                ins = api.get_post_insights(pid)
+                post_metrics.append({"post_id": pid, "pillar": post.get("pillar",""),
+                    "posted_at": post.get("posted_at",""), **ins})
+            except Exception as e:
+                logger.debug(f"Threads insights error {pid}: {e}")
+        analytics = _safe_read_json(THREADS_ANALYTICS_FILE)
+        analytics.append({"collected_at": datetime.now(timezone.utc).isoformat(),
+            "account": account, "posts": post_metrics})
+        _safe_write_json(THREADS_ANALYTICS_FILE, analytics[-30:])
+        logger.info(f"Threads analytics collected")
+    except Exception as e:
+        logger.error(f"collect_metrics_threads error: {e}")
