@@ -39,7 +39,7 @@ class InstagramAPI:
         self.ig_account_id = ig_account_id or INSTAGRAM_BUSINESS_ACCOUNT_ID
         self.post_history = self._load_json(IG_POST_HISTORY_FILE, [])
 
-    # ─── Helpers ───────────────────────────────────────────────
+    # âââ Helpers âââââââââââââââââââââââââââââââââââââââââââââââ
 
     @staticmethod
     def _load_json(path, default):
@@ -73,7 +73,7 @@ class InstagramAPI:
 
         return resp.json()
 
-    # ─── Account Info ─────────────────────────────────────────
+    # âââ Account Info âââââââââââââââââââââââââââââââââââââââââ
 
     def get_account_info(self) -> dict:
         """Get Instagram Business Account information."""
@@ -82,7 +82,7 @@ class InstagramAPI:
             params={"fields": "id,username,name,profile_picture_url,followers_count,media_count,biography"}
         )
 
-    # ─── Publishing — Single Image Post ───────────────────────
+    # âââ Publishing â Single Image Post âââââââââââââââââââââââ
 
     def create_image_post(self, image_url: str, caption: str) -> dict:
         """
@@ -101,10 +101,10 @@ class InstagramAPI:
         """
         logger.info(f"Publishing image post to Instagram ({len(caption)} chars)")
 
-        # Step 1: Create media container
+        # Step 1: Create media container (send image_url+caption in POST body to avoid URL encoding issues)
         container = self._make_request(
             "POST", f"{self.ig_account_id}/media",
-            params={
+            data={
                 "image_url": image_url,
                 "caption": caption,
             }
@@ -137,7 +137,7 @@ class InstagramAPI:
 
         return result
 
-    # ─── Publishing — Carousel Post ───────────────────────────
+    # âââ Publishing â Carousel Post âââââââââââââââââââââââââââ
 
     def create_carousel_post(self, items: list, caption: str) -> dict:
         """
@@ -209,7 +209,7 @@ class InstagramAPI:
 
         return result
 
-    # ─── Publishing — Reel ────────────────────────────────────
+    # âââ Publishing â Reel ââââââââââââââââââââââââââââââââââââ
 
     def create_reel(self, video_url: str, caption: str, cover_url: str = None, share_to_feed: bool = True) -> dict:
         """
@@ -267,7 +267,7 @@ class InstagramAPI:
 
         return result
 
-    # ─── Container Status Polling ─────────────────────────────
+    # âââ Container Status Polling âââââââââââââââââââââââââââââ
 
     def _wait_for_container(self, container_id: str, max_wait: int = 60):
         """
@@ -293,7 +293,7 @@ class InstagramAPI:
 
         raise TimeoutError(f"Container {container_id} not ready after {max_wait}s")
 
-    # ─── Insights / Analytics ─────────────────────────────────
+    # âââ Insights / Analytics âââââââââââââââââââââââââââââââââ
 
     def get_post_insights(self, media_id: str) -> dict:
         """Get engagement metrics for a specific Instagram post."""
