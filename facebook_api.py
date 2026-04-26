@@ -24,14 +24,14 @@ FB_POST_HISTORY_FILE = DATA_DIR / "fb_post_history.json"
 
 
 class FacebookAPI:
-    """Client for Facebook's Graph API — Page posting and insights."""
+    """Client for Facebook's Graph API â Page posting and insights."""
 
     def __init__(self, access_token: str = None, page_id: str = None):
         self.access_token = access_token or FACEBOOK_PAGE_ACCESS_TOKEN
         self.page_id = page_id or FACEBOOK_PAGE_ID
         self.post_history = self._load_json(FB_POST_HISTORY_FILE, [])
 
-    # ─── Helpers ───────────────────────────────────────────────
+    # âââ Helpers âââââââââââââââââââââââââââââââââââââââââââââââ
 
     @staticmethod
     def _load_json(path, default):
@@ -61,11 +61,11 @@ class FacebookAPI:
                 f"Facebook API error: {error_data.get('message', resp.text)} "
                 f"(code: {error_data.get('code')}, type: {error_data.get('type')})"
             )
-            resp.raise_for_status()
+            raise Exception(f"Facebook API Error {error_data.get('code', '?')}: {error_data.get('message', resp.text)} (type: {error_data.get('type', '?')})")
 
         return resp.json()
 
-    # ─── Page Info ─────────────────────────────────────────────
+    # âââ Page Info âââââââââââââââââââââââââââââââââââââââââââââ
 
     def get_page_info(self) -> dict:
         """Get basic page information."""
@@ -74,7 +74,7 @@ class FacebookAPI:
             params={"fields": "id,name,fan_count,followers_count,category"}
         )
 
-    # ─── Posting ───────────────────────────────────────────────
+    # âââ Posting âââââââââââââââââââââââââââââââââââââââââââââââ
 
     def create_text_post(self, message: str) -> dict:
         """
@@ -177,7 +177,7 @@ class FacebookAPI:
 
         return result
 
-    # ─── Insights / Analytics ──────────────────────────────────
+    # âââ Insights / Analytics ââââââââââââââââââââââââââââââââââ
 
     def get_post_insights(self, post_id: str) -> dict:
         """Get engagement metrics for a specific post."""
@@ -233,7 +233,7 @@ class FacebookAPI:
             logger.warning(f"Failed to get recent posts: {e}")
             return []
 
-    # ─── Delete / Trash ────────────────────────────────────────
+    # âââ Delete / Trash ââââââââââââââââââââââââââââââââââââââââ
 
     def delete_post(self, post_id: str) -> dict:
         """Delete a post from the page."""
