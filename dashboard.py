@@ -2353,7 +2353,7 @@ def api_sync():
 def api_add_post():
     """Add a post to the content queue for scheduled publishing."""
     try:
-        data = request.json or {}
+        data = request.get_json(force=True, silent=True) or {}
         text = (data.get("text") or data.get("content") or "").strip()
         image_url = data.get("image_url", "").strip()
 
@@ -2486,7 +2486,7 @@ def api_post_facebook():
         if not FACEBOOK_PAGE_ACCESS_TOKEN or FACEBOOK_PAGE_ACCESS_TOKEN == "your-fb-page-token-here":
             return jsonify({"success": False, "message": "Facebook not configured ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ add FACEBOOK_PAGE_ACCESS_TOKEN env var"})
 
-        data = request.json or {}
+        data = request.get_json(force=True, silent=True) or {}
         message = data.get("message", "")
 
         if not message:
@@ -2535,7 +2535,7 @@ def api_fb_queue():
 def api_fb_queue_add():
     """Add a post to the Facebook content queue."""
     from config import DATA_DIR
-    data = request.json or {}
+    data = request.get_json(force=True, silent=True) or {}
     text = data.get("text", "")
     if not text:
         return jsonify({"success": False, "message": "Post text is required"})
@@ -2609,7 +2609,7 @@ def api_post_instagram():
         if not INSTAGRAM_BUSINESS_ACCOUNT_ID or INSTAGRAM_BUSINESS_ACCOUNT_ID == "your-ig-account-id-here":
             return jsonify({"success": False, "message": "Instagram not configured ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ add INSTAGRAM_BUSINESS_ACCOUNT_ID env var"})
 
-        data = request.json or {}
+        data = request.get_json(force=True, silent=True) or {}
         caption = data.get("caption", "")
         image_url = data.get("image_url", "")
 
@@ -2626,7 +2626,20 @@ def api_post_instagram():
             image_url = post_data.get("image_url", "")
 
         if not image_url:
-            return jsonify({"success": False, "message": "Instagram requires an image URL. Text-only posts are not supported."})
+            # Use rotating stock trading/finance photos from Unsplash until Nano Banana is configured
+            import random as _rand
+            STOCK_PHOTOS = [
+                "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1080&h=1080&fit=crop",
+                "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=1080&h=1080&fit=crop",
+                "https://images.unsplash.com/photo-1642790551116-18e150f248e3?w=1080&h=1080&fit=crop",
+                "https://images.unsplash.com/photo-1535320903710-d993d3d77d29?w=1080&h=1080&fit=crop",
+                "https://images.unsplash.com/photo-1468254095679-bbcba94a7066?w=1080&h=1080&fit=crop",
+                "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1080&h=1080&fit=crop",
+                "https://images.unsplash.com/photo-1518183214770-9cffbec72538?w=1080&h=1080&fit=crop",
+                "https://images.unsplash.com/photo-1569025743873-ea3a9ade89f9?w=1080&h=1080&fit=crop",
+            ]
+            image_url = _rand.choice(STOCK_PHOTOS)
+            logger.info(f"No image URL in queue item — using stock photo fallback: {image_url}")
 
         ig = InstagramAPI()
         result = ig.create_image_post(image_url, caption)
@@ -2652,7 +2665,7 @@ def api_ig_queue():
 def api_ig_queue_add():
     """Add a post to the Instagram content queue."""
     from config import DATA_DIR
-    data = request.json or {}
+    data = request.get_json(force=True, silent=True) or {}
     caption = data.get("caption", data.get("text", ""))
     image_url = data.get("image_url", "")
     if not caption:
@@ -3369,7 +3382,7 @@ def api_log_engagement():
     }
     """
     try:
-        data = request.json or {}
+        data = request.get_json(force=True, silent=True) or {}
         entries = data.get("entries", [])
         if not entries:
             return jsonify({"success": False, "error": "No engagement entries provided"})
@@ -3435,7 +3448,7 @@ def api_log_metrics():
     }
     """
     try:
-        data = request.json or {}
+        data = request.get_json(force=True, silent=True) or {}
         metrics_list = data.get("metrics", [])
 
         # Store scraped metrics with timestamp
@@ -3670,7 +3683,7 @@ def api_calendar_load(year, month):
 def api_calendar_generate():
     """Generate a new content calendar using AI."""
     try:
-        data = request.json or {}
+        data = request.get_json(force=True, silent=True) or {}
         month = data.get("month", 5)
         year = data.get("year", 2026)
         platforms = data.get("platforms", ["linkedin", "instagram", "facebook", "whatsapp_status"])
@@ -3709,7 +3722,7 @@ def api_calendar_update_entry(entry_id):
     - whatsapp_status ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ no queue (manual posting, skipped)
     """
     try:
-        data = request.json or {}
+        data = request.get_json(force=True, silent=True) or {}
         month = data.pop("month", 5)
         year = data.pop("year", 2026)
 
@@ -3799,7 +3812,7 @@ def api_calendar_update_entry(entry_id):
 def api_writer_generate():
     """Generate a single post using AI for any platform."""
     try:
-        data = request.json or {}
+        data = request.get_json(force=True, silent=True) or {}
         platform = data.get("platform", "linkedin")
         pillar = data.get("pillar", "")
         topic = data.get("topic", "")
@@ -3901,7 +3914,7 @@ def api_writer_generate_company():
     """Generate Gopipways company posts for Instagram + Facebook + Threads in one call."""
     try:
         from content_engine import generate_company_post, load_full_context
-        data = request.json or {}
+        data = request.get_json(force=True, silent=True) or {}
         pillar = data.get("pillar", "")
         topic  = data.get("topic", "")
 
@@ -3921,7 +3934,7 @@ def api_writer_generate_company():
 def api_creative_generate():
     """Generate an image using DALL-E for any platform."""
     try:
-        data = request.json or {}
+        data = request.get_json(force=True, silent=True) or {}
         prompt = data.get("prompt", "")
         platform = data.get("platform", "linkedin")
         aspect = data.get("aspect", "landscape")
@@ -3977,7 +3990,7 @@ def api_visual_flags():
 def api_brand_review():
     """Quick brand review (rule-based)."""
     try:
-        data = request.json or {}
+        data = request.get_json(force=True, silent=True) or {}
         text = data.get("text", "")
         platform = data.get("platform", "linkedin")
 
@@ -4022,7 +4035,7 @@ def api_brand_review():
 def api_brand_deep_review():
     """AI-powered deep brand review using Claude."""
     try:
-        data = request.json or {}
+        data = request.get_json(force=True, silent=True) or {}
         text = data.get("text", "")
         platform = data.get("platform", "linkedin")
 
