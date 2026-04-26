@@ -1406,7 +1406,7 @@ function checkCompanyComments() {
     if (!comments.length) {
       let debugHtml = '<div class="empty-state"><p>' + (d.message || 'No comments found.') + '</p>';
       if (d.debug && d.debug.length) {
-        debugHtml += '<details style="margin-top:10px;text-align:left"><summary style="cursor:pointer;font-size:11px;color:#888">Debug info</summary><pre style="font-size:10px;color:#666;margin-top:6px;white-space:pre-wrap">' + d.debug.join('\n') + '</pre></details>';
+        debugHtml += '<details style="margin-top:10px;text-align:left"><summary style="cursor:pointer;font-size:11px;color:#888">Debug info</summary><pre style="font-size:10px;color:#666;margin-top:6px;white-space:pre-wrap">' + d.debug.join('\\n') + '</pre></details>';
       }
       debugHtml += '</div>';
       body.innerHTML = debugHtml;
