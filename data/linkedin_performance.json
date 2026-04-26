@@ -2,116 +2,132 @@
   "week": "2026-W17",
   "period": "2026-04-20 to 2026-04-26",
   "overall": {
-    "impressions": 6816,
-    "impressions_vs_prior_week_pct": 8638.5,
+    "impressions": 6806,
+    "impressions_growth_pct": 8625.6,
     "reactions": 111,
     "comments": 57,
+    "saves": 1,
     "reposts": 0,
-    "saves": 1
+    "total_engagements": 169
   },
-  "posts": [
+  "posts_ranked_by_impressions": [
     {
       "rank": 1,
-      "reactions": 26,
-      "comments": 27,
-      "engagement_score": 53,
-      "format": "contrarian_opinion",
-      "hook": "Unpopular opinion:",
-      "topic": "Africa forex education problem — silence of qualified experts",
-      "theme": "africa_education_gap",
-      "winning_elements": [
-        "unpopular opinion hook",
-        "named real villain (silence) not obvious villain (scammers)",
-        "personal mission statement",
-        "social proof (3000+ traders)",
-        "invite others to join movement"
-      ],
-      "snippet": "Unpopular opinion: The biggest problem with forex education in Africa isn't scammers. It's silence."
+      "format": "personal_student_story",
+      "label": "Emeka Style",
+      "hook": "In 2019, a student named Emeka told me...",
+      "impressions": 1799,
+      "reactions": 30,
+      "comments": 6,
+      "eng_rate_pct": 2,
+      "why_it_works": "Specific student name + real dialogue + mindset shift + Gopipways CTA. Triggers inspire/celebrate reactions. Widest reach of any format."
     },
     {
       "rank": 2,
-      "reactions": 17,
-      "comments": 15,
-      "engagement_score": 32,
-      "format": "multiple_choice_question",
-      "hook": "Quick question for the traders in here:",
-      "topic": "What dominates your thinking when you enter a trade",
-      "theme": "trader_psychology_quiz",
-      "winning_elements": [
-        "direct question hook",
-        "A/B/C/D options (easy engagement)",
-        "reveals what answer means about trader level",
-        "no wrong answer framing",
-        "reply with your letter CTA"
-      ],
-      "snippet": "Quick question for the traders in here: When you enter a trade, what dominates your thinking? A) B) C) D)"
+      "format": "unpopular_opinion",
+      "label": "Controversial Africa Take",
+      "hook": "Unpopular opinion: The biggest problem with forex in Africa isn't scammers. It's silence.",
+      "impressions": 1280,
+      "reactions": 26,
+      "comments": 27,
+      "eng_rate_pct": 4.1,
+      "why_it_works": "Controversial but defensible + Africa in hook + let me explain + calls to debate. Comment velocity drives algorithm reach."
     },
     {
       "rank": 3,
-      "reactions": 12,
-      "comments": 3,
-      "engagement_score": 15,
-      "format": "personal_process",
-      "hook": "Weekend market thought you wouldn't like to hear:",
-      "topic": "Reviewing losses not wins every Sunday",
-      "theme": "discipline_and_process",
-      "winning_elements": [
-        "weekend hook",
-        "uncomfortable truth angle",
-        "numbered exact process",
-        "smart traders vs most traders contrast"
-      ]
+      "format": "multiple_choice_question",
+      "label": "ABCD Poll",
+      "hook": "Quick question for traders: When you enter a trade, what dominates your thinking?",
+      "impressions": 782,
+      "reactions": 17,
+      "comments": 15,
+      "eng_rate_pct": 4.1,
+      "why_it_works": "Easy to engage (just pick a letter). Reveals what answer means about trader level. Algorithm rewards comment count."
     },
     {
       "rank": 4,
-      "reactions": 10,
-      "comments": 3,
-      "engagement_score": 13,
       "format": "concept_reveal",
       "hook": "Every trader has a magic number they don't know about",
-      "topic": "Win rate is less important than risk-reward ratio",
-      "theme": "trading_education_insight"
+      "impressions": 536,
+      "reactions": 12,
+      "comments": 3,
+      "eng_rate_pct": 2.8
     },
     {
       "rank": 5,
+      "format": "statistic_hook",
+      "hook": "90% of retail forex traders lose money in their first...",
+      "impressions": 411,
+      "reactions": 19,
+      "comments": 4,
+      "eng_rate_pct": 5.6,
+      "why_it_works": "Highest engagement RATE. Hard data resonates with loyal core audience."
+    },
+    {
+      "rank": 6,
+      "format": "educational_rr",
+      "hook": "Reward-to-risk ratio post",
+      "impressions": 306,
+      "reactions": 10,
+      "comments": 3,
+      "eng_rate_pct": 4.2
+    },
+    {
+      "rank": 7,
+      "format": "reactive_opinion",
+      "hook": "AI vs human trading post",
+      "impressions": 205,
       "reactions": 4,
       "comments": 0,
-      "engagement_score": 4,
-      "format": "reactive_opinion",
-      "hook": "AI will replace traders. I hear this every week.",
-      "topic": "Why AI won't replace traders",
-      "theme": "ai_and_trading",
-      "avoid_reason": "reactive to external narrative, no Africa angle, no personal stake, generic topic"
+      "eng_rate_pct": 0,
+      "avoid_reason": "No Africa angle, reactive to external narrative, no personal stake, invites no response."
     }
   ],
-  "learned_patterns": {
-    "high_performing_hooks": [
-      "Unpopular opinion: [contrarian take]",
-      "Quick question for the traders in here: [multiple choice]",
-      "Weekend market thought you wouldn't like to hear:",
-      "[Bold claim] that [implies problem most traders have]"
-    ],
-    "high_performing_themes": [
-      "africa_education_gap",
-      "trader_psychology_quiz",
-      "discipline_and_process",
-      "qualified_experts_staying_silent"
-    ],
-    "high_performing_structures": [
-      "contrarian_opinion_with_mission",
-      "multiple_choice_quiz_with_reveal",
-      "personal_process_numbered_list",
-      "smart_traders_vs_most_traders_contrast"
-    ],
+  "weekly_content_formula": {
+    "priority_1": "unpopular_opinion — one per week, Africa-specific, comment machine",
+    "priority_2": "personal_student_story (Emeka style) — one per week, reach driver",
+    "priority_3": "multiple_choice_question — mid-week, algorithm fuel",
+    "priority_4": "statistic_hook — for loyal audience engagement",
     "avoid": [
-      "reactive posts to tech/AI news without personal stake",
-      "generic trading advice without Africa angle",
-      "posts with no clear call to engage (no question, no CTA)"
+      "pure educational breakdowns without debate question",
+      "AI/tech reactive posts without personal angle",
+      "posts with no CTA"
+    ]
+  },
+  "emeka_style_formula": {
+    "description": "Personal student story for maximum reach",
+    "structure": [
+      "Hook with specific student name + year: 'In [year], a student named [name] told me...'",
+      "Real dialogue or exact words they said",
+      "The mindset problem they had",
+      "The shift or realization",
+      "What happened after (result)",
+      "What this taught you / what you built because of it",
+      "Gopipways CTA"
     ],
-    "cta_patterns_that_work": [
-      "Reply with your letter",
-      "If you're an expert staying silent — this is your sign",
-      "Drop a comment if you agree"
+    "key_elements": [
+      "Real name makes it specific and credible",
+      "Year anchors it in reality",
+      "Dialogue makes it cinematic",
+      "Triggers inspire and celebrate LinkedIn reactions",
+      "Gopipways CTA ties personal story to brand mission"
+    ]
+  },
+  "unpopular_opinion_formula": {
+    "structure": [
+      "'Unpopular opinion:' opener",
+      "Contrarian but defensible claim",
+      "'Let me explain.'",
+      "Build tension — name the real villain not the obvious one",
+      "Personal mission/decision moment",
+      "Social proof (3000+ traders)",
+      "CTA that invites debate or joining movement"
+    ],
+    "best_topics": [
+      "Africa education gap",
+      "Silence of qualified experts",
+      "Demo trading myths",
+      "Risk model misconceptions"
     ]
   }
 }
