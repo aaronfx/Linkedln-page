@@ -24,14 +24,14 @@ FB_POST_HISTORY_FILE = DATA_DIR / "fb_post_history.json"
 
 
 class FacebookAPI:
-    """Client for Facebook's Graph API â Page posting and insights."""
+    """Client for Facebook's Graph API Ã¢ÂÂ Page posting and insights."""
 
     def __init__(self, access_token: str = None, page_id: str = None):
         self.access_token = access_token or FACEBOOK_PAGE_ACCESS_TOKEN
         self.page_id = page_id or FACEBOOK_PAGE_ID
         self.post_history = self._load_json(FB_POST_HISTORY_FILE, [])
 
-    # âââ Helpers âââââââââââââââââââââââââââââââââââââââââââââââ
+    # Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Helpers Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
     @staticmethod
     def _load_json(path, default):
@@ -65,7 +65,7 @@ class FacebookAPI:
 
         return resp.json()
 
-    # âââ Page Info âââââââââââââââââââââââââââââââââââââââââââââ
+    # Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Page Info Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
     def get_page_info(self) -> dict:
         """Get basic page information."""
@@ -74,7 +74,7 @@ class FacebookAPI:
             params={"fields": "id,name,fan_count,followers_count,category"}
         )
 
-    # âââ Posting âââââââââââââââââââââââââââââââââââââââââââââââ
+    # Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Posting Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
     def create_text_post(self, message: str) -> dict:
         """
@@ -177,7 +177,7 @@ class FacebookAPI:
 
         return result
 
-    # âââ Insights / Analytics ââââââââââââââââââââââââââââââââââ
+    # Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Insights / Analytics Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
     def get_post_insights(self, post_id: str) -> dict:
         """Get engagement metrics for a specific post."""
@@ -233,9 +233,29 @@ class FacebookAPI:
             logger.warning(f"Failed to get recent posts: {e}")
             return []
 
-    # âââ Delete / Trash ââââââââââââââââââââââââââââââââââââââââ
+    # Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Delete / Trash Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
     def delete_post(self, post_id: str) -> dict:
         """Delete a post from the page."""
         logger.info(f"Deleting Facebook post: {post_id}")
         return self._make_request("DELETE", post_id)
+
+    def get_comments(self, post_id: str) -> list:
+        """Fetch comments on a Facebook post."""
+        try:
+            resp = self._make_request(
+                "GET", f"{post_id}/comments",
+                params={"fields": "id,message,from,created_time"}
+            )
+            return resp.get("data", [])
+        except Exception as e:
+            logger.warning(f"Could not fetch comments for {post_id}: {e}")
+            return []
+
+    def reply_to_comment(self, comment_id: str, reply_text: str) -> dict:
+        """Reply to a Facebook comment."""
+        return self._make_request(
+            "POST", f"{comment_id}/comments",
+            params={"message": reply_text}
+        )
+
