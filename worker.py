@@ -569,6 +569,9 @@ def run_scheduler():
     report_time = wat_to_utc(ANALYTICS_SETTINGS.get("report_time", "20:00"))
     getattr(sched_lib.every(), report_day).at(report_time).do(weekly_report)
 
+    # Auto-refill content queue every hour when running low
+    sched_lib.every(1).hours.do(refill_queue)
+
     logger.info("All platform schedulers active. Running loop...")
     while not _shutdown_event.is_set():
         sched_lib.run_pending()
