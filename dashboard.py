@@ -379,12 +379,12 @@ DASHBOARD_HTML = """
     </div>
     <div class="stat-card">
       <div class="label">Engagements</div>
-      <div class="value" style="color:var(--accent);" id="engagementTodayCount">—</div>
+      <div class="value" style="color:var(--accent);" id="engagementTodayCount">â</div>
       <div class="sub" id="engagementTodaySub">Today's outreach</div>
     </div>
     <div class="stat-card">
       <div class="label">Followers</div>
-      <div class="value" style="color:var(--green);" id="followerCount">—</div>
+      <div class="value" style="color:var(--green);" id="followerCount">â</div>
       <div class="sub" id="followerGrowthSub">Target: 20,000</div>
     </div>
   </div>
@@ -403,6 +403,9 @@ DASHBOARD_HTML = """
     <button class="tab" onclick="switchTab('comments')">Comments</button>
     <button class="tab" onclick="switchTab('engagement')">Engagement</button>
     <button class="tab" onclick="switchTab('system')">System</button>
+    <button class="tab" onclick="switchTab('instagram'); loadInstagramTab()">Instagram</button>
+    <button class="tab" onclick="switchTab('facebook'); loadFacebookTab()">Facebook</button>
+    <button class="tab" onclick="switchTab('threads'); loadThreadsTab()">Threads</button>
   </div>
 
   <!-- QUEUE PANEL -->
@@ -417,7 +420,7 @@ DASHBOARD_HTML = """
         {% for post in queue %}
         <div class="post-card" id="queue-{{ loop.index0 }}">
           <div class="post-meta">
-            <span class="post-pillar {{ post.get('pillar','unknown')|lower|replace(' ','') }}">{{ post.get('pillar','â') }}</span>
+            <span class="post-pillar {{ post.get('pillar','unknown')|lower|replace(' ','') }}">{{ post.get('pillar','Ã¢ÂÂ') }}</span>
             <span class="post-date">{{ post.get('scheduled_date','Unscheduled') }} {{ post.get('scheduled_time','') }}</span>
             {% if post.get('image_url') or post.get('image_filename') %}<span class="badge badge-blue">Has Image</span>{% endif %}
           </div>
@@ -503,7 +506,7 @@ DASHBOARD_HTML = """
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Topic (optional — leave blank for AI to choose)</label>
+          <label class="form-label">Topic (optional â leave blank for AI to choose)</label>
           <input type="text" class="form-control" id="writerTopic" placeholder="e.g. 3 mistakes beginners make with AI trading tools">
         </div>
         <div class="form-group">
@@ -575,14 +578,14 @@ DASHBOARD_HTML = """
           <label class="form-label">Pillar Style</label>
           <select class="form-control" id="creativePillar">
             <option value="">General</option>
-            <option value="Forex Education">Forex Education — Trading screens, data</option>
-            <option value="AI in Trading">AI in Trading — Tech workspace, cool blue</option>
-            <option value="African Markets">African Markets — Vibrant city, professionals</option>
-            <option value="Personal Story">Personal Story — Warm, candid, documentary</option>
-            <option value="Industry Commentary">Industry Commentary — Financial district</option>
-            <option value="EDUCATE">EDUCATE — Classroom, learning</option>
-            <option value="PROVE">PROVE — Results, confident trader</option>
-            <option value="INSPIRE">INSPIRE — Success, sunrise</option>
+            <option value="Forex Education">Forex Education â Trading screens, data</option>
+            <option value="AI in Trading">AI in Trading â Tech workspace, cool blue</option>
+            <option value="African Markets">African Markets â Vibrant city, professionals</option>
+            <option value="Personal Story">Personal Story â Warm, candid, documentary</option>
+            <option value="Industry Commentary">Industry Commentary â Financial district</option>
+            <option value="EDUCATE">EDUCATE â Classroom, learning</option>
+            <option value="PROVE">PROVE â Results, confident trader</option>
+            <option value="INSPIRE">INSPIRE â Success, sunrise</option>
           </select>
         </div>
         <div style="display:flex;gap:8px;">
@@ -620,7 +623,7 @@ DASHBOARD_HTML = """
         {% for post in recent_posts %}
         <div class="post-card">
           <div class="post-meta">
-            <span class="post-pillar {{ post.get('pillar','unknown')|lower|replace(' ','') }}">{{ post.get('pillar','â') }}</span>
+            <span class="post-pillar {{ post.get('pillar','unknown')|lower|replace(' ','') }}">{{ post.get('pillar','Ã¢ÂÂ') }}</span>
             <span class="post-date">{{ post.get('posted_at', post.get('scheduled_date','')) }}</span>
             {% if post.get('engagement_rate') %}<span class="badge badge-green">{{ post.get('engagement_rate') }}% eng.</span>{% endif %}
           </div>
@@ -724,7 +727,7 @@ DASHBOARD_HTML = """
           <div class="card" id="brand-review-card">
             <div class="card-header">
               <h3>Review Results</h3>
-              <span class="badge" id="brand-score-badge">—</span>
+              <span class="badge" id="brand-score-badge">â</span>
             </div>
             <div class="card-body" id="brand-review-results"></div>
           </div>
@@ -959,7 +962,7 @@ DASHBOARD_HTML = """
           <div class="hook-item">[Event/news] happened yesterday. Nobody's talking about [angle].</div>
           <div class="hook-item">In [time], [prediction]. Are you ready?</div>
           <div class="hook-item">This week I noticed something that concerns me about [industry].</div>
-          <div class="hook-item">[Breaking development] — and why it matters for [audience].</div>
+          <div class="hook-item">[Breaking development] â and why it matters for [audience].</div>
         </div>
         <div class="hook-section" data-cat="authority">
           <div style="font-weight:600;margin:16px 0 8px;font-size:14px;">Authority &amp; Experience</div>
@@ -971,9 +974,9 @@ DASHBOARD_HTML = """
         </div>
         <div class="hook-section" data-cat="african">
           <div style="font-weight:600;color:var(--green);margin:16px 0 8px;font-size:14px;">African Market Specific</div>
-          <div class="hook-item">Africa's [industry] is worth $[N]. The opportunity is massive — and misunderstood.</div>
+          <div class="hook-item">Africa's [industry] is worth $[N]. The opportunity is massive â and misunderstood.</div>
           <div class="hook-item">What I wish I knew before starting [business] in [African country].</div>
-          <div class="hook-item">The biggest gap in [African industry] isn't talent — it's [X].</div>
+          <div class="hook-item">The biggest gap in [African industry] isn't talent â it's [X].</div>
           <div class="hook-item">Why [African city/country] is becoming the [superlative] for [industry].</div>
           <div class="hook-item">[Global trend] is hitting Africa differently. Here's why.</div>
           <div class="hook-item">I hear this every week from African [traders/entrepreneurs]: "[quote]."</div>
@@ -1006,7 +1009,7 @@ DASHBOARD_HTML = """
           <tr>
             <td style="font-weight:500;">{{ c.get('author','Unknown') }}</td>
             <td style="max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ c.get('comment','') }}</td>
-            <td style="max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text2);">{{ c.get('reply','â') }}</td>
+            <td style="max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text2);">{{ c.get('reply','Ã¢ÂÂ') }}</td>
             <td style="white-space:nowrap;">{{ c.get('replied_at', c.get('date','')) }}</td>
           </tr>
           {% endfor %}
@@ -1029,7 +1032,7 @@ DASHBOARD_HTML = """
         </div>
       </div>
       <div class="card">
-        <div class="card-header"><h3>Follower Progress → 20K</h3></div>
+        <div class="card-header"><h3>Follower Progress â 20K</h3></div>
         <div class="card-body" id="follower-progress">
           <div class="empty-state"><p>Loading follower data...</p></div>
         </div>
@@ -1421,7 +1424,7 @@ function loadHealth() {
     html += '<div class="pillar-row"><span style="color:var(--text2);">Scheduler</span><span class="badge ' + (d.scheduler_alive?'badge-green':'badge-red') + '">' + (d.scheduler_alive?'Running':'Stopped') + '</span></div>';
     html += '<div class="pillar-row"><span style="color:var(--text2);">Posts Today</span><span>' + (d.posts_today||0) + '</span></div>';
     html += '<div class="pillar-row"><span style="color:var(--text2);">Dead Letters</span><span>' + (d.dead_letter_count||0) + '</span></div>';
-    html += '<div class="pillar-row"><span style="color:var(--text2);">Started</span><span style="font-size:12px;">' + (d.started_at||'â') + '</span></div>';
+    html += '<div class="pillar-row"><span style="color:var(--text2);">Started</span><span style="font-size:12px;">' + (d.started_at||'Ã¢ÂÂ') + '</span></div>';
     if (d.learning_summary) html += '<div class="pillar-row"><span style="color:var(--text2);">AI Insights</span><span style="font-size:12px;">' + d.learning_summary + '</span></div>';
     html += '</div>';
     document.getElementById('health-info').innerHTML = html;
@@ -1451,7 +1454,7 @@ function runDebug() {
     // Profile
     if (d.profile) {
       html += '<div style="margin-bottom:12px;"><strong style="color:var(--accent);">Profile</strong><br>';
-      html += 'Name: ' + (d.profile.name||'—') + '<br>';
+      html += 'Name: ' + (d.profile.name||'â') + '<br>';
       html += 'Token: <span class="badge ' + (d.token==='present'?'badge-green':'badge-red') + '">' + (d.token||'unknown') + '</span>';
       html += '</div>';
     }
@@ -1460,7 +1463,7 @@ function runDebug() {
       html += '<div><strong style="color:var(--accent);">API Endpoints</strong></div>';
       for (const [name, info] of Object.entries(d.endpoints)) {
         const ok = info.ok;
-        const icon = ok ? '✓' : '✗';
+        const icon = ok ? 'â' : 'â';
         const color = ok ? 'var(--green)' : 'var(--red)';
         html += '<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;">';
         html += '<span style="color:' + color + ';font-weight:600;margin-right:6px;">' + icon + '</span>';
@@ -1489,7 +1492,7 @@ function loadEngagement() {
     ovHtml += '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
     ['morning','midday','evening'].forEach(s => {
       const done = sessions.includes(s);
-      ovHtml += '<span class="badge ' + (done?'badge-green':'badge-yellow') + '">' + s + (done?' ✓':' pending') + '</span>';
+      ovHtml += '<span class="badge ' + (done?'badge-green':'badge-yellow') + '">' + s + (done?' â':' pending') + '</span>';
     });
     ovHtml += '</div>';
     ovHtml += '<div class="pillar-row"><span style="color:var(--text2);">This Week</span><span>' + (d.this_week.engagements||0) + ' engagements over ' + (d.this_week.days_active||0) + ' days</span></div>';
@@ -1526,7 +1529,7 @@ function loadEngagement() {
     let feedHtml = '';
     if (d.recent_entries && d.recent_entries.length) {
       feedHtml = d.recent_entries.map(e => {
-        const icon = e.type === 'reply' ? '↩' : e.type === 'like' ? '♥' : '💬';
+        const icon = e.type === 'reply' ? 'â©' : e.type === 'like' ? 'â¥' : 'ð¬';
         const time = e.timestamp ? new Date(e.timestamp).toLocaleString() : '';
         return '<div style="padding:12px;background:var(--surface2);border-radius:8px;margin-bottom:8px;">'
           + '<div style="display:flex;justify-content:space-between;align-items:center;">'
@@ -1550,10 +1553,10 @@ function loadEngagement() {
         return '<div style="padding:12px;background:var(--surface2);border-radius:8px;margin-bottom:8px;">'
           + '<div style="font-size:13px;color:var(--text1);margin-bottom:6px;">' + (m.post_text_preview||'').substring(0,100) + '...</div>'
           + '<div style="display:flex;gap:16px;font-size:12px;color:var(--text2);">'
-          + '<span>👁 ' + (m.impressions||0).toLocaleString() + '</span>'
-          + '<span>👍 ' + (m.likes||0) + '</span>'
-          + '<span>💬 ' + (m.comments||0) + '</span>'
-          + '<span>🔄 ' + (m.reposts||0) + '</span>'
+          + '<span>ð ' + (m.impressions||0).toLocaleString() + '</span>'
+          + '<span>ð ' + (m.likes||0) + '</span>'
+          + '<span>ð¬ ' + (m.comments||0) + '</span>'
+          + '<span>ð ' + (m.reposts||0) + '</span>'
           + '</div></div>';
       }).join('');
     } else {
@@ -1764,11 +1767,11 @@ function showBrandResults(r) {
   }
   // Meta
   html += '<div style="display:flex;gap:16px;font-size:12px;color:var(--text2);flex-wrap:wrap;">';
-  html += '<span>Platform fit: <strong>' + (r.platform_fit||'—') + '</strong></span>';
+  html += '<span>Platform fit: <strong>' + (r.platform_fit||'â') + '</strong></span>';
   html += '<span>Chars: <strong>' + (r.char_count||0) + '</strong></span>';
   html += '<span>Within limit: <strong>' + (r.within_limit ? 'Yes' : 'No') + '</strong></span>';
   html += '<span>Has CTA: <strong>' + (r.has_cta ? 'Yes' : 'No') + '</strong></span>';
-  html += '<span>Readability: <strong>' + (r.readability||'—') + '</strong></span>';
+  html += '<span>Readability: <strong>' + (r.readability||'â') + '</strong></span>';
   html += '</div>';
   document.getElementById('brand-review-results').innerHTML = html;
 }
@@ -1787,7 +1790,187 @@ document.addEventListener('click', function(e) {
     navigator.clipboard.writeText(e.target.textContent.trim()).then(() => showToast('Hook copied!', 'success'));
   }
 });
+
+// ── Instagram tab ──────────────────────────────────────────────────────────
+async function loadInstagramTab() {
+  try {
+    const [qRes, hRes, sRes] = await Promise.all([
+      fetch('/api/ig-queue').then(r => r.json()),
+      fetch('/api/ig-history').then(r => r.json()),
+      fetch('/api/instagram-status').then(r => r.json()),
+    ]);
+    var igStatus = document.getElementById('ig-status');
+    if (igStatus) igStatus.innerHTML = sRes.connected ? '<span style="color:#4ade80">Connected</span>' : '<span style="color:#f87171">Not connected</span>';
+    var queue = qRes.queue || [];
+    var qEl = document.getElementById('ig-queue-list');
+    if (qEl) qEl.innerHTML = queue.length === 0 ? '<p style="color:#888">Queue empty</p>' : queue.map(function(p, i) { return '<div style="padding:1rem;background:#0f172a;border-radius:.5rem;margin-bottom:.75rem"><div style="font-size:.8rem;color:#94a3b8;margin-bottom:.3rem">' + (p.pillar || '') + '</div><div style="margin-bottom:.75rem">' + (p.text || p.content || '').slice(0, 250) + '</div><button onclick="igPostNow(' + i + ')" style="background:#3b82f6;color:#fff;border:none;padding:.35rem .9rem;border-radius:.25rem;cursor:pointer;margin-right:.5rem">Post Now</button><button onclick="igDeletePost(' + i + ')" style="background:#ef4444;color:#fff;border:none;padding:.35rem .9rem;border-radius:.25rem;cursor:pointer">Delete</button></div>'; }).join('');
+    var history = hRes.history || [];
+    var hEl = document.getElementById('ig-history-list');
+    if (hEl) hEl.innerHTML = history.length === 0 ? '<p style="color:#888">No posts yet</p>' : history.slice(0, 10).map(function(p) { return '<div style="padding:.75rem;border-bottom:1px solid #1e293b;margin-bottom:.5rem"><div style="font-size:.8rem;color:#94a3b8">' + (p.posted_at || '').slice(0,10) + '</div><div>' + (p.text || p.content || '').slice(0,180) + '</div></div>'; }).join('');
+  } catch(e) { console.error('loadInstagramTab', e); }
+}
+async function igPostNow(index) {
+  if (!confirm('Post this Instagram item now?')) return;
+  var r = await fetch('/api/post-instagram', {method:'POST'});
+  var d = await r.json();
+  alert(d.success ? 'Posted! ID: ' + (d.result && d.result.post_id ? d.result.post_id : 'OK') : 'Error: ' + d.error);
+  loadInstagramTab();
+}
+async function igDeletePost(index) {
+  if (!confirm('Remove from queue?')) return;
+  var r = await fetch('/api/ig-queue/' + index + '/delete', {method:'POST'});
+  var d = await r.json();
+  if (d.success) loadInstagramTab(); else alert('Error: ' + d.error);
+}
+async function igAddPost() {
+  var text = document.getElementById('ig-new-text').value.trim();
+  if (!text) return alert('Enter post text');
+  var r = await fetch('/api/ig-queue/add', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text: text, platform: 'instagram'})});
+  var d = await r.json();
+  if (d.success) { document.getElementById('ig-new-text').value = ''; loadInstagramTab(); } else alert('Error: ' + d.error);
+}
+
+// ── Facebook tab ───────────────────────────────────────────────────────────────
+async function loadFacebookTab() {
+  try {
+    const [qRes, hRes, sRes] = await Promise.all([
+      fetch('/api/fb-queue').then(r => r.json()),
+      fetch('/api/fb-history').then(r => r.json()),
+      fetch('/api/facebook-status').then(r => r.json()),
+    ]);
+    var fbStatus = document.getElementById('fb-status');
+    if (fbStatus) fbStatus.innerHTML = sRes.connected ? '<span style="color:#4ade80">Connected</span>' : '<span style="color:#f87171">Not connected</span>';
+    var queue = qRes.queue || [];
+    var qEl = document.getElementById('fb-queue-list');
+    if (qEl) qEl.innerHTML = queue.length === 0 ? '<p style="color:#888">Queue empty</p>' : queue.map(function(p, i) { return '<div style="padding:1rem;background:#0f172a;border-radius:.5rem;margin-bottom:.75rem"><div style="font-size:.8rem;color:#94a3b8;margin-bottom:.3rem">' + (p.pillar || '') + '</div><div style="margin-bottom:.75rem">' + (p.text || p.content || '').slice(0, 250) + '</div><button onclick="fbPostNow(' + i + ')" style="background:#3b82f6;color:#fff;border:none;padding:.35rem .9rem;border-radius:.25rem;cursor:pointer;margin-right:.5rem">Post Now</button><button onclick="fbDeletePost(' + i + ')" style="background:#ef4444;color:#fff;border:none;padding:.35rem .9rem;border-radius:.25rem;cursor:pointer">Delete</button></div>'; }).join('');
+    var history = hRes.history || [];
+    var hEl = document.getElementById('fb-history-list');
+    if (hEl) hEl.innerHTML = history.length === 0 ? '<p style="color:#888">No posts yet</p>' : history.slice(0, 10).map(function(p) { return '<div style="padding:.75rem;border-bottom:1px solid #1e293b;margin-bottom:.5rem"><div style="font-size:.8rem;color:#94a3b8">' + (p.posted_at || '').slice(0,10) + '</div><div>' + (p.text || p.content || '').slice(0,180) + '</div></div>'; }).join('');
+  } catch(e) { console.error('loadFacebookTab', e); }
+}
+async function fbPostNow(index) {
+  if (!confirm('Post this Facebook item now?')) return;
+  var r = await fetch('/api/post-facebook', {method:'POST'});
+  var d = await r.json();
+  alert(d.success ? 'Posted! ID: ' + (d.result && d.result.post_id ? d.result.post_id : 'OK') : 'Error: ' + d.error);
+  loadFacebookTab();
+}
+async function fbDeletePost(index) {
+  if (!confirm('Remove from queue?')) return;
+  var r = await fetch('/api/fb-queue/' + index + '/delete', {method:'POST'});
+  var d = await r.json();
+  if (d.success) loadFacebookTab(); else alert('Error: ' + d.error);
+}
+async function fbAddPost() {
+  var text = document.getElementById('fb-new-text').value.trim();
+  if (!text) return alert('Enter post text');
+  var r = await fetch('/api/fb-queue/add', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text: text, platform: 'facebook'})});
+  var d = await r.json();
+  if (d.success) { document.getElementById('fb-new-text').value = ''; loadFacebookTab(); } else alert('Error: ' + d.error);
+}
+
+// ── Threads tab ────────────────────────────────────────────────────────────────
+async function loadThreadsTab() {
+  try {
+    const [qRes, hRes, sRes] = await Promise.all([
+      fetch('/api/threads-queue').then(r => r.json()),
+      fetch('/api/threads-history').then(r => r.json()),
+      fetch('/api/threads-status').then(r => r.json()),
+    ]);
+    var thStatus = document.getElementById('th-status');
+    if (thStatus) thStatus.innerHTML = sRes.connected ? '<span style="color:#4ade80">Connected</span>' : '<span style="color:#f87171">Not connected — add THREADS_ACCESS_TOKEN &amp; THREADS_USER_ID in Railway</span>';
+    var queue = qRes.queue || [];
+    var qEl = document.getElementById('th-queue-list');
+    if (qEl) qEl.innerHTML = queue.length === 0 ? '<p style="color:#888">Queue empty</p>' : queue.map(function(p, i) { return '<div style="padding:1rem;background:#0f172a;border-radius:.5rem;margin-bottom:.75rem"><div style="font-size:.8rem;color:#94a3b8;margin-bottom:.3rem">' + (p.pillar || '') + '</div><div style="margin-bottom:.75rem">' + (p.text || '').slice(0, 250) + '</div><button onclick="threadsPostNow(' + i + ')" style="background:#3b82f6;color:#fff;border:none;padding:.35rem .9rem;border-radius:.25rem;cursor:pointer;margin-right:.5rem">Post Now</button><button onclick="threadsDeletePost(' + i + ')" style="background:#ef4444;color:#fff;border:none;padding:.35rem .9rem;border-radius:.25rem;cursor:pointer">Delete</button></div>'; }).join('');
+    var history = hRes.history || [];
+    var hEl = document.getElementById('th-history-list');
+    if (hEl) hEl.innerHTML = history.length === 0 ? '<p style="color:#888">No posts yet</p>' : history.slice(0, 10).map(function(p) { return '<div style="padding:.75rem;border-bottom:1px solid #1e293b;margin-bottom:.5rem"><div style="font-size:.8rem;color:#94a3b8">' + (p.posted_at || '').slice(0,10) + '</div><div>' + (p.text || '').slice(0,200) + '</div></div>'; }).join('');
+  } catch(e) { console.error('loadThreadsTab', e); }
+}
+async function threadsPostNow(index) {
+  if (!confirm('Post this Threads item now?')) return;
+  var r = await fetch('/api/post-threads', {method:'POST'});
+  var d = await r.json();
+  alert(d.success ? 'Posted! ID: ' + (d.result && d.result.post_id ? d.result.post_id : 'OK') : 'Error: ' + d.error);
+  loadThreadsTab();
+}
+async function threadsDeletePost(index) {
+  if (!confirm('Remove from queue?')) return;
+  var r = await fetch('/api/threads-queue/' + index + '/delete', {method:'POST'});
+  var d = await r.json();
+  if (d.success) loadThreadsTab(); else alert('Error: ' + d.error);
+}
+async function threadsAddPost() {
+  var text = document.getElementById('th-new-text').value.trim();
+  if (!text) return alert('Enter post text');
+  var r = await fetch('/api/threads-queue/add', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text: text, platform: 'threads'})});
+  var d = await r.json();
+  if (d.success) { document.getElementById('th-new-text').value = ''; loadThreadsTab(); } else alert('Error: ' + d.error);
+}
+
 </script>
+
+
+  <!-- INSTAGRAM PANEL -->
+  <div class="panel" id="panel-instagram">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <h2 style="margin:0">Instagram</h2>
+        <span id="ig-status"></span>
+      </div>
+      <div id="ig-queue-list"></div>
+      <div style="margin-top:1.5rem">
+        <h3 style="margin-bottom:.5rem;font-size:1rem">Add to Queue</h3>
+        <textarea id="ig-new-text" rows="4" placeholder="Instagram post text..." style="width:100%;background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:.5rem;padding:.75rem;font-size:.9rem;box-sizing:border-box"></textarea>
+        <button onclick="igAddPost()" style="margin-top:.5rem;background:#3b82f6;color:#fff;border:none;padding:.5rem 1.25rem;border-radius:.375rem;cursor:pointer;font-size:.9rem">Add to Queue</button>
+      </div>
+    </div>
+    <div class="card" style="margin-top:1rem">
+      <h3 style="margin-bottom:.75rem;font-size:1rem">Recent Posts</h3>
+      <div id="ig-history-list"></div>
+    </div>
+  </div>
+
+  <!-- FACEBOOK PANEL -->
+  <div class="panel" id="panel-facebook">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <h2 style="margin:0">Facebook</h2>
+        <span id="fb-status"></span>
+      </div>
+      <div id="fb-queue-list"></div>
+      <div style="margin-top:1.5rem">
+        <h3 style="margin-bottom:.5rem;font-size:1rem">Add to Queue</h3>
+        <textarea id="fb-new-text" rows="4" placeholder="Facebook post text..." style="width:100%;background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:.5rem;padding:.75rem;font-size:.9rem;box-sizing:border-box"></textarea>
+        <button onclick="fbAddPost()" style="margin-top:.5rem;background:#3b82f6;color:#fff;border:none;padding:.5rem 1.25rem;border-radius:.375rem;cursor:pointer;font-size:.9rem">Add to Queue</button>
+      </div>
+    </div>
+    <div class="card" style="margin-top:1rem">
+      <h3 style="margin-bottom:.75rem;font-size:1rem">Recent Posts</h3>
+      <div id="fb-history-list"></div>
+    </div>
+  </div>
+
+  <!-- THREADS PANEL -->
+  <div class="panel" id="panel-threads">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <h2 style="margin:0">Threads</h2>
+        <span id="th-status"></span>
+      </div>
+      <div id="th-queue-list"></div>
+      <div style="margin-top:1.5rem">
+        <h3 style="margin-bottom:.5rem;font-size:1rem">Add to Queue</h3>
+        <textarea id="th-new-text" rows="4" placeholder="Threads post (280-500 chars)..." style="width:100%;background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:.5rem;padding:.75rem;font-size:.9rem;box-sizing:border-box"></textarea>
+        <button onclick="threadsAddPost()" style="margin-top:.5rem;background:#3b82f6;color:#fff;border:none;padding:.5rem 1.25rem;border-radius:.375rem;cursor:pointer;font-size:.9rem">Add to Queue</button>
+      </div>
+    </div>
+    <div class="card" style="margin-top:1rem">
+      <h3 style="margin-bottom:.75rem;font-size:1rem">Recent Posts</h3>
+      <div id="th-history-list"></div>
+    </div>
+  </div>
+
 </body>
 </html>
 """
@@ -2164,7 +2347,7 @@ def api_post_facebook():
         from pathlib import Path as _Path
 
         if not FACEBOOK_PAGE_ACCESS_TOKEN or FACEBOOK_PAGE_ACCESS_TOKEN == "your-fb-page-token-here":
-            return jsonify({"success": False, "message": "Facebook not configured — add FACEBOOK_PAGE_ACCESS_TOKEN env var"})
+            return jsonify({"success": False, "message": "Facebook not configured â add FACEBOOK_PAGE_ACCESS_TOKEN env var"})
 
         data = request.json or {}
         message = data.get("message", "")
@@ -2252,7 +2435,7 @@ def api_facebook_status():
         return jsonify({"connected": False, "message": str(e)})
 
 
-# ─── Instagram API Endpoints ──────────────────────────────────
+# âââ Instagram API Endpoints ââââââââââââââââââââââââââââââââââ
 
 @app.route("/api/post-instagram", methods=["POST"])
 def api_post_instagram():
@@ -2264,7 +2447,7 @@ def api_post_instagram():
         from pathlib import Path as _Path
 
         if not INSTAGRAM_BUSINESS_ACCOUNT_ID or INSTAGRAM_BUSINESS_ACCOUNT_ID == "your-ig-account-id-here":
-            return jsonify({"success": False, "message": "Instagram not configured — add INSTAGRAM_BUSINESS_ACCOUNT_ID env var"})
+            return jsonify({"success": False, "message": "Instagram not configured â add INSTAGRAM_BUSINESS_ACCOUNT_ID env var"})
 
         data = request.json or {}
         caption = data.get("caption", "")
@@ -2353,6 +2536,162 @@ def api_instagram_status():
         })
     except Exception as e:
         return jsonify({"connected": False, "message": str(e)})
+
+
+
+
+
+# ─── Threads routes ───────────────────────────────────────────────────────────
+
+@app.route("/api/threads-queue", methods=["GET"])
+def api_threads_queue():
+    """View the Threads content queue."""
+    from config import DATA_DIR
+    q = load_json(DATA_DIR / "threads_content_queue.json", [])
+    return jsonify({"queue": q, "count": len(q)})
+
+
+@app.route("/api/threads-queue/add", methods=["POST"])
+def api_threads_queue_add():
+    """Add a post to the Threads content queue."""
+    from config import DATA_DIR
+    import uuid as _uuid
+    data = request.get_json() or {}
+    text = data.get("text", "").strip()
+    if not text:
+        return jsonify({"error": "text required"}), 400
+    q = load_json(DATA_DIR / "threads_content_queue.json", [])
+    entry = {
+        "id": str(_uuid.uuid4()),
+        "text": text,
+        "platform": "threads",
+        "pillar": data.get("pillar", "Forex Education"),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    q.append(entry)
+    save_json(DATA_DIR / "threads_content_queue.json", q)
+    return jsonify({"success": True, "entry": entry})
+
+
+@app.route("/api/threads-queue/<int:index>/delete", methods=["POST"])
+def api_threads_queue_delete(index):
+    """Remove an entry from the Threads queue."""
+    from config import DATA_DIR
+    q = load_json(DATA_DIR / "threads_content_queue.json", [])
+    if 0 <= index < len(q):
+        removed = q.pop(index)
+        save_json(DATA_DIR / "threads_content_queue.json", q)
+        return jsonify({"success": True, "removed": removed})
+    return jsonify({"error": "index out of range"}), 400
+
+
+@app.route("/api/post-threads", methods=["POST"])
+def api_post_threads():
+    """Post next item from Threads queue."""
+    from config import DATA_DIR
+    from threads_api import ThreadsAPI
+    from datetime import datetime, timezone as tz
+    q = load_json(DATA_DIR / "threads_content_queue.json", [])
+    if not q:
+        return jsonify({"error": "Threads queue is empty"}), 400
+    entry = q[0]
+    try:
+        api = ThreadsAPI()
+        result = api.create_text_post(entry["text"])
+        q.pop(0)
+        save_json(DATA_DIR / "threads_content_queue.json", q)
+        history = load_json(DATA_DIR / "threads_post_history.json", [])
+        entry["post_id"] = result.get("post_id", "")
+        entry["posted_at"] = datetime.now(tz.utc).isoformat()
+        history.insert(0, entry)
+        save_json(DATA_DIR / "threads_post_history.json", history[:100])
+        return jsonify({"success": True, "result": result})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/threads-status", methods=["GET"])
+def api_threads_status():
+    """Check Threads integration status."""
+    import os as _os
+    token = _os.getenv("THREADS_ACCESS_TOKEN", "")
+    user_id = _os.getenv("THREADS_USER_ID", "")
+    connected = bool(token and user_id)
+    return jsonify({"connected": connected, "user_id": user_id if connected else ""})
+
+
+@app.route("/api/threads-history", methods=["GET"])
+def api_threads_history():
+    """Get Threads post history."""
+    from config import DATA_DIR
+    history = load_json(DATA_DIR / "threads_post_history.json", [])
+    return jsonify({"history": history})
+
+
+@app.route("/api/threads-comments", methods=["GET"])
+def api_threads_comments():
+    """Get Threads comment log."""
+    from config import DATA_DIR
+    comments = load_json(DATA_DIR / "threads_comment_log.json", [])
+    return jsonify({"comments": comments})
+
+
+# ─── IG/FB history + dead-letter + delete ─────────────────────────────────────
+
+@app.route("/api/ig-history", methods=["GET"])
+def api_ig_history():
+    """Get Instagram post history."""
+    from config import DATA_DIR
+    history = load_json(DATA_DIR / "ig_post_history.json", [])
+    return jsonify({"history": history})
+
+
+@app.route("/api/ig-dead-letter", methods=["GET"])
+def api_ig_dead_letter():
+    """Get Instagram dead-letter queue."""
+    from config import DATA_DIR
+    dead = load_json(DATA_DIR / "ig_dead_letter.json", [])
+    return jsonify({"dead_letter": dead})
+
+
+@app.route("/api/ig-queue/<int:index>/delete", methods=["POST"])
+def api_ig_queue_delete(index):
+    """Remove an entry from the Instagram queue."""
+    from config import DATA_DIR
+    q = load_json(DATA_DIR / "ig_content_queue.json", [])
+    if 0 <= index < len(q):
+        removed = q.pop(index)
+        save_json(DATA_DIR / "ig_content_queue.json", q)
+        return jsonify({"success": True, "removed": removed})
+    return jsonify({"error": "index out of range"}), 400
+
+
+@app.route("/api/fb-history", methods=["GET"])
+def api_fb_history():
+    """Get Facebook post history."""
+    from config import DATA_DIR
+    history = load_json(DATA_DIR / "fb_post_history.json", [])
+    return jsonify({"history": history})
+
+
+@app.route("/api/fb-dead-letter", methods=["GET"])
+def api_fb_dead_letter():
+    """Get Facebook dead-letter queue."""
+    from config import DATA_DIR
+    dead = load_json(DATA_DIR / "fb_dead_letter.json", [])
+    return jsonify({"dead_letter": dead})
+
+
+@app.route("/api/fb-queue/<int:index>/delete", methods=["POST"])
+def api_fb_queue_delete(index):
+    """Remove an entry from the Facebook queue."""
+    from config import DATA_DIR
+    q = load_json(DATA_DIR / "fb_content_queue.json", [])
+    if 0 <= index < len(q):
+        removed = q.pop(index)
+        save_json(DATA_DIR / "fb_content_queue.json", q)
+        return jsonify({"success": True, "removed": removed})
+    return jsonify({"error": "index out of range"}), 400
 
 
 @app.route("/api/check-comments", methods=["POST"])
@@ -2839,9 +3178,9 @@ def api_clear_history():
     return jsonify({"status": "ok", "message": "Post history cleared"})
 
 
-# ═══════════════════════════════════════════════════════════════
-# INTEGRATION API — Bridges Claude scheduled tasks ↔ Railway app
-# ═══════════════════════════════════════════════════════════════
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+# INTEGRATION API â Bridges Claude scheduled tasks â Railway app
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 ENGAGEMENT_LOG_FILE = DATA_DIR / "engagement_log.json"
 SCRAPED_METRICS_FILE = DATA_DIR / "scraped_metrics.json"
@@ -3142,9 +3481,9 @@ def api_engagement_stats():
         return jsonify({"success": False, "error": str(e)})
 
 
-# ═══════════════════════════════════════════════════════════════
-# SOCIAL HUB API — Calendar, AI Writer, Creative Studio, Brand Review
-# ═══════════════════════════════════════════════════════════════
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+# SOCIAL HUB API â Calendar, AI Writer, Creative Studio, Brand Review
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 # --- Calendar API ---
 
@@ -3198,16 +3537,16 @@ def api_calendar_update_entry(entry_id):
     """
     Update a calendar entry.
 
-    Calendar → Queue Bridge:
+    Calendar â Queue Bridge:
     When an entry's status is set to "approved" or "scheduled",
     it is automatically pushed into the correct platform posting queue
     so the worker can pick it up and post at the right time.
 
     Platform routing:
-    - linkedin    → data/content_queue.json
-    - instagram   → data/ig_content_queue.json
-    - facebook    → data/fb_content_queue.json
-    - whatsapp_status → no queue (manual posting, skipped)
+    - linkedin    â data/content_queue.json
+    - instagram   â data/ig_content_queue.json
+    - facebook    â data/fb_content_queue.json
+    - whatsapp_status â no queue (manual posting, skipped)
     """
     try:
         data = request.json or {}
@@ -3220,7 +3559,7 @@ def api_calendar_update_entry(entry_id):
         if not success:
             return jsonify({"success": False, "error": "Entry not found"})
 
-        # ── Calendar → Queue Bridge ─────────────────────────────────────
+        # ââ Calendar â Queue Bridge âââââââââââââââââââââââââââââââââââââ
         new_status = data.get("status", "")
         if new_status in ("approved", "scheduled"):
             entries = load_calendar(month, year)
@@ -3249,7 +3588,7 @@ def api_calendar_update_entry(entry_id):
                         "added_at": datetime.now(timezone.utc).isoformat(),
                     })
                     save_json(ig_queue_file, ig_queue)
-                    logger.info(f"Calendar entry {entry_id} → Instagram queue ({len(ig_queue)} total)")
+                    logger.info(f"Calendar entry {entry_id} â Instagram queue ({len(ig_queue)} total)")
 
                 elif entry_platform == "facebook" and content:
                     fb_queue_file = DATA_DIR / "fb_content_queue.json"
@@ -3265,7 +3604,7 @@ def api_calendar_update_entry(entry_id):
                         "added_at": datetime.now(timezone.utc).isoformat(),
                     })
                     save_json(fb_queue_file, fb_queue)
-                    logger.info(f"Calendar entry {entry_id} → Facebook queue ({len(fb_queue)} total)")
+                    logger.info(f"Calendar entry {entry_id} â Facebook queue ({len(fb_queue)} total)")
 
                 elif entry_platform == "linkedin" and content:
                     queue = load_json(CONTENT_QUEUE_FILE, [])
@@ -3279,7 +3618,7 @@ def api_calendar_update_entry(entry_id):
                         "added_at": datetime.now(timezone.utc).isoformat(),
                     })
                     save_json(CONTENT_QUEUE_FILE, queue)
-                    logger.info(f"Calendar entry {entry_id} → LinkedIn queue ({len(queue)} total)")
+                    logger.info(f"Calendar entry {entry_id} â LinkedIn queue ({len(queue)} total)")
 
                 # whatsapp_status: manual posting only, no queue
 
@@ -3378,7 +3717,7 @@ def api_writer_generate():
             return jsonify({"success": True, "post": result})
 
         else:
-            return jsonify({"success": False, "error": f"Platform '{platform}' is Coming Soon — not yet active"})
+            return jsonify({"success": False, "error": f"Platform '{platform}' is Coming Soon â not yet active"})
 
     except Exception as e:
         logger.error(f"Writer generate failed: {e}")
@@ -3412,7 +3751,7 @@ def api_creative_generate():
                 "size": str(result.get("size", ""))
             })
         else:
-            return jsonify({"success": False, "error": "Image generation failed — check OPENAI_API_KEY"})
+            return jsonify({"success": False, "error": "Image generation failed â check OPENAI_API_KEY"})
 
     except Exception as e:
         logger.error(f"Creative generate failed: {e}")
