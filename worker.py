@@ -95,7 +95,7 @@ def _safe_write_json(filepath, data):
 def wat_to_utc(time_str):
     """
     Convert a WAT (UTC+1) time string to UTC.
-    Example: "08:00" WAT â "07:00" UTC
+    Example: "08:00" WAT Ã¢ÂÂ "07:00" UTC
     """
     h, m = map(int, time_str.split(":"))
     wat = datetime.now(timezone.utc).replace(hour=h, minute=m, second=0)
@@ -106,7 +106,7 @@ def wat_to_utc(time_str):
 
 def create_and_post(pillar=None):
     """
-    Post to LinkedIn â QUEUE-FIRST strategy with retry safety.
+    Post to LinkedIn Ã¢ÂÂ QUEUE-FIRST strategy with retry safety.
 
     Critical fix: Queue pop happens AFTER successful post, not before.
     Failed posts go to dead-letter queue for retry or manual review.
@@ -120,7 +120,7 @@ def create_and_post(pillar=None):
         source = "queue"
         queue_index = None
 
-        # ââ Step 1: Try to post from queue (READ without popping) ââ
+        # Ã¢ÂÂÃ¢ÂÂ Step 1: Try to post from queue (READ without popping) Ã¢ÂÂÃ¢ÂÂ
         queue = _safe_read_json(CONTENT_QUEUE_FILE)
 
         if queue:
@@ -128,7 +128,7 @@ def create_and_post(pillar=None):
             queue_index = 0
             logger.info(f"Posting from queue ({len(queue)} total): {post_data.get('pillar', '?')}")
         else:
-            # ââ Step 2: Queue empty â generate fresh content ââ
+            # Ã¢ÂÂÃ¢ÂÂ Step 2: Queue empty Ã¢ÂÂ generate fresh content Ã¢ÂÂÃ¢ÂÂ
             source = "generated"
             analytics = AnalyticsEngine(linkedin)
             top_posts = analytics.get_top_posts(5, 30)
@@ -139,7 +139,7 @@ def create_and_post(pillar=None):
             # Inject learning engine insights into generation
             learning_summary = _learning.get_learning_summary()
 
-            logger.info(f"Queue empty â generating fresh intelligent post for pillar: {pillar}")
+            logger.info(f"Queue empty Ã¢ÂÂ generating fresh intelligent post for pillar: {pillar}")
             post_data = generate_post(
                 pillar=pillar,
                 optimize_from=top_posts,
@@ -149,7 +149,7 @@ def create_and_post(pillar=None):
                 comment_insights=context["comment_insights"],
             )
 
-        # ââ Step 3: Generate image if needed and not already present ââ
+        # Ã¢ÂÂÃ¢ÂÂ Step 3: Generate image if needed and not already present Ã¢ÂÂÃ¢ÂÂ
         post_text = post_data["text"]
         image_path = post_data.get("image_path", "")
         image_prompt = post_data.get("image_prompt", "")
@@ -161,7 +161,7 @@ def create_and_post(pillar=None):
                 logger.warning(f"Image generation failed, posting text-only: {img_err}")
                 image_path = ""
 
-        # ââ Step 4: Post to LinkedIn ââ
+        # Ã¢ÂÂÃ¢ÂÂ Step 4: Post to LinkedIn Ã¢ÂÂÃ¢ÂÂ
         if image_path and Path(image_path).exists():
             result = linkedin.create_image_post(post_text, image_path)
         else:
@@ -170,7 +170,7 @@ def create_and_post(pillar=None):
         post_id = result.get("id", "unknown")
         logger.info(f"Post published ({source}): {post_id} | Pillar: {post_data.get('pillar', '?')}")
 
-        # ââ Step 4b: Post to Facebook (from separate FB queue) ââ
+        # Ã¢ÂÂÃ¢ÂÂ Step 4b: Post to Facebook (from separate FB queue) Ã¢ÂÂÃ¢ÂÂ
         try:
             from facebook_api import FacebookAPI
             from config import FACEBOOK_PAGE_ACCESS_TOKEN, DATA_DIR
@@ -202,13 +202,13 @@ def create_and_post(pillar=None):
                     fb_post_id = fb_result.get("id", "unknown")
                     logger.info(f"Facebook post published from FB queue ({len(fb_queue)} remaining): {fb_post_id}")
                 else:
-                    logger.info("Facebook queue empty â skipping FB post this cycle")
+                    logger.info("Facebook queue empty Ã¢ÂÂ skipping FB post this cycle")
             else:
-                logger.info("Facebook posting skipped â no token configured")
+                logger.info("Facebook posting skipped Ã¢ÂÂ no token configured")
         except Exception as fb_err:
             logger.warning(f"Facebook post failed (non-blocking): {fb_err}")
 
-        # ââ Step 4c: Post to Instagram (from separate IG queue) ââ
+        # Ã¢ÂÂÃ¢ÂÂ Step 4c: Post to Instagram (from separate IG queue) Ã¢ÂÂÃ¢ÂÂ
         try:
             from instagram_api import InstagramAPI
             from config import INSTAGRAM_BUSINESS_ACCOUNT_ID, DATA_DIR
@@ -237,16 +237,16 @@ def create_and_post(pillar=None):
                         ig_post_id = ig_result.get("id", "unknown")
                         logger.info(f"Instagram post published from IG queue ({len(ig_queue)} remaining): {ig_post_id}")
                     else:
-                        logger.info("Instagram post skipped â no image URL (Instagram requires images)")
+                        logger.info("Instagram post skipped Ã¢ÂÂ no image URL (Instagram requires images)")
                 else:
-                    logger.info("Instagram queue empty â skipping IG post this cycle")
+                    logger.info("Instagram queue empty Ã¢ÂÂ skipping IG post this cycle")
             else:
-                logger.info("Instagram posting skipped â no account ID configured")
+                logger.info("Instagram posting skipped Ã¢ÂÂ no account ID configured")
         except Exception as ig_err:
             logger.warning(f"Instagram post failed (non-blocking): {ig_err}")
 
-        # ââ Step 5: Save to post history for future intelligence ââ
-        # ââ Step 5: SUCCESS â NOW pop from queue (safe) ââ
+        # Ã¢ÂÂÃ¢ÂÂ Step 5: Save to post history for future intelligence Ã¢ÂÂÃ¢ÂÂ
+        # Ã¢ÂÂÃ¢ÂÂ Step 5: SUCCESS Ã¢ÂÂ NOW pop from queue (safe) Ã¢ÂÂÃ¢ÂÂ
         if queue_index is not None:
             queue = _safe_read_json(CONTENT_QUEUE_FILE)
             if queue:
@@ -254,7 +254,7 @@ def create_and_post(pillar=None):
                 _safe_write_json(CONTENT_QUEUE_FILE, queue)
                 logger.info(f"Queue post consumed. {len(queue)} remaining.")
 
-        # ââ Step 6: Save to post history ââ
+        # Ã¢ÂÂÃ¢ÂÂ Step 6: Save to post history Ã¢ÂÂÃ¢ÂÂ
         from config import POST_HISTORY_FILE
         history = _safe_read_json(POST_HISTORY_FILE)
 
@@ -274,7 +274,7 @@ def create_and_post(pillar=None):
         history.append(post_record)
         _safe_write_json(POST_HISTORY_FILE, history)
 
-        # ââ Step 7: Record in learning engine ââ
+        # Ã¢ÂÂÃ¢ÂÂ Step 7: Record in learning engine Ã¢ÂÂÃ¢ÂÂ
         _learning.record_post_result(
             post_id=post_id,
             pillar=post_data.get("pillar", "unknown"),
@@ -481,59 +481,59 @@ def _handle_shutdown(signum, frame):
 def run_scheduler():
     """Background thread: runs the scheduled automation tasks for ALL platforms."""
     _health["scheduler_alive"] = True
-    logger.info("Scheduler starting — LinkedIn (personal) + Gopipways company platforms...")
+    logger.info("Scheduler starting â LinkedIn (personal) + Gopipways company platforms...")
 
     from config import (
         INSTAGRAM_POSTING_SCHEDULE, FACEBOOK_POSTING_SCHEDULE, THREADS_POSTING_SCHEDULE
     )
 
-    # ── LinkedIn — Aaron's personal brand (unchanged, always first) ───────────
+    # ââ LinkedIn â Aaron's personal brand (unchanged, always first) âââââââââââ
     for day, config in POSTING_SCHEDULE.items():
         utc_time = wat_to_utc(config["time"])
         pillar = config["pillar_preference"]
         getattr(sched_lib.every(), day).at(utc_time).do(create_and_post, pillar=pillar)
         logger.info(f"[LinkedIn] {day} {config['time']} WAT -> {utc_time} UTC | {pillar}")
 
-    # ── Instagram — Gopipways company brand ───────────────────────────────────
+    # ââ Instagram â Gopipways company brand âââââââââââââââââââââââââââââââââââ
     for day, config in INSTAGRAM_POSTING_SCHEDULE.items():
         utc_time = wat_to_utc(config["time"])
         pillar = config["pillar_preference"]
         getattr(sched_lib.every(), day).at(utc_time).do(create_and_post_instagram, pillar=pillar)
         logger.info(f"[Instagram] {day} {config['time']} WAT -> {utc_time} UTC | {pillar}")
 
-    # ── Facebook — Gopipways company brand ────────────────────────────────────
+    # ââ Facebook â Gopipways company brand ââââââââââââââââââââââââââââââââââââ
     for day, config in FACEBOOK_POSTING_SCHEDULE.items():
         utc_time = wat_to_utc(config["time"])
         pillar = config["pillar_preference"]
         getattr(sched_lib.every(), day).at(utc_time).do(create_and_post_facebook, pillar=pillar)
         logger.info(f"[Facebook] {day} {config['time']} WAT -> {utc_time} UTC | {pillar}")
 
-    # ── Threads — Gopipways company brand ─────────────────────────────────────
+    # ââ Threads â Gopipways company brand âââââââââââââââââââââââââââââââââââââ
     for day, config in THREADS_POSTING_SCHEDULE.items():
         utc_time = wat_to_utc(config["time"])
         pillar = config["pillar_preference"]
         getattr(sched_lib.every(), day).at(utc_time).do(create_and_post_threads, pillar=pillar)
         logger.info(f"[Threads] {day} {config['time']} WAT -> {utc_time} UTC | {pillar}")
 
-    # ── Comment monitoring — all platforms every 2 hours ─────────────────────
+    # ââ Comment monitoring â all platforms every 2 hours âââââââââââââââââââââ
     sched_lib.every(2).hours.do(check_comments)
     sched_lib.every(2).hours.do(check_comments_instagram)
     sched_lib.every(2).hours.do(check_comments_facebook)
     sched_lib.every(2).hours.do(check_comments_threads)
 
-    # ── Analytics — all platforms every 12 hours ──────────────────────────────
+    # ââ Analytics â all platforms every 12 hours ââââââââââââââââââââââââââââââ
     sched_lib.every(12).hours.do(collect_metrics)
     sched_lib.every(12).hours.do(collect_metrics_instagram)
     sched_lib.every(12).hours.do(collect_metrics_facebook)
     sched_lib.every(12).hours.do(collect_metrics_threads)
 
-    # ── Learning + intelligence loop every 6 hours ────────────────────────────
+    # ââ Learning + intelligence loop every 6 hours ââââââââââââââââââââââââââââ
     sched_lib.every(6).hours.do(detect_and_learn)
 
-    # ── Dead letter retry every hour ─────────────────────────────────────────
+    # ââ Dead letter retry every hour âââââââââââââââââââââââââââââââââââââââââ
     sched_lib.every(1).hours.do(retry_dead_letter)
 
-    # ── Weekly report ─────────────────────────────────────────────────────────
+    # ââ Weekly report âââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
     report_day = ANALYTICS_SETTINGS.get("report_day", "sunday")
     report_time = wat_to_utc(ANALYTICS_SETTINGS.get("report_time", "20:00"))
     getattr(sched_lib.every(), report_day).at(report_time).do(weekly_report)
@@ -547,10 +547,10 @@ def run_scheduler():
     _health["scheduler_alive"] = False
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# GOPIPWAYS COMPANY PLATFORM AUTOMATION — Instagram, Facebook, Threads
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+# GOPIPWAYS COMPANY PLATFORM AUTOMATION â Instagram, Facebook, Threads
 # LinkedIn (Aaron's personal brand) uses the existing create_and_post() above.
-# ═══════════════════════════════════════════════════════════════════════════════
+# âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def _safe_read_json(path, default=None):
     """Thread-safe JSON read with fallback."""
@@ -577,7 +577,7 @@ def _safe_write_json(path, data):
         logger.error(f"_safe_write_json error: {e}")
 
 
-# ── Instagram Posting ─────────────────────────────────────────────────────────
+# ââ Instagram Posting âââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def create_and_post_instagram(pillar=None):
     """Queue-first Instagram posting using generate_company_post()."""
@@ -634,7 +634,7 @@ def create_and_post_instagram(pillar=None):
             pass
 
 
-# ── Facebook Posting ──────────────────────────────────────────────────────────
+# ââ Facebook Posting ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def create_and_post_facebook(pillar=None):
     """Queue-first Facebook posting using generate_company_post()."""
@@ -686,7 +686,7 @@ def create_and_post_facebook(pillar=None):
             pass
 
 
-# ── Threads Posting ───────────────────────────────────────────────────────────
+# ââ Threads Posting âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def create_and_post_threads(pillar=None):
     """Queue-first Threads posting using generate_company_post()."""
@@ -738,7 +738,7 @@ def create_and_post_threads(pillar=None):
             pass
 
 
-# ── Comment Monitoring — Company Platforms ────────────────────────────────────
+# ââ Comment Monitoring â Company Platforms ââââââââââââââââââââââââââââââââââââ
 
 def check_comments_instagram():
     """Check and log comments on recent Instagram posts."""
@@ -833,7 +833,7 @@ def check_comments_threads():
         logger.error(f"check_comments_threads error: {e}")
 
 
-# ── Analytics Collection — Company Platforms ──────────────────────────────────
+# ââ Analytics Collection â Company Platforms ââââââââââââââââââââââââââââââââââ
 
 def collect_metrics_instagram():
     """Collect Instagram post and account insights."""
@@ -923,3 +923,18 @@ def collect_metrics_threads():
         logger.info(f"Threads analytics collected")
     except Exception as e:
         logger.error(f"collect_metrics_threads error: {e}")
+
+
+if __name__ == "__main__":
+    # Register graceful shutdown handlers
+    signal.signal(signal.SIGTERM, _handle_shutdown)
+    signal.signal(signal.SIGINT, _handle_shutdown)
+
+    # Start scheduler in background thread
+    scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
+    scheduler_thread.start()
+    logger.info("Scheduler thread started")
+
+    # Run dashboard in main thread (Railway needs this for the PORT)
+    logger.info("Starting dashboard...")
+    run_dashboard()
