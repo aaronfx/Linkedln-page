@@ -1814,21 +1814,21 @@ async function igPostNow(index) {
   if (!confirm('Post this Instagram item now?')) return;
   var r = await fetch('/api/post-instagram', {method:'POST'});
   var d = await r.json();
-  alert(d.success ? 'Posted! ID: ' + (d.result && d.result.post_id ? d.result.post_id : 'OK') : 'Error: ' + d.error);
+  alert(d.success ? 'Posted! ID: ' + (d.result && d.result.post_id ? d.result.post_id : 'OK') : 'Error: ' + (d.message || d.error || 'Unknown error'));
   loadInstagramTab();
 }
 async function igDeletePost(index) {
   if (!confirm('Remove from queue?')) return;
   var r = await fetch('/api/ig-queue/' + index + '/delete', {method:'POST'});
   var d = await r.json();
-  if (d.success) loadInstagramTab(); else alert('Error: ' + d.error);
+  if (d.success) loadInstagramTab(); else alert('Error: ' + (d.message || d.error || 'Unknown error'));
 }
 async function igAddPost() {
   var text = document.getElementById('ig-new-text').value.trim();
   if (!text) return alert('Enter post text');
   var r = await fetch('/api/ig-queue/add', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text: text, platform: 'instagram'})});
   var d = await r.json();
-  if (d.success) { document.getElementById('ig-new-text').value = ''; loadInstagramTab(); } else alert('Error: ' + d.error);
+  if (d.success) { document.getElementById('ig-new-text').value = ''; loadInstagramTab(); } else alert('Error: ' + (d.message || d.error || 'Unknown error'));
 }
 
 // ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Facebook tab ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ
@@ -1853,21 +1853,21 @@ async function fbPostNow(index) {
   if (!confirm('Post this Facebook item now?')) return;
   var r = await fetch('/api/post-facebook', {method:'POST'});
   var d = await r.json();
-  alert(d.success ? 'Posted! ID: ' + (d.result && d.result.post_id ? d.result.post_id : 'OK') : 'Error: ' + d.error);
+  alert(d.success ? 'Posted! ID: ' + (d.result && d.result.post_id ? d.result.post_id : 'OK') : 'Error: ' + (d.message || d.error || 'Unknown error'));
   loadFacebookTab();
 }
 async function fbDeletePost(index) {
   if (!confirm('Remove from queue?')) return;
   var r = await fetch('/api/fb-queue/' + index + '/delete', {method:'POST'});
   var d = await r.json();
-  if (d.success) loadFacebookTab(); else alert('Error: ' + d.error);
+  if (d.success) loadFacebookTab(); else alert('Error: ' + (d.message || d.error || 'Unknown error'));
 }
 async function fbAddPost() {
   var text = document.getElementById('fb-new-text').value.trim();
   if (!text) return alert('Enter post text');
   var r = await fetch('/api/fb-queue/add', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text: text, platform: 'facebook'})});
   var d = await r.json();
-  if (d.success) { document.getElementById('fb-new-text').value = ''; loadFacebookTab(); } else alert('Error: ' + d.error);
+  if (d.success) { document.getElementById('fb-new-text').value = ''; loadFacebookTab(); } else alert('Error: ' + (d.message || d.error || 'Unknown error'));
 }
 
 // ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Threads tab ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ
@@ -1892,21 +1892,21 @@ async function threadsPostNow(index) {
   if (!confirm('Post this Threads item now?')) return;
   var r = await fetch('/api/post-threads', {method:'POST'});
   var d = await r.json();
-  alert(d.success ? 'Posted! ID: ' + (d.result && d.result.post_id ? d.result.post_id : 'OK') : 'Error: ' + d.error);
+  alert(d.success ? 'Posted! ID: ' + (d.result && d.result.post_id ? d.result.post_id : 'OK') : 'Error: ' + (d.message || d.error || 'Unknown error'));
   loadThreadsTab();
 }
 async function threadsDeletePost(index) {
   if (!confirm('Remove from queue?')) return;
   var r = await fetch('/api/threads-queue/' + index + '/delete', {method:'POST'});
   var d = await r.json();
-  if (d.success) loadThreadsTab(); else alert('Error: ' + d.error);
+  if (d.success) loadThreadsTab(); else alert('Error: ' + (d.message || d.error || 'Unknown error'));
 }
 async function threadsAddPost() {
   var text = document.getElementById('th-new-text').value.trim();
   if (!text) return alert('Enter post text');
   var r = await fetch('/api/threads-queue/add', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text: text, platform: 'threads'})});
   var d = await r.json();
-  if (d.success) { document.getElementById('th-new-text').value = ''; loadThreadsTab(); } else alert('Error: ' + d.error);
+  if (d.success) { document.getElementById('th-new-text').value = ''; loadThreadsTab(); } else alert('Error: ' + (d.message || d.error || 'Unknown error'));
 }
 
 
@@ -2496,11 +2496,11 @@ def api_post_facebook():
             if not fb_queue:
                 return jsonify({"success": False, "message": "Facebook queue is empty. Add Facebook-native posts first."})
 
-            post_data = fb_queue.pop(0)
-            save_json(fb_queue_file, fb_queue)
+            post_data = fb_queue[0]
             message = post_data.get("text", "")
             image_path = post_data.get("image_path", "")
         else:
+            post_data = None
             image_path = data.get("image_path", "")
 
         fb = FacebookAPI()
@@ -2508,6 +2508,11 @@ def api_post_facebook():
             result = fb.create_image_post(message, image_path)
         else:
             result = fb.create_text_post(message)
+
+        # Only remove from queue after successful post
+        if post_data is not None:
+            fb_queue.pop(0)
+            save_json(fb_queue_file, fb_queue)
 
         return jsonify({
             "success": True,
