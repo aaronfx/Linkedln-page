@@ -633,12 +633,7 @@ DASHBOARD_HTML = """
             <span>Views: <strong>{{ post.get('impressions', 0) }}</strong></span>
           </div>
         </div>
-        {% endfor %}
-        {% else %}
-        <div class="empty-state">
-          <p>No post history yet. Posts will appear here after publishing.</p>
-        </div>
-        {% endif %}
+        
       </div>
     </div>
   </div>
