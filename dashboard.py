@@ -396,7 +396,7 @@ DASHBOARD_HTML = """
     <button class="tab" onclick="switchTab('writer')">AI Writer</button>
           <button class="tab" onclick="switchTab('company'); loadCompanyWriter()">Company Posts</button>
     <button class="tab" onclick="switchTab('creative')">Creative Studio</button>
-    <button class="tab" onclick="switchTab('history')">Post History</button>
+    <button class="tab" onclick="switchTab('history');loadHistory()">Post History</button>
     <button class="tab" onclick="switchTab('analytics')">Analytics</button>
     <button class="tab" onclick="switchTab('brand')">Brand Review</button>
     <button class="tab" onclick="switchTab('platforms')">Platforms</button>
@@ -620,13 +620,9 @@ DASHBOARD_HTML = """
         <button class="btn btn-danger btn-sm" onclick="clearHistory()">Clear All History</button>
       </div>
       <div class="card-body" style="padding:12px;">
-        {% if recent_posts %}
-        {% for post in recent_posts %}
-        <div class="post-card">
-          <div class="post-meta">
-            <span class="post-pillar {{ post.get('pillar','unknown')|lower|replace(' ','') }}">{{ post.get('pillar','ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ') }}</span>
-            <span class="post-date">{{ post.get('posted_at', post.get('scheduled_date','')) }}</span>
-            {% if post.get('engagement_rate') %}<span class="badge badge-green">{{ post.get('engagement_rate') }}% eng.</span>{% endif %}
+        <div id="history-posts-container">
+                  <p class="text-muted text-center py-4">Loading history...</p>
+                </div>
           </div>
           <div class="post-content" id="hc-{{ loop.index0 }}">{{ post.get('text', post.get('content','')) }}</div>
           <span class="post-expand" onclick="toggleExpand('hc-{{ loop.index0 }}')">Show more</span>
@@ -1369,10 +1365,40 @@ function savePost() {
   });
 }
 
-function clearHistory() {
+function loadHistory() {
+      const container = document.getElementById('history-posts-container');
+      if (!container) return;
+      container.innerHTML = '<p class="text-muted text-center py-4">Loading...</p>';
+      fetch('/api/history')
+        .then(r => r.json())
+        .then(posts => {
+          if (!posts || posts.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center py-4">No post history yet. Posts will appear here after publishing.</p>';
+            return;
+          }
+          container.innerHTML = posts.slice().reverse().map(p => {
+            const content = (p.content || p.text || p.post_text || '').slice(0, 400);
+            const time = p.posted_at || p.scheduled_time || p.created_at || '';
+            const platform = p.platform || 'LinkedIn';
+            return `<div class="post-card mb-3 p-3" style="border:1px solid #e0e0e0;border-radius:8px;">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <small class="text-muted">${time}</small>
+                <span class="badge bg-success">${platform}</span>
+              </div>
+              <p style="white-space:pre-wrap;font-size:14px;">${content}${content.length >= 400 ? '...' : ''}</p>
+            </div>`;
+          }).join('');
+        })
+        .catch(() => {
+          container.innerHTML = '<p class="text-danger text-center py-4">Failed to load history.</p>';
+        });
+    }
+
+    function clearHistory() {
   if (!confirm('Clear ALL post history? This cannot be undone.')) return;
   apiCall('/api/clear-history', 'POST').then(d => {
     if (d.status === 'ok') { showToast('History cleared', 'success'); setTimeout(() => location.reload(), 500); }
+          loadHistory();
     else showToast('Error: ' + (d.error || 'Unknown'), 'error');
   });
 }
