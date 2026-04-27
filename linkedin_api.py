@@ -456,7 +456,8 @@ class LinkedInAPI:
 
         post_record = {
             "id": post_id,
-            "text": text[:200],
+            "text": text,
+            "content": text,
             "image": str(image_path),
             "created_at": datetime.now(timezone.utc).isoformat(),
             "type": "image",
