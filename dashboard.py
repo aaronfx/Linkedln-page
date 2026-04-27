@@ -1383,8 +1383,7 @@ function loadHistory() {
     function clearHistory() {
   if (!confirm('Clear ALL post history? This cannot be undone.')) return;
   apiCall('/api/clear-history', 'POST').then(d => {
-    if (d.status === 'ok') { showToast('History cleared', 'success'); setTimeout(() => location.reload(), 500); }
-          loadHistory();
+    if (d.status === 'ok') { showToast('History cleared', 'success'); loadHistory(); }
     else showToast('Error: ' + (d.error || 'Unknown'), 'error');
   });
 }
