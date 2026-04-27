@@ -1534,7 +1534,8 @@ def generate_threads_post(
     raw = response.content[0].text.strip()
     match = _re.search(r"\{.*\}", raw, _re.DOTALL)
     if not match:
-        raise ValueError(f"No JSON in Threads response: {raw[:200]}")
+        plain = _re.sub(r"(?s)^here.{0,100}:\s*\n+---+\s*\n*", "", raw, flags=_re.IGNORECASE).strip().rstrip("-").strip()
+        return {"platform": "threads", "pillar": pillar, "text": plain, "hashtags": [], "image_prompt": "", "visual_direction": ""}
 
     data = _json.loads(match.group())
 
