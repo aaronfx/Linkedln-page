@@ -1165,7 +1165,29 @@ def generate_instagram_post(
         "Caption: 150-300 characters total. First line must be the scroll-stopping HOOK ÃÂ¢ÃÂÃÂ make it count.\n"
         "Hashtags go at the very end after the CTA, on a new line.\n"
         "The image supports the post ÃÂ¢ÃÂÃÂ assume it exists, do not describe it in the caption.\n"
-    )
+    
+        "\n"
+        "=== 6 LAWS OF PERSUASION — MUST FOLLOW IN EVERY POST ===\n"
+        "LAW 1 — PAIN BEFORE PRODUCT (Mom Test): Open by describing the trader's real struggle — "
+        "missing entries, watching profits disappear, staring at charts confused. Make them feel seen "
+        "before mentioning any solution. Talk about their life, not your product.\n"
+        "LAW 2 — VALUE STACK ($100M Offers): Frame Gopipways against the cost of NOT having it. "
+        "Anchor high: 'A trading mentor costs ₦50K/month. Signals ₦30K. Tools ₦20K. Gopipways replaces "
+        "all three for a fraction of that.' Stack the value visibly before revealing the offer.\n"
+        "LAW 3 — HOOK → STORY → OFFER (Dotcom Secrets): Structure every post as: "
+        "(1) Hook — a bold claim or scroll-stopping question, "
+        "(2) Story — one relatable trader moment that proves the pain is real, "
+        "(3) Offer — a soft CTA to explore Gopipways. Never jump to the offer without the story.\n"
+        "LAW 4 — TACTICAL EMPATHY (Never Split the Difference): Use labelling phrases to disarm "
+        "resistance before pitching: 'It seems like...' / 'It sounds like you've been...' / "
+        "'Most traders feel...' Acknowledge the skepticism first, then present the solution.\n"
+        "LAW 5 — LOSS + ANCHORING (Predictably Irrational): Frame inaction as costly. "
+        "'Every week without a system is another week of guessing.' Anchor to the pain of the "
+        "status quo, then offer the escape. Use loss language: 'stop losing', 'avoid another "
+        "bad trade', 'protect your capital'.\n"
+        "LAW 6 — TRADER = HERO, GOPIPWAYS = GUIDE (StoryBrand): The trader is the hero. "
+        "Gopipways is the guide (Yoda, not Luke). Name the villain: emotional trading, random "
+        "signals, market noise, FOMO. The guide gives the hero a clear plan and a call to action.\n")
     user_prompt = (
         f'Write an Instagram caption for the "{pillar}" content pillar.\n'
         + (f"Topic: {topic_hint}\n" if topic_hint else "")
@@ -1309,7 +1331,29 @@ def generate_facebook_post(
         "Post: 200-500 characters. Slightly more narrative ÃÂ¢ÃÂÃÂ community members sharing wins feel authentic.\n"
         "Can include a short 2-3 sentence story before the offer. "
         "Always end with a direct question to encourage comments.\n"
-    )
+    
+        "\n"
+        "=== 6 LAWS OF PERSUASION — MUST FOLLOW IN EVERY POST ===\n"
+        "LAW 1 — PAIN BEFORE PRODUCT (Mom Test): Open by describing the trader's real struggle — "
+        "missing entries, watching profits disappear, staring at charts confused. Make them feel seen "
+        "before mentioning any solution. Talk about their life, not your product.\n"
+        "LAW 2 — VALUE STACK ($100M Offers): Frame Gopipways against the cost of NOT having it. "
+        "Anchor high: 'A trading mentor costs ₦50K/month. Signals ₦30K. Tools ₦20K. Gopipways replaces "
+        "all three for a fraction of that.' Stack the value visibly before revealing the offer.\n"
+        "LAW 3 — HOOK → STORY → OFFER (Dotcom Secrets): Structure every post as: "
+        "(1) Hook — a bold claim or scroll-stopping question, "
+        "(2) Story — one relatable trader moment that proves the pain is real, "
+        "(3) Offer — a soft CTA to explore Gopipways. Never jump to the offer without the story.\n"
+        "LAW 4 — TACTICAL EMPATHY (Never Split the Difference): Use labelling phrases to disarm "
+        "resistance before pitching: 'It seems like...' / 'It sounds like you've been...' / "
+        "'Most traders feel...' Acknowledge the skepticism first, then present the solution.\n"
+        "LAW 5 — LOSS + ANCHORING (Predictably Irrational): Frame inaction as costly. "
+        "'Every week without a system is another week of guessing.' Anchor to the pain of the "
+        "status quo, then offer the escape. Use loss language: 'stop losing', 'avoid another "
+        "bad trade', 'protect your capital'.\n"
+        "LAW 6 — TRADER = HERO, GOPIPWAYS = GUIDE (StoryBrand): The trader is the hero. "
+        "Gopipways is the guide (Yoda, not Luke). Name the villain: emotional trading, random "
+        "signals, market noise, FOMO. The guide gives the hero a clear plan and a call to action.\n")
     user_prompt = (
         f'Write a Facebook post for the "{pillar}" content pillar.\n'
         + (f"Topic: {topic_hint}\n" if topic_hint else "")
@@ -1460,7 +1504,29 @@ def generate_threads_post(
         "Post: 280-500 characters. Conversational ÃÂ¢ÃÂÃÂ like a direct message to a fellow trader.\n"
         "Must end with a question to drive replies and build conversation threads.\n"
         "Spell out gopipways.com clearly since link previews are limited.\n"
-    )
+    
+        "\n"
+        "=== 6 LAWS OF PERSUASION — MUST FOLLOW IN EVERY POST ===\n"
+        "LAW 1 — PAIN BEFORE PRODUCT (Mom Test): Open by describing the trader's real struggle — "
+        "missing entries, watching profits disappear, staring at charts confused. Make them feel seen "
+        "before mentioning any solution. Talk about their life, not your product.\n"
+        "LAW 2 — VALUE STACK ($100M Offers): Frame Gopipways against the cost of NOT having it. "
+        "Anchor high: 'A trading mentor costs ₦50K/month. Signals ₦30K. Tools ₦20K. Gopipways replaces "
+        "all three for a fraction of that.' Stack the value visibly before revealing the offer.\n"
+        "LAW 3 — HOOK → STORY → OFFER (Dotcom Secrets): Structure every post as: "
+        "(1) Hook — a bold claim or scroll-stopping question, "
+        "(2) Story — one relatable trader moment that proves the pain is real, "
+        "(3) Offer — a soft CTA to explore Gopipways. Never jump to the offer without the story.\n"
+        "LAW 4 — TACTICAL EMPATHY (Never Split the Difference): Use labelling phrases to disarm "
+        "resistance before pitching: 'It seems like...' / 'It sounds like you've been...' / "
+        "'Most traders feel...' Acknowledge the skepticism first, then present the solution.\n"
+        "LAW 5 — LOSS + ANCHORING (Predictably Irrational): Frame inaction as costly. "
+        "'Every week without a system is another week of guessing.' Anchor to the pain of the "
+        "status quo, then offer the escape. Use loss language: 'stop losing', 'avoid another "
+        "bad trade', 'protect your capital'.\n"
+        "LAW 6 — TRADER = HERO, GOPIPWAYS = GUIDE (StoryBrand): The trader is the hero. "
+        "Gopipways is the guide (Yoda, not Luke). Name the villain: emotional trading, random "
+        "signals, market noise, FOMO. The guide gives the hero a clear plan and a call to action.\n")
     user_prompt = f"Write a Threads post for the '{pillar}' content pillar.{topic_line}{history_snippet}"
 
     response = _claude_call(
