@@ -624,15 +624,6 @@ DASHBOARD_HTML = """
                   <p class="text-muted text-center py-4">Loading history...</p>
                 </div>
           </div>
-          <div class="post-content" id="hc-{{ loop.index0 }}">{{ post.get('text', post.get('content','')) }}</div>
-          <span class="post-expand" onclick="toggleExpand('hc-{{ loop.index0 }}')">Show more</span>
-          <div class="post-stats">
-            <span>Likes: <strong>{{ post.get('likes', 0) }}</strong></span>
-            <span>Comments: <strong>{{ post.get('comments', 0) }}</strong></span>
-            <span>Shares: <strong>{{ post.get('shares', 0) }}</strong></span>
-            <span>Views: <strong>{{ post.get('impressions', 0) }}</strong></span>
-          </div>
-        </div>
         
       </div>
     </div>
