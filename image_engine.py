@@ -26,7 +26,7 @@ from datetime import datetime, timezone
 
 logger = logging.getLogger("image_engine")
 
-# ── ApiPass / Nano Banana 2 ──────────────────────────────────────────────
+# ── ApiPass / Nano Banana 2 ────────────────────────────────────────────────────
 # Set NANO_BANANA_API_KEY in Railway env to the ApiPass API key.
 
 APIPASS_CREATE_URL = "https://api.apipass.dev/api/v1/jobs/createTask"
@@ -38,30 +38,30 @@ APP_BASE_URL = os.getenv(
     "APP_BASE_URL", "https://linkedln-page-production.up.railway.app"
 ).rstrip("/")
 
-# ── Brand visual identity ──────────────────────────────────────────────
+# ── Brand visual identity ──────────────────────────────────────────────────────
 BRAND_VISUAL = {
     "name": "Gopipways",
     "tagline": "Africa's leading forex education platform",
     "colors": "deep navy blue (#1a237e), gold (#ffd700), crisp white",
     "feeling": "trustworthy, empowering, aspirational, professional",
     "style": "modern, clean, African-inspired, data-forward",
-    "avoid": "cartoon style, clutter, stock-photo cliches, generic office photos",
+    "avoid": "cartoon style, clutter, stock-photo clichés, generic office photos",
 }
 
-# ── Platform image specs ───────────────────────────────────────────────
+# ── Platform image specs ───────────────────────────────────────────────────────
 PLATFORM_IMAGE_SPECS = {
     "instagram": {
-        "ratio": "1:1 square (1080x1080) or 4:5 portrait",
+        "ratio": "1:1 square (1080×1080) or 4:5 portrait",
         "style": "Bold, scroll-stopping. Strong focal point. Minimal text in frame.",
         "mood": "high-energy but professional",
     },
     "facebook": {
-        "ratio": "1.91:1 landscape (1200x630) or square",
+        "ratio": "1.91:1 landscape (1200×630) or square",
         "style": "Clear, professional. Approachable. Works as a feed post.",
         "mood": "community-focused, warm",
     },
     "linkedin": {
-        "ratio": "1.91:1 landscape (1200x627)",
+        "ratio": "1.91:1 landscape (1200×627)",
         "style": "Corporate-clean. Data and charts welcome. Credibility signals.",
         "mood": "authoritative, analytical",
     },
@@ -90,7 +90,7 @@ def generate_image(
 
     Returns:
         {
-          "image_url":   "https://app.../images/ig_abc123.jpg",
+          "image_url":   "https://app.../images/ig_abc123.jpg"  ← public URL for Instagram API,
           "local_path":  "/path/to/image.jpg",
           "filename":    "ig_abc123.jpg",
           "prompt_used": "...",
@@ -124,7 +124,7 @@ def generate_image(
         f.write(image_bytes)
 
     public_url = f"{APP_BASE_URL}/images/{filename}"
-    logger.info(f"Image saved: {filename} ({len(image_bytes)} bytes) -> {public_url}")
+    logger.info(f"Image saved: {filename} ({len(image_bytes)} bytes) → {public_url}")
 
     return {
         "image_url": public_url,
@@ -163,7 +163,7 @@ def generate_image_for_queue_entry(entry: dict, images_dir: Path = None) -> dict
     return entry
 
 
-# ── Private helpers ────────────────────────────────────────────────────────────────
+# ── Private helpers ────────────────────────────────────────────────────────────
 
 def _build_prompt(concept: str, platform: str, style_notes: str = "") -> str:
     """Build a brand-aware, platform-optimised image generation prompt."""
@@ -204,9 +204,10 @@ def _call_nano_banana(prompt: str) -> dict:
     Call Nano Banana 2 via ApiPass async jobs API.
 
     Flow:
-      1. POST createTask -> taskId
+      1. POST createTask → taskId
       2. Poll recordInfo every 5 s until state == "success" (max 3 min)
-      3. Parse resultJson -> download image from resultUrls[0]
+      3. Parse resultJson → download image from resultUrls[0]
+         Note: resultJson may be a dict (already parsed) or a JSON string.
     """
     headers = {
         "Authorization": f"Bearer {NANO_BANANA_API_KEY}",
@@ -257,7 +258,8 @@ def _call_nano_banana(prompt: str) -> dict:
         logger.info(f"ApiPass task {task_id} state: {state}")
 
         if state == "success":
-            result_json = json.loads(task["resultJson"])
+            raw = task["resultJson"]
+            result_json = raw if isinstance(raw, dict) else json.loads(raw)
             image_url = result_json["resultUrls"][0]
             img_resp = requests.get(image_url, timeout=60)
             img_resp.raise_for_status()
