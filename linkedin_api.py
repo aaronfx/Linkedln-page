@@ -156,6 +156,7 @@ class LinkedInAPI:
         last_error = None
         for attempt in range(MAX_RETRIES):
             try:
+                kwargs.setdefault('timeout', 10)
                 resp = getattr(requests, method)(url, headers=self.headers, **kwargs)
 
                 # Handle rate limiting response
