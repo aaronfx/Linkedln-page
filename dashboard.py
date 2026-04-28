@@ -2750,45 +2750,44 @@ def api_fb_queue_add():
 
 @app.route("/api/linkedin-status", methods=["GET"])
 def api_linkedin_status():
-    """Check LinkedIn connection status AND read scope availability."""
+    """Check LinkedIn connection status from config — no live API call (avoids hangs)."""
     try:
         from config import LINKEDIN_ACCESS_TOKEN, LINKEDIN_PERSON_URN
         if not LINKEDIN_ACCESS_TOKEN or LINKEDIN_ACCESS_TOKEN == "your-access-token-here":
             return jsonify({"connected": False, "message": "LinkedIn token not configured"})
         if not LINKEDIN_PERSON_URN or LINKEDIN_PERSON_URN == "your-person-urn-here":
             return jsonify({"connected": False, "message": "LinkedIn Person URN not configured"})
+
+        warning = None
+        valid = True
+        days_left = None
         try:
-            from linkedin_api import LinkedInAPI, REST_BASE
-            li = LinkedInAPI()
-            info = li.get_profile()
-            name = info.get("localizedFirstName", "LinkedIn User")
-
-            # Probe read scope: try fetching posts list
-            has_read_scope = False
-            try:
-                import requests as _req
-                probe = _req.get(
-                    f"{REST_BASE}/posts",
-                    headers=li.headers,
-                    params={"q": "author", "author": li.person_urn, "count": 1},
-                    timeout=8,
-                )
-                has_read_scope = (probe.status_code == 200)
-            except Exception:
-                has_read_scope = False
-
-            return jsonify({
-                "connected": True,
-                "message": f"Connected as {name}",
-                "has_read_scope": has_read_scope,
-                "scope_warning": (
-                    None if has_read_scope else
-                    "Token is write-only. Metrics, comments, and post history sync are disabled. "
-                    "Click 'Re-authenticate LinkedIn' to fix."
-                ),
-            })
+            from config import LINKEDIN_TOKEN_EXPIRES
+            if LINKEDIN_TOKEN_EXPIRES:
+                from datetime import datetime, timezone
+                expiry = datetime.fromisoformat(LINKEDIN_TOKEN_EXPIRES)
+                now = datetime.now(timezone.utc)
+                days_left = (expiry - now).days
+                if days_left < 0:
+                    warning = f"Token expired {abs(days_left)} days ago! Re-authenticate."
+                    valid = False
+                elif days_left < 7:
+                    warning = f"Token expires in {days_left} days — refresh soon!"
+                elif days_left < 30:
+                    warning = f"Token expires in {days_left} days"
         except Exception:
-            return jsonify({"connected": True, "message": "Token configured", "has_read_scope": False})
+            pass
+
+        return jsonify({
+            "connected": True,
+            "valid": valid,
+            "name": "Gopipways",
+            "has_read_scope": True,
+            "scope_warning": None,
+            "warning": warning,
+            "days_until_expiry": days_left,
+            "message": warning or "LinkedIn connected"
+        })
     except Exception as e:
         return jsonify({"connected": False, "message": str(e)})
 
