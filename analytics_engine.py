@@ -28,11 +28,17 @@ class AnalyticsEngine:
     # Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Data Collection Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
     def collect_metrics(self):
-        """Collect latest metrics for recent posts only (last 7 days).
-        Was collecting for ALL posts Ã¢ÂÂ caused hundreds of unnecessary API calls.
         """
+        Collect latest metrics for recent posts (last 7 days).
+        Requires r_member_social scope. If token is write-only (403),
+        stops after first failure to avoid hammering the API.
+        Re-authenticate via /api/auth-url to unlock read access.
+        """
+        import logging as _log
+        logger = _log.getLogger("analytics")
         logger.info("Collecting post metrics (last 7 days only)...")
         updated_count = 0
+        scope_blocked = False
         cutoff = datetime.now(timezone.utc) - timedelta(days=7)
 
         for post in self.post_history:
@@ -40,7 +46,7 @@ class AnalyticsEngine:
             if not post_id:
                 continue
 
-            # Skip old posts Ã¢ÂÂ no need to re-fetch their stats constantly
+            # Skip old posts
             created_at = post.get("created_at", "")
             if created_at:
                 try:
@@ -50,20 +56,34 @@ class AnalyticsEngine:
                 except (ValueError, TypeError):
                     pass
 
+            if scope_blocked:
+                break  # Token lacks read scope — stop hammering
+
             try:
                 stats = self.linkedin.get_post_stats(post_id)
+
+                if stats is not None and len(stats) == 0:
+                    # Empty dict returned = 403 scope block
+                    logger.warning(
+                        "Metrics blocked: LinkedIn token lacks r_member_social scope. "
+                        "Re-authenticate via Settings > LinkedIn Auth to fix."
+                    )
+                    scope_blocked = True
+                    break
+
                 post["metrics"] = stats
                 post["metrics_updated"] = datetime.now(timezone.utc).isoformat()
 
-                # Calculate engagement rate
+                likes = stats.get("likes", 0)
+                comments = stats.get("comments", 0)
+                shares = stats.get("shares", 0)
                 impressions = stats.get("impressions", 0)
+
                 if impressions > 0:
-                    total_engagement = (
-                        stats.get("likes", 0)
-                        + stats.get("comments", 0) * 3  # Comments weighted 3x
-                        + stats.get("shares", 0) * 5    # Shares weighted 5x
-                    )
-                    post["engagement_rate"] = round(total_engagement / impressions * 100, 2)
+                    total_eng = likes + comments * 3 + shares * 5
+                    post["engagement_rate"] = round(total_eng / impressions * 100, 2)
+                elif likes + comments + shares > 0:
+                    post["engagement_rate"] = float(likes + comments + shares)
                 else:
                     post["engagement_rate"] = 0.0
 
@@ -73,7 +93,10 @@ class AnalyticsEngine:
                 logger.error(f"Failed to get metrics for {post_id}: {e}")
 
         self._save_json(POST_HISTORY_FILE, self.post_history)
-        logger.info(f"Updated metrics for {updated_count} posts")
+        if scope_blocked:
+            logger.warning("Metrics update incomplete — token needs read scopes")
+        else:
+            logger.info(f"Updated metrics for {updated_count} posts")
         return updated_count
 
     # Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Analysis Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ

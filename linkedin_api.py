@@ -199,7 +199,7 @@ class LinkedInAPI:
     @staticmethod
     def get_auth_url(redirect_uri: str = "http://localhost:8080/callback") -> str:
         """Generate the OAuth 2.0 authorization URL."""
-        scopes = "openid%20profile%20w_member_social"
+        scopes = "openid%20profile%20w_member_social%20r_member_social%20r_liteprofile"
         return (
             f"https://www.linkedin.com/oauth/v2/authorization?"
             f"response_type=code&client_id={LINKEDIN_CLIENT_ID}"
@@ -472,13 +472,24 @@ class LinkedInAPI:
     # --- Comments ---
 
     def get_post_comments(self, post_urn: str) -> list:
-        """Get comments on a specific post."""
+        """
+        Get comments on a specific post.
+        Requires r_member_social scope. Returns [] gracefully on 403.
+        """
         try:
             resp = self._make_request(
                 "get",
                 f"{REST_BASE}/socialActions/{post_urn}/comments",
-                params={"count": 50},  # Reduced from 100
+                params={"count": 50},
             )
+            if resp.status_code == 200:
+                return resp.json().get("elements", [])
+            elif resp.status_code == 403:
+                logger.warning(
+                    "get_post_comments 403: token missing r_member_social scope. "
+                    "Comment monitoring requires re-authentication with read scopes."
+                )
+                return []
             resp.raise_for_status()
             return resp.json().get("elements", [])
         except Exception as e:
@@ -516,7 +527,11 @@ class LinkedInAPI:
     # --- Analytics ---
 
     def get_post_stats(self, post_urn: str) -> dict:
-        """Get engagement statistics for a specific post."""
+        """
+        Get engagement statistics for a specific post.
+        Requires r_member_social scope. Returns empty dict gracefully
+        if the token lacks that scope (403) rather than crashing.
+        """
         stats = {}
         for action in ["likes", "comments"]:
             try:
@@ -528,13 +543,25 @@ class LinkedInAPI:
                 if resp.status_code == 200:
                     data = resp.json()
                     stats[action] = data.get("paging", {}).get("total", 0)
+                elif resp.status_code == 403:
+                    # Token lacks r_member_social scope — log once, return empty
+                    logger.warning(
+                        f"get_post_stats 403: token missing r_member_social scope. "
+                        f"Re-authenticate via /api/auth-url to gain read access."
+                    )
+                    return {}
+                else:
+                    logger.warning(f"get_post_stats {action} returned {resp.status_code}")
             except Exception as e:
                 logger.warning(f"Failed to get {action} for {post_urn}: {e}")
 
         return stats
 
     def get_all_posts(self, count: int = 20) -> list:
-        """Get recent posts by the authenticated user."""
+        """
+        Get recent posts by the authenticated user.
+        Requires r_member_social scope. Returns [] gracefully on 403.
+        """
         try:
             resp = self._make_request(
                 "get",
@@ -547,6 +574,12 @@ class LinkedInAPI:
             )
             if resp.status_code == 200:
                 return resp.json().get("elements", [])
+            elif resp.status_code == 403:
+                logger.warning(
+                    "get_all_posts 403: token missing r_member_social scope. "
+                    "Post history will rely on locally saved records only."
+                )
+                return []
             logger.warning(f"Could not fetch posts: {resp.status_code}")
             return []
         except Exception as e:
@@ -556,22 +589,22 @@ class LinkedInAPI:
 
     def get_follower_count(self) -> int:
         """
-        Get the current follower count for the authenticated profile.
-        Uses the LinkedIn Community Management API networkSizes endpoint.
-        Returns 0 if the API call fails (best-effort).
+        Get the current follower count for the authenticated personal profile.
+        LinkedIn's personal follower count is NOT available via the standard API
+        without Marketing Developer Platform access.
+        Best effort: tries the connections endpoint and returns 0 on failure.
         """
         try:
-            url = f"{self.api_base}/networkSizes/{self.person_urn}?edgeType=CompanyFollowedByMember"
-            resp = self._make_request("GET", url)
-            if resp and resp.get("firstDegreeSize"):
-                return resp["firstDegreeSize"]
-            
-            # Fallback: try connections count
-            url2 = f"{self.api_base}/connections?q=viewer&start=0&count=0"
-            resp2 = self._make_request("GET", url2)
-            if resp2 and resp2.get("paging", {}).get("total"):
-                return resp2["paging"]["total"]
-            
+            # Try the Community Management connections endpoint
+            resp = self._make_request(
+                "get",
+                f"{REST_BASE}/connections",
+                params={"q": "viewer", "start": 0, "count": 0},
+            )
+            if resp.status_code == 200:
+                total = resp.json().get("paging", {}).get("total", 0)
+                if total:
+                    return total
             return 0
         except Exception as e:
             logger.warning(f"Failed to get follower count: {e}")

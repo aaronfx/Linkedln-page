@@ -1546,6 +1546,21 @@ function loadAnalytics() {
 }
 
 function loadHealth() {
+  // Check LinkedIn read scope and show persistent warning if missing
+  apiCall('/api/linkedin-status').then(li => {
+    if (li.connected && li.has_read_scope === false && li.scope_warning) {
+      var banner = document.getElementById('li-scope-banner');
+      if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'li-scope-banner';
+        banner.style.cssText = 'background:#7c3aed;color:#fff;padding:10px 18px;font-size:.85rem;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:999;';
+        banner.innerHTML = '<span>⚠️ <strong>LinkedIn read access missing</strong> — metrics, comments, and post history sync are disabled. Re-authenticate to fix.</span>'
+          + '<button onclick="reAuthLinkedIn()" style="background:#fff;color:#7c3aed;border:none;padding:5px 14px;border-radius:4px;cursor:pointer;font-weight:600;white-space:nowrap;">Re-authenticate</button>';
+        document.body.prepend(banner);
+      }
+    }
+  }).catch(() => {});
+
   apiCall('/health').then(d => {
     let html = '<div style="display:grid;gap:12px;">';
     html += '<div class="pillar-row"><span style="color:var(--text2);">Status</span><span class="badge ' + (d.status==='ok'?'badge-green':'badge-red') + '">' + d.status + '</span></div>';
@@ -1696,6 +1711,18 @@ function loadEngagement() {
 
 // Load engagement stats on page load (for top cards)
 loadEngagement();
+// LinkedIn re-auth helper
+function reAuthLinkedIn() {
+  apiCall('/api/auth-url').then(d => {
+    if (d.auth_url) {
+      window.open(d.auth_url, '_blank');
+      showToast('LinkedIn auth opened — after approving, paste the new token into Railway env vars.', 'info');
+    } else {
+      showToast('Could not get auth URL: ' + (d.error || 'unknown'), 'error');
+    }
+  });
+}
+
 // Load health on page load
 loadHealth();
 
@@ -2723,7 +2750,7 @@ def api_fb_queue_add():
 
 @app.route("/api/linkedin-status", methods=["GET"])
 def api_linkedin_status():
-    """Check LinkedIn connection status."""
+    """Check LinkedIn connection status AND read scope availability."""
     try:
         from config import LINKEDIN_ACCESS_TOKEN, LINKEDIN_PERSON_URN
         if not LINKEDIN_ACCESS_TOKEN or LINKEDIN_ACCESS_TOKEN == "your-access-token-here":
@@ -2731,12 +2758,37 @@ def api_linkedin_status():
         if not LINKEDIN_PERSON_URN or LINKEDIN_PERSON_URN == "your-person-urn-here":
             return jsonify({"connected": False, "message": "LinkedIn Person URN not configured"})
         try:
-            from linkedin_api import LinkedInAPI
+            from linkedin_api import LinkedInAPI, REST_BASE
             li = LinkedInAPI()
             info = li.get_profile()
-            return jsonify({"connected": True, "message": f"Connected as {info.get('localizedFirstName', 'LinkedIn User')}"})
+            name = info.get("localizedFirstName", "LinkedIn User")
+
+            # Probe read scope: try fetching posts list
+            has_read_scope = False
+            try:
+                import requests as _req
+                probe = _req.get(
+                    f"{REST_BASE}/posts",
+                    headers=li.headers,
+                    params={"q": "author", "author": li.person_urn, "count": 1},
+                    timeout=8,
+                )
+                has_read_scope = (probe.status_code == 200)
+            except Exception:
+                has_read_scope = False
+
+            return jsonify({
+                "connected": True,
+                "message": f"Connected as {name}",
+                "has_read_scope": has_read_scope,
+                "scope_warning": (
+                    None if has_read_scope else
+                    "Token is write-only. Metrics, comments, and post history sync are disabled. "
+                    "Click 'Re-authenticate LinkedIn' to fix."
+                ),
+            })
         except Exception:
-            return jsonify({"connected": True, "message": "Token configured"})
+            return jsonify({"connected": True, "message": "Token configured", "has_read_scope": False})
     except Exception as e:
         return jsonify({"connected": False, "message": str(e)})
 
