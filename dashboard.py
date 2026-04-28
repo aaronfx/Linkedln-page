@@ -3685,7 +3685,7 @@ def api_queue_delete(index):
         removed = queue.pop(index)
         save_json(CONTENT_QUEUE_FILE, queue)
         logger.info(f"Queue post {index} deleted: {removed.get('hook', 'unknown')[:40]}")
-        return jsonify({"status": "deleted", "remaining": len(queue)})
+        return jsonify({"status": "ok", "remaining": len(queue)})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

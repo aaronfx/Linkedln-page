@@ -74,13 +74,21 @@ def validate_post_content(post_data: dict) -> dict:
         issues.append("too_short")
     if len(text) > 3000:
         issues.append("too_long")
-        # Auto-trim to 3000 chars at last sentence boundary
+        # Auto-trim to 3000 chars at the last sentence boundary.
+        # Always trim — don't leave posts hanging mid-sentence.
         trimmed = text[:3000]
         last_period = trimmed.rfind(".")
-        if last_period > 2500:
+        if last_period > 1500:
+            # Cut cleanly at the last sentence
             text = trimmed[:last_period + 1]
-            post_data["text"] = text
-            issues.append("auto_trimmed")
+        else:
+            # No good sentence boundary found — trim at last newline or word
+            last_newline = trimmed.rfind("\n")
+            last_space = trimmed.rfind(" ")
+            cut = max(last_newline, last_space)
+            text = trimmed[:cut].rstrip() if cut > 2000 else trimmed
+        post_data["text"] = text
+        issues.append("auto_trimmed")
 
     # Hook check - first line should be compelling (< 100 chars, no hashtags)
     first_line = text.split("\n")[0] if "\n" in text else text[:100]

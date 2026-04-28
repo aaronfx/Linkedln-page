@@ -170,80 +170,9 @@ def create_and_post(pillar=None):
         post_id = result.get("id", "unknown")
         logger.info(f"Post published ({source}): {post_id} | Pillar: {post_data.get('pillar', '?')}")
 
-        # ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Step 4b: Post to Facebook (from separate FB queue) ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
-        try:
-            from facebook_api import FacebookAPI
-            from config import FACEBOOK_PAGE_ACCESS_TOKEN, DATA_DIR
-            fb_queue_file = DATA_DIR / "fb_content_queue.json"
-
-            if FACEBOOK_PAGE_ACCESS_TOKEN and FACEBOOK_PAGE_ACCESS_TOKEN != "your-fb-page-token-here":
-                fb_queue = []
-                if fb_queue_file.exists():
-                    try:
-                        with open(fb_queue_file) as f:
-                            fb_queue = json.load(f)
-                    except (json.JSONDecodeError, IOError):
-                        fb_queue = []
-
-                if fb_queue:
-                    fb_post_data = fb_queue.pop(0)
-                    with open(fb_queue_file, "w") as f:
-                        json.dump(fb_queue, f, indent=2)
-
-                    fb = FacebookAPI()
-                    fb_text = fb_post_data.get("text", "")
-                    fb_image = fb_post_data.get("image_path", "")
-
-                    if fb_image and Path(fb_image).exists():
-                        fb_result = fb.create_image_post(fb_text, fb_image)
-                    else:
-                        fb_result = fb.create_text_post(fb_text)
-
-                    fb_post_id = fb_result.get("id", "unknown")
-                    logger.info(f"Facebook post published from FB queue ({len(fb_queue)} remaining): {fb_post_id}")
-                else:
-                    logger.info("Facebook queue empty ÃÂ¢ÃÂÃÂ skipping FB post this cycle")
-            else:
-                logger.info("Facebook posting skipped ÃÂ¢ÃÂÃÂ no token configured")
-        except Exception as fb_err:
-            logger.warning(f"Facebook post failed (non-blocking): {fb_err}")
-
-        # ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Step 4c: Post to Instagram (from separate IG queue) ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
-        try:
-            from instagram_api import InstagramAPI
-            from config import INSTAGRAM_BUSINESS_ACCOUNT_ID, DATA_DIR
-            ig_queue_file = DATA_DIR / "ig_content_queue.json"
-
-            if INSTAGRAM_BUSINESS_ACCOUNT_ID and INSTAGRAM_BUSINESS_ACCOUNT_ID != "your-ig-account-id-here":
-                ig_queue = []
-                if ig_queue_file.exists():
-                    try:
-                        with open(ig_queue_file) as f:
-                            ig_queue = json.load(f)
-                    except (json.JSONDecodeError, IOError):
-                        ig_queue = []
-
-                if ig_queue:
-                    ig_post_data = ig_queue.pop(0)
-                    with open(ig_queue_file, "w") as f:
-                        json.dump(ig_queue, f, indent=2)
-
-                    ig = InstagramAPI()
-                    ig_caption = ig_post_data.get("caption", ig_post_data.get("text", ""))
-                    ig_image_url = ig_post_data.get("image_url", "")
-
-                    if ig_image_url:
-                        ig_result = ig.create_image_post(ig_image_url, ig_caption)
-                        ig_post_id = ig_result.get("id", "unknown")
-                        logger.info(f"Instagram post published from IG queue ({len(ig_queue)} remaining): {ig_post_id}")
-                    else:
-                        logger.info("Instagram post skipped ÃÂ¢ÃÂÃÂ no image URL (Instagram requires images)")
-                else:
-                    logger.info("Instagram queue empty ÃÂ¢ÃÂÃÂ skipping IG post this cycle")
-            else:
-                logger.info("Instagram posting skipped ÃÂ¢ÃÂÃÂ no account ID configured")
-        except Exception as ig_err:
-            logger.warning(f"Instagram post failed (non-blocking): {ig_err}")
+        # Step 4b/4c REMOVED: Facebook and Instagram each have their own
+        # dedicated scheduled functions (create_and_post_facebook,
+        # create_and_post_instagram). Posting here caused double-posting.
 
         # ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Step 5: Save to post history for future intelligence ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
         # ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Step 5: SUCCESS ÃÂ¢ÃÂÃÂ NOW pop from queue (safe) ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
@@ -640,11 +569,24 @@ def create_and_post_instagram(pillar=None):
             logger.warning("Instagram: empty caption, skipping")
             return
 
+        # Instagram REQUIRES a real image URL — skip cleanly if missing
+        if not image_url:
+            logger.warning(
+                f"Instagram: no image_url on queue entry (id={entry.get('id','?')}) "
+                f"— moving to dead letter. Add image_url before requeuing."
+            )
+            dead = _safe_read_json(IG_DEAD_LETTER_FILE)
+            dead.append({**entry,
+                         "error": "no_image_url",
+                         "failed_at": datetime.now(timezone.utc).isoformat()})
+            _safe_write_json(IG_DEAD_LETTER_FILE, dead)
+            # Remove from queue so we don't retry the same broken entry forever
+            queue.pop(0)
+            _safe_write_json(IG_QUEUE_FILE, queue)
+            return
+
         api = InstagramAPI()
-        if image_url:
-            result = api.create_image_post(image_url=image_url, caption=caption)
-        else:
-            result = api.create_image_post(image_url="", caption=caption)
+        result = api.create_image_post(image_url=image_url, caption=caption)
 
         if result.get("id") or result.get("success"):
             queue.pop(0)
