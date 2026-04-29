@@ -29,10 +29,8 @@ class AnalyticsEngine:
 
     def collect_metrics(self):
         """
-        Collect latest metrics for recent posts (last 7 days).
-        Requires r_member_social scope. If token is write-only (403),
-        stops after first failure to avoid hammering the API.
-        Re-authenticate via /api/auth-url to unlock read access.
+        Collect latest metrics for recent posts (last 30 days) via Apify.
+        No LinkedIn read scopes needed — uses Apify scrapers instead.
         """
         import logging as _log
         logger = _log.getLogger("analytics")
