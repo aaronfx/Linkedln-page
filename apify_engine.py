@@ -1,4 +1,5 @@
 """
+            "author_followers": item.get("user_followers", item.get("followers_count", 0)),
 Apify integration -- LinkedIn metrics and comments scraping.
 
 Replaces the broken LinkedIn read API (r_member_social scope / hanging calls).
