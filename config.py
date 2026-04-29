@@ -20,6 +20,9 @@ LINKEDIN_CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET", "your-client-secret
 LINKEDIN_ACCESS_TOKEN = os.getenv("LINKEDIN_ACCESS_TOKEN", "your-access-token-here")
 LINKEDIN_PERSON_URN = os.getenv("LINKEDIN_PERSON_URN", "your-person-urn-here")  # e.g., "urn:li:person:ABC123"
 
+# Apify — LinkedIn metrics & comments scraping (replaces read API)
+APIFY_API_KEY = os.getenv("APIFY_API_KEY", "")
+
 # Facebook Graph API credentials
 # Get these from https://developers.facebook.com/tools/explorer/
 FACEBOOK_PAGE_ACCESS_TOKEN = os.getenv("FACEBOOK_PAGE_ACCESS_TOKEN", "your-fb-page-token-here")
