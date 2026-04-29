@@ -401,7 +401,7 @@ def apify_sync_linkedin():
             logger.warning(f"Apify auto-reply phase error: {e}")
 
 
-        # -- Follower count: extracted free from posts-scraper author data
+        # -- Follower count: try from posts-scraper author data first (free)
         try:
             _first_urn = recent_urns[0] if recent_urns else None
             if _first_urn:
@@ -411,7 +411,7 @@ def apify_sync_linkedin():
                     import os as _os2, datetime as _dt2
                     _pfile = _os2.path.join(_os2.path.dirname(POST_HISTORY_FILE), "linkedin_profile_stats.json")
                     _safe_write_json(_pfile, {"followers": _af, "synced_at": _dt2.datetime.utcnow().isoformat()+"Z", "source":"posts_scraper"})
-                    logger.info(f"Apify sync: {_af} LinkedIn followers captured")
+                    logger.info(f"Apify sync: {_af} LinkedIn followers captured from posts data")
         except Exception as e:
             logger.warning(f"Apify follower capture error: {e}")
 
@@ -661,10 +661,13 @@ def _purge_expired_queue(queue, queue_file, max_age_hours=24):
     fresh = []
     purged = 0
     for entry in queue:
-        ref = entry.get("scheduled_date") or entry.get("created_at", "")
+        # Prefer scheduled_datetime (has timezone) over scheduled_date (date-only, no tz)
+        ref = entry.get("scheduled_datetime") or entry.get("created_at", "")
         if ref:
             try:
-                dt = datetime.fromisoformat(ref.replace("Z", "+00:00"))
+                dt = datetime.fromisoformat(str(ref).replace("Z", "+00:00"))
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
                 if dt < cutoff:
                     age_h = int((datetime.now(timezone.utc) - dt).total_seconds() / 3600)
                     logger.warning(f"Queue: purging expired entry ({age_h}h old): {str(entry)[:80]}")
@@ -680,18 +683,22 @@ def _purge_expired_queue(queue, queue_file, max_age_hours=24):
 
 
 def _is_due(entry, buffer_minutes=10):
-    """Return True if entry's scheduled_date is in the past (post is due)."""
+    """Return True if entry's scheduled time is in the past (post is due)."""
     from datetime import datetime, timezone, timedelta
-    ref = entry.get("scheduled_date") or entry.get("created_at", "")
+    # Prefer scheduled_datetime (has tz) over scheduled_date (date-only, ambiguous)
+    ref = entry.get("scheduled_datetime") or entry.get("scheduled_date") or entry.get("created_at", "")
     if not ref:
         return True
     try:
         s = str(ref)
         if len(s) == 16 and "T" not in s:
+            # Legacy "YYYY-MM-DD HH:MM" format — assume WAT
             WAT = timezone(timedelta(hours=1))
             dt = datetime.strptime(s, "%Y-%m-%d %H:%M").replace(tzinfo=WAT)
         else:
             dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
         return dt <= datetime.now(timezone.utc) + timedelta(minutes=buffer_minutes)
     except Exception:
         return True

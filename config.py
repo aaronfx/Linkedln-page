@@ -191,11 +191,11 @@ if PERSISTENT_DIR:
     import shutil
     _repo_data = BASE_DIR / "data"
     if _repo_data.exists():
-        # Always sync queue and history from repo (allows remote updates via GitHub)
-        _always_sync = {"content_queue.json", "post_history.json"}
+        # Copy seed data only if file does not already exist on the persistent volume.
+        # NEVER overwrite queue or history — those are live app data that must survive deploys.
         for f in _repo_data.glob("*.json"):
             dest = DATA_DIR / f.name
-            if not dest.exists() or f.name in _always_sync:
+            if not dest.exists():
                 shutil.copy2(f, dest)
 
 CONTENT_QUEUE_FILE = DATA_DIR / "content_queue.json"
