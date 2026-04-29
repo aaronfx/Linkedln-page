@@ -3855,7 +3855,7 @@ def api_learning_summary():
 
 def run_dashboard(port=None):
     port = port or int(os.getenv("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    app.run(host="0.0.0.0", port=port, debug=False, threaded=True)
 
 
 if __name__ == "__main__":
