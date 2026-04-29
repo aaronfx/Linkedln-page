@@ -3502,15 +3502,90 @@ def api_profile_stats():
         return jsonify({"error": str(e), "followers": 0}), 500
 @app.route("/api/trigger-apify-sync", methods=["POST"])
 def api_trigger_apify_sync():
-    """Manually trigger the Apify LinkedIn posts-scraper sync."""
-    try:
-        import threading
-        from worker import apify_sync_linkedin
-        t = threading.Thread(target=apify_sync_linkedin, daemon=True)
-        t.start()
-        return jsonify({"status": "started", "message": "Apify sync triggered in background"})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    """Manually trigger Apify sync. Uses post history if available, else profile scraper."""
+    def _run():
+        try:
+            # Try post-history based sync first
+            history = load_json(POST_HISTORY_FILE, [])
+            from datetime import datetime, timezone, timedelta
+            cutoff = datetime.now(timezone.utc) - timedelta(days=30)
+            recent_urns = []
+            for p in history:
+                try:
+                    ts = p.get("created_at", "")
+                    if ts:
+                        dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+                        if dt >= cutoff and p.get("id"):
+                            recent_urns.append(p["id"])
+                except Exception:
+                    pass
+
+            if recent_urns:
+                from worker import apify_sync_linkedin
+                apify_sync_linkedin()
+                return
+
+            # No post history — fall back to profile scraper for follower count
+            import requests as _req, time as _time
+            api_key = os.environ.get("APIFY_API_KEY", "")
+            profile_url = os.environ.get("LINKEDIN_PROFILE_URL", "")
+            if not api_key or not profile_url:
+                logger.warning("Apify trigger: missing APIFY_API_KEY or LINKEDIN_PROFILE_URL")
+                return
+
+            actor = "sourabhbgp~linkedin-profile-scraper"
+            run_resp = _req.post(
+                f"https://api.apify.com/v2/acts/{actor}/runs",
+                params={"token": api_key},
+                json={"profiles": [profile_url], "maxResults": 1},
+                timeout=15
+            )
+            run_resp.raise_for_status()
+            run_id = run_resp.json()["data"]["id"]
+            dataset_id = run_resp.json()["data"]["defaultDatasetId"]
+
+            # Poll for completion (max 3 min)
+            for _ in range(36):
+                _time.sleep(5)
+                status_r = _req.get(
+                    f"https://api.apify.com/v2/actor-runs/{run_id}",
+                    params={"token": api_key}, timeout=10
+                )
+                st = status_r.json()["data"]["status"]
+                if st in ("SUCCEEDED", "FAILED", "ABORTED", "TIMED-OUT"):
+                    break
+
+            if st != "SUCCEEDED":
+                logger.warning(f"Apify profile scraper run {run_id} ended with: {st}")
+                return
+
+            items_r = _req.get(
+                f"https://api.apify.com/v2/datasets/{dataset_id}/items",
+                params={"token": api_key, "limit": 1}, timeout=10
+            )
+            items = items_r.json()
+            if not items:
+                logger.warning("Apify profile scraper: no items returned")
+                return
+
+            item = items[0]
+            followers = item.get("followers") or item.get("followersCount") or item.get("connections") or 0
+            if followers:
+                import datetime as _dt2
+                pfile = os.path.join(os.path.dirname(POST_HISTORY_FILE), "linkedin_profile_stats.json")
+                save_json(pfile, {
+                    "followers": followers,
+                    "synced_at": _dt2.datetime.utcnow().isoformat() + "Z",
+                    "source": "profile_scraper"
+                })
+                logger.info(f"Apify profile scraper: {followers} followers written")
+        except Exception as e:
+            logger.warning(f"Apify trigger error: {e}")
+
+    import threading
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
+    return jsonify({"status": "started", "message": "Apify sync triggered in background"})
 
 @app.route("/api/generate-images", methods=["POST"])
 def api_generate_images():
