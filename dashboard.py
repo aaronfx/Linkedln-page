@@ -679,7 +679,7 @@ DASHBOARD_HTML = """
             <option value="facebook">&#128172; Facebook</option>
             <option value="threads">&#128204; Threads</option>
           </select>
-          <button class="btn btn-secondary btn-sm" onclick="loadAnalytics()">Refresh</button>
+          <button class="btn btn-secondary btn-sm" onclick="loadAnalytics(); loadProfileStats()">Refresh</button>
         </div>
       </div>
       <div class="card-body" id="analytics-detail">
@@ -1545,6 +1545,20 @@ function loadAnalytics() {
   });
 }
 
+function loadProfileStats() {
+  fetch('/api/profile-stats')
+    .then(r => r.json())
+    .then(d => {
+      const el = document.getElementById('followerCount');
+      if (el) el.textContent = d.followers ? d.followers.toLocaleString() : '—';
+      const sub = document.getElementById('followerSyncedAt');
+      if (sub && d.synced_at) {
+        const dt = new Date(d.synced_at);
+        sub.textContent = 'Synced ' + dt.toLocaleDateString('en-GB', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+      }
+    })
+    .catch(() => {});
+}
 function loadHealth() {
   // Check LinkedIn read scope and show persistent warning if missing
   apiCall('/api/linkedin-status').then(li => {
@@ -3474,6 +3488,19 @@ def _api_analytics_platform(platform, history_file, analytics_file, text_field):
         "report": report_html,
         "message": f"{platform.title()} analytics: {total_posts} posts tracked."
     })
+@app.route("/api/profile-stats", methods=["GET"])
+@login_required
+def api_profile_stats():
+    """Return LinkedIn follower count captured by Apify post-scraper sync."""
+    try:
+        import json as _json
+        pfile = os.path.join(os.path.dirname(POST_HISTORY_FILE), "linkedin_profile_stats.json")
+        if os.path.exists(pfile):
+            with open(pfile) as f:
+                return jsonify(_json.load(f))
+        return jsonify({"followers": 0, "synced_at": None, "source": "none"})
+    except Exception as e:
+        return jsonify({"error": str(e), "followers": 0}), 500
 @app.route("/api/generate-images", methods=["POST"])
 def api_generate_images():
     """Generate DALL-E images for all queued posts that don't have images yet."""
