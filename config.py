@@ -274,3 +274,5 @@ THREADS_POSTING_SCHEDULE = {
     "friday":    {"time": "08:00", "pillar_preference": "Engagement"},
     "saturday":  {"time": "08:00", "pillar_preference": "Personal Story"},
 }
+
+# build trigger
