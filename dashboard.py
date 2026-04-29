@@ -3489,7 +3489,6 @@ def _api_analytics_platform(platform, history_file, analytics_file, text_field):
         "message": f"{platform.title()} analytics: {total_posts} posts tracked."
     })
 @app.route("/api/profile-stats", methods=["GET"])
-@login_required
 def api_profile_stats():
     """Return LinkedIn follower count captured by Apify post-scraper sync."""
     try:
