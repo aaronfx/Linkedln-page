@@ -153,6 +153,34 @@ def get_post_stats(post_urns):
     return results
 
 
+
+ACTOR_PROFILE = "sourabhbgp/linkedin-profile-scraper"
+
+
+def get_profile_stats(profile_url):
+    """
+    Fetch LinkedIn profile stats (followers, connections, headline) via Apify.
+    Requires LINKEDIN_PROFILE_URL env var set to your LinkedIn vanity URL.
+    Returns a dict; empty dict on failure or missing URL.
+    """
+    if not profile_url:
+        logger.info("Apify profile sync: LINKEDIN_PROFILE_URL not set -- skipping")
+        return {}
+    items = _run_actor(ACTOR_PROFILE, {"profiles": [profile_url], "maxResults": 1})
+    if not items:
+        logger.warning(f"Apify profile sync: no data for {profile_url}")
+        return {}
+    item = items[0]
+    import datetime as _dt
+    return {
+        "followers":   item.get("followersCount", item.get("followers", 0)),
+        "connections": item.get("connectionsCount", item.get("connections", 0)),
+        "name":        item.get("fullName", item.get("name", "")),
+        "headline":    item.get("headline", ""),
+        "profile_url": profile_url,
+        "synced_at":   _dt.datetime.utcnow().isoformat() + "Z",
+    }
+
 def sync_all_post_data(post_urns, limit_comments=30):
     if not post_urns:
         return {}
