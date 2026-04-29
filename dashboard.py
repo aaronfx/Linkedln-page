@@ -3741,6 +3741,32 @@ def api_queue_delete(index):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/api/queue/clear-all", methods=["POST"])
+def api_queue_clear_all():
+    """Clear all queues across all platforms immediately."""
+    try:
+        from config import CONTENT_QUEUE_FILE, IG_QUEUE_FILE, FB_QUEUE_FILE, THREADS_QUEUE_FILE
+        cleared = {}
+        for name, qfile in [
+            ("linkedin", CONTENT_QUEUE_FILE),
+            ("instagram", IG_QUEUE_FILE),
+            ("facebook", FB_QUEUE_FILE),
+            ("threads", THREADS_QUEUE_FILE),
+        ]:
+            try:
+                existing = load_json(qfile, [])
+                cleared[name] = len(existing)
+                save_json(qfile, [])
+            except Exception as ex:
+                logger.warning(f"clear-all: could not clear {name} queue: {ex}")
+                cleared[name] = 0
+        total = sum(cleared.values())
+        logger.info(f"Queue clear-all: removed {total} entries across all platforms")
+        return jsonify({"status": "ok", "cleared": cleared, "total": total})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/health")
 def health():
     """Enhanced health endpoint with worker status and learning engine data."""
