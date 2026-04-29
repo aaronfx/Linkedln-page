@@ -155,7 +155,7 @@ def get_post_stats(post_urns):
 
 
 
-ACTOR_PROFILE = "sourabhbgp/linkedin-profile-scraper"
+ACTOR_PROFILE = "sourabhbgp~linkedin-profile-scraper"
 
 
 def get_profile_stats(profile_url):
