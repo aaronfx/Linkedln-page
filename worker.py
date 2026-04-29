@@ -45,6 +45,12 @@ logger = logging.getLogger("worker")
 # Thread-safe lock for JSON file operations
 _file_lock = FileLock(str(CONTENT_QUEUE_FILE) + ".lock", timeout=10)
 
+# Per-platform posting locks — prevent duplicate concurrent posts
+_linkedin_post_lock = threading.Lock()
+_ig_post_lock = threading.Lock()
+_fb_post_lock = threading.Lock()
+_threads_post_lock = threading.Lock()
+
 # Graceful shutdown flag
 _shutdown_event = threading.Event()
 
@@ -112,8 +118,10 @@ def create_and_post(pillar=None):
     Failed posts go to dead-letter queue for retry or manual review.
     All file ops are thread-safe via filelock.
     """
+    if not _linkedin_post_lock.acquire(blocking=False):
+        logger.warning("LinkedIn post already in progress -- skipping duplicate call")
+        return
     _health["last_post_attempt"] = datetime.now(timezone.utc).isoformat()
-
     try:
         linkedin = LinkedInAPI()
         post_data = None
@@ -124,10 +132,16 @@ def create_and_post(pillar=None):
         queue = _safe_read_json(CONTENT_QUEUE_FILE)
         queue = _purge_expired_queue(queue, CONTENT_QUEUE_FILE)
 
-        if queue:
-            post_data = queue[0]  # Peek, don't pop yet
-            queue_index = 0
-            logger.info(f"Posting from queue ({len(queue)} total): {post_data.get('pillar', '?')}")
+        # Time-aware: only post entries whose scheduled_date has passed
+        due_idx = next((i for i, e in enumerate(queue) if _is_due(e)), None)
+        if due_idx is not None:
+            post_data = queue[due_idx]
+            queue_index = due_idx
+            logger.info(f"Posting from queue entry {due_idx+1}/{len(queue)}: {post_data.get('pillar', '?')}")
+        elif queue:
+            next_time = queue[0].get('scheduled_date', 'unknown')
+            logger.info(f"Queue has {len(queue)} entries but none are due yet (next: {next_time}) -- skipping")
+            return
         else:
             # ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Step 2: Queue empty ÃÂ¢ÃÂÃÂ generate fresh content ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
             source = "generated"
@@ -242,6 +256,8 @@ def create_and_post(pillar=None):
             error=str(e),
         )
         _learning.add_alert("post_failure", f"Post failed: {str(e)[:200]}")
+    finally:
+        _linkedin_post_lock.release()
 
 
 def retry_dead_letter():
@@ -647,17 +663,42 @@ def _purge_expired_queue(queue, queue_file, max_age_hours=24):
         _safe_write_json(queue_file, fresh)
     return fresh
 
+
+def _is_due(entry, buffer_minutes=10):
+    """Return True if entry's scheduled_date is in the past (post is due)."""
+    from datetime import datetime, timezone, timedelta
+    ref = entry.get("scheduled_date") or entry.get("created_at", "")
+    if not ref:
+        return True
+    try:
+        s = str(ref)
+        if len(s) == 16 and "T" not in s:
+            WAT = timezone(timedelta(hours=1))
+            dt = datetime.strptime(s, "%Y-%m-%d %H:%M").replace(tzinfo=WAT)
+        else:
+            dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
+        return dt <= datetime.now(timezone.utc) + timedelta(minutes=buffer_minutes)
+    except Exception:
+        return True
+
 # Ã¢ÂÂÃ¢ÂÂ Instagram Posting Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 def create_and_post_instagram(pillar=None):
     """Queue-first Instagram posting using generate_company_post()."""
+    if not _ig_post_lock.acquire(blocking=False):
+        logger.warning("Instagram post already in progress -- skipping duplicate call")
+        return
     try:
         from config import IG_QUEUE_FILE, IG_HISTORY_FILE, IG_DEAD_LETTER_FILE, IMAGES_DIR
         from instagram_api import InstagramAPI
 
         queue = _safe_read_json(IG_QUEUE_FILE)
         queue = _purge_expired_queue(queue, IG_QUEUE_FILE)
-        if not queue:
+        due_entry = next((e for e in queue if _is_due(e)), None)
+        if due_entry is None and queue:
+            logger.info(f"IG queue: {len(queue)} entries but none due yet -- skipping")
+            return
+        if not queue or due_entry is None:
             from content_engine import generate_company_post
             history = _safe_read_json(IG_HISTORY_FILE)
             company = generate_company_post(pillar=pillar, post_history=history[-20:] if history else [])
@@ -668,8 +709,9 @@ def create_and_post_instagram(pillar=None):
                 caption = caption.rstrip() + "\n" + tags
             queue = [{"caption": caption, "pillar": company.get("pillar",""), "type":"company",
                       "core_hook": company.get("core_hook",""), "generated_at": company.get("generated_at","")}]
+            due_entry = queue[0]
 
-        entry = queue[0]
+        entry = due_entry
         caption = entry.get("caption", entry.get("text", ""))
         image_url = entry.get("image_url", "")
 
@@ -716,19 +758,28 @@ def create_and_post_instagram(pillar=None):
             _safe_write_json(IG_DEAD_LETTER_FILE, dead)
         except Exception:
             pass
+    finally:
+        _ig_post_lock.release()
 
 
 # Ã¢ÂÂÃ¢ÂÂ Facebook Posting Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 def create_and_post_facebook(pillar=None):
     """Queue-first Facebook posting using generate_company_post()."""
+    if not _fb_post_lock.acquire(blocking=False):
+        logger.warning("Facebook post already in progress -- skipping duplicate call")
+        return
     try:
         from config import FB_QUEUE_FILE, FB_HISTORY_FILE, FB_DEAD_LETTER_FILE
         from facebook_api import FacebookAPI
 
         queue = _safe_read_json(FB_QUEUE_FILE)
         queue = _purge_expired_queue(queue, FB_QUEUE_FILE)
-        if not queue:
+        due_entry = next((e for e in queue if _is_due(e)), None)
+        if due_entry is None and queue:
+            logger.info(f"FB queue: {len(queue)} entries but none due yet -- skipping")
+            return
+        if not queue or due_entry is None:
             from content_engine import generate_company_post
             history = _safe_read_json(FB_HISTORY_FILE)
             company = generate_company_post(pillar=pillar, post_history=history[-20:] if history else [])
@@ -739,8 +790,9 @@ def create_and_post_facebook(pillar=None):
                 text = text.rstrip() + "\n" + tags
             queue = [{"text": text, "pillar": company.get("pillar",""), "type":"company",
                       "core_hook": company.get("core_hook",""), "generated_at": company.get("generated_at","")}]
+            due_entry = queue[0]
 
-        entry = queue[0]
+        entry = due_entry
         text = entry.get("text", entry.get("caption", ""))
         if not text:
             logger.warning("Facebook: empty text, skipping")
@@ -769,19 +821,28 @@ def create_and_post_facebook(pillar=None):
             _safe_write_json(FB_DEAD_LETTER_FILE, dead)
         except Exception:
             pass
+    finally:
+        _fb_post_lock.release()
 
 
 # Ã¢ÂÂÃ¢ÂÂ Threads Posting Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 def create_and_post_threads(pillar=None):
     """Queue-first Threads posting using generate_company_post()."""
+    if not _threads_post_lock.acquire(blocking=False):
+        logger.warning("Threads post already in progress -- skipping duplicate call")
+        return
     try:
         from config import THREADS_QUEUE_FILE, THREADS_HISTORY_FILE, THREADS_DEAD_LETTER_FILE
         from threads_api import ThreadsAPI
 
         queue = _safe_read_json(THREADS_QUEUE_FILE)
         queue = _purge_expired_queue(queue, THREADS_QUEUE_FILE)
-        if not queue:
+        due_entry = next((e for e in queue if _is_due(e)), None)
+        if due_entry is None and queue:
+            logger.info(f"Threads queue: {len(queue)} entries but none due yet -- skipping")
+            return
+        if not queue or due_entry is None:
             from content_engine import generate_company_post
             history = _safe_read_json(THREADS_HISTORY_FILE)
             company = generate_company_post(pillar=pillar, post_history=history[-20:] if history else [])
@@ -792,8 +853,9 @@ def create_and_post_threads(pillar=None):
                 text = text.rstrip() + "\n" + tags
             queue = [{"text": text, "pillar": company.get("pillar",""), "type":"company",
                       "core_hook": company.get("core_hook",""), "generated_at": company.get("generated_at","")}]
+            due_entry = queue[0]
 
-        entry = queue[0]
+        entry = due_entry
         text = entry.get("text", "")
         if not text:
             logger.warning("Threads: empty text, skipping")
@@ -822,6 +884,8 @@ def create_and_post_threads(pillar=None):
             _safe_write_json(THREADS_DEAD_LETTER_FILE, dead)
         except Exception:
             pass
+    finally:
+        _threads_post_lock.release()
 
 
 # Ã¢ÂÂÃ¢ÂÂ Comment Monitoring Ã¢ÂÂ Company Platforms Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
