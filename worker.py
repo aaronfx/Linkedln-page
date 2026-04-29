@@ -401,19 +401,19 @@ def apify_sync_linkedin():
             logger.warning(f"Apify auto-reply phase error: {e}")
 
 
-    # -- Follower count: extracted free from posts-scraper author data
-    try:
-        _first_urn = recent_urns[0] if recent_urns else None
-        if _first_urn:
-            _fs = data.get(_first_urn, {}).get("stats", {})
-            _af = _fs.get("author_followers", 0)
-            if _af:
-                import os as _os2, datetime as _dt2
-                _pfile = _os2.path.join(_os2.path.dirname(POST_HISTORY_FILE), "linkedin_profile_stats.json")
-                _safe_write_json(_pfile, {"followers": _af, "synced_at": _dt2.datetime.utcnow().isoformat()+"Z", "source":"posts_scraper"})
-                logger.info(f"Apify sync: {_af} LinkedIn followers captured")
-    except Exception as e:
-        logger.warning(f"Apify follower capture error: {e}")
+        # -- Follower count: extracted free from posts-scraper author data
+        try:
+            _first_urn = recent_urns[0] if recent_urns else None
+            if _first_urn:
+                _fs = data.get(_first_urn, {}).get("stats", {})
+                _af = _fs.get("author_followers", 0)
+                if _af:
+                    import os as _os2, datetime as _dt2
+                    _pfile = _os2.path.join(_os2.path.dirname(POST_HISTORY_FILE), "linkedin_profile_stats.json")
+                    _safe_write_json(_pfile, {"followers": _af, "synced_at": _dt2.datetime.utcnow().isoformat()+"Z", "source":"posts_scraper"})
+                    logger.info(f"Apify sync: {_af} LinkedIn followers captured")
+        except Exception as e:
+            logger.warning(f"Apify follower capture error: {e}")
 
     except Exception as e:
         logger.error(f"apify_sync_linkedin error: {e}")
