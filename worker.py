@@ -122,6 +122,7 @@ def create_and_post(pillar=None):
 
         # ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Step 1: Try to post from queue (READ without popping) ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
         queue = _safe_read_json(CONTENT_QUEUE_FILE)
+        queue = _purge_expired_queue(queue, CONTENT_QUEUE_FILE)
 
         if queue:
             post_data = queue[0]  # Peek, don't pop yet
@@ -621,6 +622,31 @@ def _safe_write_json(path, data):
         logger.error(f"_safe_write_json error: {e}")
 
 
+
+def _purge_expired_queue(queue, queue_file, max_age_hours=24):
+    """Remove stale entries from queue. Called before every post attempt."""
+    from datetime import datetime, timezone, timedelta
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=max_age_hours)
+    fresh = []
+    purged = 0
+    for entry in queue:
+        ref = entry.get("scheduled_date") or entry.get("created_at", "")
+        if ref:
+            try:
+                dt = datetime.fromisoformat(ref.replace("Z", "+00:00"))
+                if dt < cutoff:
+                    age_h = int((datetime.now(timezone.utc) - dt).total_seconds() / 3600)
+                    logger.warning(f"Queue: purging expired entry ({age_h}h old): {str(entry)[:80]}")
+                    purged += 1
+                    continue
+            except Exception:
+                pass
+        fresh.append(entry)
+    if purged:
+        logger.info(f"Queue: purged {purged} expired entries, {len(fresh)} remain")
+        _safe_write_json(queue_file, fresh)
+    return fresh
+
 # Ã¢ÂÂÃ¢ÂÂ Instagram Posting Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 def create_and_post_instagram(pillar=None):
@@ -630,6 +656,7 @@ def create_and_post_instagram(pillar=None):
         from instagram_api import InstagramAPI
 
         queue = _safe_read_json(IG_QUEUE_FILE)
+        queue = _purge_expired_queue(queue, IG_QUEUE_FILE)
         if not queue:
             from content_engine import generate_company_post
             history = _safe_read_json(IG_HISTORY_FILE)
@@ -700,6 +727,7 @@ def create_and_post_facebook(pillar=None):
         from facebook_api import FacebookAPI
 
         queue = _safe_read_json(FB_QUEUE_FILE)
+        queue = _purge_expired_queue(queue, FB_QUEUE_FILE)
         if not queue:
             from content_engine import generate_company_post
             history = _safe_read_json(FB_HISTORY_FILE)
@@ -752,6 +780,7 @@ def create_and_post_threads(pillar=None):
         from threads_api import ThreadsAPI
 
         queue = _safe_read_json(THREADS_QUEUE_FILE)
+        queue = _purge_expired_queue(queue, THREADS_QUEUE_FILE)
         if not queue:
             from content_engine import generate_company_post
             history = _safe_read_json(THREADS_HISTORY_FILE)
