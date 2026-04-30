@@ -661,7 +661,7 @@ DASHBOARD_HTML = """
             {% for day, times in schedule.items() %}
             <tr>
               <td style="font-weight:600;">{{ day }}</td>
-              <td>{{ times|join(', ') }}</td>
+              <td><strong>{{ times.time }}</strong> WAT &middot; {{ times.pillar_preference | replace('_', ' ') | title }}</td>
             </tr>
             {% endfor %}
             </tbody>
@@ -1186,6 +1186,8 @@ function switchTab(name) {
   event.target.classList.add('active');
   if (name === 'system') loadHealth();
   if (name === 'engagement') loadEngagement();
+  if (name === 'history') loadHistory();
+  if (name === 'analytics') { typeof loadAnalytics === 'function' && loadAnalytics(); }
 }
 
 // Toast notifications
@@ -1364,7 +1366,8 @@ function loadHistory() {
           }
           container.innerHTML = posts.slice().reverse().map(p => {
             const content = (p.content || p.text || p.post_text || '').slice(0, 400);
-            const time = p.posted_at || p.scheduled_time || p.created_at || '';
+            const _rawT = p.posted_at || p.scheduled_time || p.created_at || '';
+            const time = _rawT ? (() => { try { return new Date(_rawT).toLocaleString('en-GB', {day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); } catch(e) { return _rawT; } })() : '';
             const platform = p.platform || 'LinkedIn';
             return `<div class="post-card mb-3 p-3" style="border:1px solid #e0e0e0;border-radius:8px;">
               <div class="d-flex justify-content-between align-items-center mb-2">
@@ -2467,6 +2470,13 @@ def api_post_now():
                 "success": False,
                 "message": "Content queue is empty! Click 'Generate Week' first to create posts."
             })
+
+        # Read requested post index and reorder queue so it posts the right item
+        _req_data = request.get_json(force=True, silent=True) or {}
+        _post_index = int(_req_data.get("post_index", 0))
+        if _post_index > 0 and _post_index < len(queue):
+            queue.insert(0, queue.pop(_post_index))
+            save_json(CONTENT_QUEUE_FILE, queue)
 
         # Check if the first post was already published
         post_data = queue[0]
