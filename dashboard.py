@@ -2420,9 +2420,159 @@ async function threadsAddPost() {
     fixGarbledContent();
   }
   var obs=new MutationObserver(fixGarbledContent);
-  obs.observe(document.documentElement,{childList:true,subtree:true});  if(typeof loadProfileStats==='function')loadProfileStats();
+  
+
+    // Pending Posts / Weekly Draft
+    function _escHtml(str) {
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function loadPendingPosts() {
+      fetch('/api/pending-posts')
+        .then(function(r){return r.json();})
+        .then(function(data) {
+          var container=document.getElementById('pendingPostsContainer'),
+              badge=document.getElementById('pendingBadge'),
+              approveAll=document.getElementById('approveAllBtn');
+          if (!container) return;
+          var posts = data.posts || [];
+          if (badge) { badge.textContent=posts.length; badge.style.display=posts.length>0?'inline':'none'; }
+          if (approveAll) { approveAll.style.display=posts.length>0?'inline-block':'none'; }
+          if (!posts.length) {
+            container.innerHTML='<p style="color:#475569;text-align:center;padding:24px;margin:0;font-size:13px;">No posts waiting for review.<br>Posts from the Saturday automation will appear here.</p>';
+            return;
+          }
+          var PC={'Education':'#3b82f6','Insight':'#8b5cf6','Student Story':'#f59e0b','Community':'#10b981','Thought Leadership':'#ec4899'};
+          container.innerHTML = posts.map(function(p) {
+            var pc=PC[p.pillar]||'#6366f1', content=p.content||'',
+                preview=content.length>220?content.substring(0,220)+'...':content;
+            return '<div id="pcard-'+p.id+'" style="background:#1e293b;border-radius:10px;padding:14px 16px;margin-bottom:10px;border-left:3px solid '+pc+';">'+
+              '<div style="display:flex;align-items:center;gap:7px;margin-bottom:10px;flex-wrap:wrap;">'+
+                '<span style="background:'+pc+'22;color:'+pc+';font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">'+_escHtml(p.pillar||'General')+'</span>'+
+                '<span style="background:#334155;color:#94a3b8;font-size:11px;padding:2px 8px;border-radius:4px;">&#x1F4C5; '+_escHtml(p.scheduled_date||'-')+' @ '+_escHtml(p.scheduled_time||'09:00')+' WAT</span>'+
+                (p.africa_lens?'<span style="background:#05966922;color:#059669;font-size:11px;padding:2px 8px;border-radius:4px;">&#x1F30D; Africa lens</span>':'')+
+                (p.hook_type?'<span style="background:#7c3aed22;color:#a78bfa;font-size:11px;padding:2px 8px;border-radius:4px;">'+_escHtml(p.hook_type)+'</span>':'')+
+              '</div>'+
+              '<p id="ppreview-'+p.id+'" style="color:#cbd5e1;font-size:13px;line-height:1.65;margin:0 0 12px;white-space:pre-wrap;">'+_escHtml(preview)+'</p>'+
+              '<textarea id="pedit-'+p.id+'" style="display:none;width:100%;background:#0f172a;border:1px solid #475569;color:#e2e8f0;border-radius:6px;padding:10px;font-size:13px;line-height:1.65;resize:vertical;min-height:160px;box-sizing:border-box;">'+_escHtml(content)+'</textarea>'+
+              '<div style="display:flex;gap:6px;flex-wrap:wrap;">'+
+                '<button onclick="approvePending(''+p.id+'',this)" style="background:#10b981;border:none;color:white;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;">&#x2705; Approve to Queue</button>'+
+                '<button id="pbtn-edit-'+p.id+'" onclick="editPending(''+p.id+'')" style="background:#1e293b;border:1px solid #475569;color:#94a3b8;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;">&#x270F; Edit</button>'+
+                '<button id="pbtn-save-'+p.id+'" onclick="savePendingEdit(''+p.id+'')" style="display:none;background:#3b82f6;border:none;color:white;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;">&#x1F4BE; Save</button>'+
+                '<button onclick="deletePending(''+p.id+'')" style="background:#1e293b;border:1px solid #ef4444;color:#ef4444;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;">&#x1F5D1; Remove</button>'+
+              '</div>'+
+            '</div>';
+          }).join('');
+        })
+        .catch(function(err){
+          var c=document.getElementById('pendingPostsContainer');
+          if(c) c.innerHTML='<p style="color:#ef4444;text-align:center;padding:20px;">Error: '+err.message+'</p>';
+        });
+    }
+
+    function approvePending(id,btn) {
+      if(btn){btn.textContent='Moving...';btn.disabled=true;}
+      fetch('/api/pending-posts/'+id+'/approve',{method:'POST'})
+        .then(function(r){return r.json();})
+        .then(function(d){
+          if(d.ok){
+            var card=document.getElementById('pcard-'+id);
+            if(card){card.style.transition='opacity 0.3s';card.style.opacity='0';setTimeout(function(){card.remove();loadPendingPosts();},320);}
+            if(typeof loadQueue==='function') setTimeout(loadQueue,400);
+          } else {
+            if(btn){btn.textContent='&#x2705; Approve to Queue';btn.disabled=false;}
+            alert('Error: '+(d.error||'Unknown'));
+          }
+        })
+        .catch(function(e){if(btn){btn.textContent='&#x2705; Approve to Queue';btn.disabled=false;}alert('Network error: '+e.message);});
+    }
+
+    function approveAllPending() {
+      var btn=document.getElementById('approveAllBtn'),badge=document.getElementById('pendingBadge'),n=badge?badge.textContent:'all';
+      if(!confirm('Move '+n+' draft posts to the live queue?')) return;
+      if(btn){btn.textContent='Approving...';btn.disabled=true;}
+      fetch('/api/pending-posts/approve-all',{method:'POST'})
+        .then(function(r){return r.json();})
+        .then(function(d){
+          if(d.ok){loadPendingPosts();if(typeof loadQueue==='function') setTimeout(loadQueue,400);}
+          else{alert('Error: '+(d.error||'Unknown'));}
+          if(btn){btn.textContent='&#x2705; Approve All';btn.disabled=false;}
+        })
+        .catch(function(e){alert('Network error: '+e.message);if(btn){btn.textContent='&#x2705; Approve All';btn.disabled=false;}});
+    }
+
+    function editPending(id) {
+      var preview=document.getElementById('ppreview-'+id),editArea=document.getElementById('pedit-'+id),
+          editBtn=document.getElementById('pbtn-edit-'+id),saveBtn=document.getElementById('pbtn-save-'+id);
+      if(!preview||!editArea) return;
+      preview.style.display='none';editArea.style.display='block';
+      if(editBtn) editBtn.style.display='none';
+      if(saveBtn) saveBtn.style.display='inline-block';
+      editArea.focus();
+    }
+
+    function savePendingEdit(id) {
+      var editArea=document.getElementById('pedit-'+id),preview=document.getElementById('ppreview-'+id),
+          editBtn=document.getElementById('pbtn-edit-'+id),saveBtn=document.getElementById('pbtn-save-'+id);
+      if(!editArea) return;
+      var nc=editArea.value.trim();
+      if(!nc){alert('Content cannot be empty');return;}
+      fetch('/api/pending-posts/'+id+'/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:nc})})
+        .then(function(r){return r.json();})
+        .then(function(d){
+          if(d.ok){
+            if(preview){preview.textContent=nc.length>220?nc.substring(0,220)+'...':nc;preview.style.display='block';}
+            editArea.style.display='none';
+            if(editBtn) editBtn.style.display='inline-block';
+            if(saveBtn) saveBtn.style.display='none';
+          } else {alert('Save failed: '+(d.error||'Unknown'));}
+        })
+        .catch(function(e){alert('Network error: '+e.message);});
+    }
+
+    function deletePending(id) {
+      if(!confirm('Remove this draft post?')) return;
+      fetch('/api/pending-posts/'+id+'/delete',{method:'POST'})
+        .then(function(r){return r.json();})
+        .then(function(d){
+          if(d.ok){var card=document.getElementById('pcard-'+id);if(card){card.style.transition='opacity 0.3s';card.style.opacity='0';setTimeout(function(){card.remove();loadPendingPosts();},320);}}
+          else{alert('Error: '+(d.error||'Unknown'));}
+        })
+        .catch(function(e){alert('Network error: '+e.message);});
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      var _orig=window.switchTab;
+      if(typeof _orig==='function'){
+        window.switchTab=function(tab){_orig(tab);if(tab==='queue') setTimeout(loadPendingPosts,150);};
+      }
+      var qp=document.getElementById('tab-queue');
+      if(qp && qp.style.display!=='none') loadPendingPosts();
+    });
+
+
+    obs.observe(document.documentElement,{childList:true,subtree:true});  if(typeof loadProfileStats==='function')loadProfileStats();
 })();
 </script>
+
+    <!-- Weekly Draft Review Panel -->
+    <div class="card" id="weeklyDraftPanel" style="margin-bottom:24px;border:2px solid #f59e0b;border-radius:12px;overflow:hidden;">
+      <div style="background:linear-gradient(135deg,#1e1b4b,#312e81);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:20px;">&#x1F4CB;</span>
+          <h3 style="color:#fef3c7;margin:0;font-size:16px;font-weight:700;">Weekly Draft</h3>
+          <span id="pendingBadge" style="background:#f59e0b;color:#1c1917;font-size:11px;font-weight:800;padding:2px 9px;border-radius:999px;display:none;">0</span>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="loadPendingPosts()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#e2e8f0;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;">&#x1F504; Refresh</button>
+          <button id="approveAllBtn" onclick="approveAllPending()" style="background:#10b981;border:none;color:white;padding:5px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;display:none;">&#x2705; Approve All</button>
+        </div>
+      </div>
+      <div id="pendingPostsContainer" style="padding:16px;background:#0f172a;min-height:70px;">
+        <p style="color:#475569;text-align:center;padding:18px;margin:0;font-size:13px;">Loading draft posts...</p>
+      </div>
+    </div>
+
 </body>
 </html>
 """
@@ -3742,6 +3892,146 @@ def api_apify_post_metrics():
         logger.error(f"Apify post-metrics error: {e}")
         return jsonify({"ok": False, "error": str(e)}), 500
 
+
+
+# ─── Pending Posts (Weekly Draft Review) ─────────────────────────────────────
+
+@app.route("/api/pending-posts", methods=["GET"])
+def api_pending_posts_get():
+    """Return all pending/draft posts awaiting approval."""
+    try:
+        _pf = os.path.join(os.path.dirname(POST_HISTORY_FILE), "pending_posts.json")
+        posts = load_json(_pf, [])
+        return jsonify({"ok": True, "posts": posts, "count": len(posts)})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
+@app.route("/api/pending-posts", methods=["POST"])
+def api_pending_posts_add():
+    """Add one or more pending posts (called by Saturday weekly automation)."""
+    try:
+        body = request.get_json(force=True, silent=True) or {}
+        new_posts = body if isinstance(body, list) else [body]
+        _pf = os.path.join(os.path.dirname(POST_HISTORY_FILE), "pending_posts.json")
+        posts = load_json(_pf, [])
+        import uuid as _uuid
+        added = []
+        for p in new_posts:
+            post = {
+                "id":             str(_uuid.uuid4())[:8],
+                "content":        p.get("content", ""),
+                "scheduled_date": p.get("scheduled_date", ""),
+                "scheduled_time": p.get("scheduled_time", "09:00"),
+                "pillar":         p.get("pillar", ""),
+                "platform":       p.get("platform", "linkedin"),
+                "hook_type":      p.get("hook_type", ""),
+                "africa_lens":    p.get("africa_lens", False),
+                "added_at":       datetime.now(timezone.utc).isoformat(),
+            }
+            posts.append(post)
+            added.append(post)
+        save_json(_pf, posts)
+        return jsonify({"ok": True, "added": len(added), "total": len(posts)})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
+@app.route("/api/pending-posts/<post_id>/approve", methods=["POST"])
+def api_pending_posts_approve(post_id):
+    """Approve a pending post — moves it to the live LinkedIn queue."""
+    try:
+        _pf = os.path.join(os.path.dirname(POST_HISTORY_FILE), "pending_posts.json")
+        posts = load_json(_pf, [])
+        post = next((p for p in posts if p.get("id") == post_id), None)
+        if not post:
+            return jsonify({"ok": False, "error": "Post not found"}), 404
+        _qf = os.path.join(os.path.dirname(POST_HISTORY_FILE), "content_queue.json")
+        queue = load_json(_qf, [])
+        queue.append({
+            "content":        post.get("content", ""),
+            "scheduled_date": post.get("scheduled_date", ""),
+            "scheduled_time": post.get("scheduled_time", "09:00"),
+            "pillar":         post.get("pillar", ""),
+            "platform":       post.get("platform", "linkedin"),
+            "source":         "weekly_draft",
+            "approved_at":    datetime.now(timezone.utc).isoformat(),
+        })
+        save_json(_qf, queue)
+        posts = [p for p in posts if p.get("id") != post_id]
+        save_json(_pf, posts)
+        logger.info(f"Pending post {post_id} approved -> queue ({len(queue)} items)")
+        return jsonify({"ok": True, "message": "Post approved and added to queue", "remaining": len(posts)})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
+@app.route("/api/pending-posts/approve-all", methods=["POST"])
+def api_pending_posts_approve_all():
+    """Approve all pending posts at once."""
+    try:
+        _pf = os.path.join(os.path.dirname(POST_HISTORY_FILE), "pending_posts.json")
+        posts = load_json(_pf, [])
+        if not posts:
+            return jsonify({"ok": True, "message": "No pending posts", "approved": 0})
+        _qf = os.path.join(os.path.dirname(POST_HISTORY_FILE), "content_queue.json")
+        queue = load_json(_qf, [])
+        for post in posts:
+            queue.append({
+                "content":        post.get("content", ""),
+                "scheduled_date": post.get("scheduled_date", ""),
+                "scheduled_time": post.get("scheduled_time", "09:00"),
+                "pillar":         post.get("pillar", ""),
+                "platform":       post.get("platform", "linkedin"),
+                "source":         "weekly_draft",
+                "approved_at":    datetime.now(timezone.utc).isoformat(),
+            })
+        save_json(_qf, queue)
+        count = len(posts)
+        save_json(_pf, [])
+        logger.info(f"Approved all {count} pending posts -> queue")
+        return jsonify({"ok": True, "approved": count, "message": f"{count} posts moved to queue"})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
+@app.route("/api/pending-posts/<post_id>/delete", methods=["POST"])
+def api_pending_posts_delete(post_id):
+    """Remove a pending post without approving."""
+    try:
+        _pf = os.path.join(os.path.dirname(POST_HISTORY_FILE), "pending_posts.json")
+        posts = load_json(_pf, [])
+        before = len(posts)
+        posts = [p for p in posts if p.get("id") != post_id]
+        save_json(_pf, posts)
+        return jsonify({"ok": True, "removed": before - len(posts), "remaining": len(posts)})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
+@app.route("/api/pending-posts/<post_id>/update", methods=["POST"])
+def api_pending_posts_update(post_id):
+    """Edit a pending post content, date, or time."""
+    try:
+        body = request.get_json(force=True, silent=True) or {}
+        _pf = os.path.join(os.path.dirname(POST_HISTORY_FILE), "pending_posts.json")
+        posts = load_json(_pf, [])
+        updated = False
+        for p in posts:
+            if p.get("id") == post_id:
+                if "content"        in body: p["content"]        = body["content"]
+                if "scheduled_date" in body: p["scheduled_date"] = body["scheduled_date"]
+                if "scheduled_time" in body: p["scheduled_time"] = body["scheduled_time"]
+                if "pillar"         in body: p["pillar"]         = body["pillar"]
+                p["edited_at"] = datetime.now(timezone.utc).isoformat()
+                updated = True
+                break
+        if not updated:
+            return jsonify({"ok": False, "error": "Post not found"}), 404
+        save_json(_pf, posts)
+        return jsonify({"ok": True, "message": "Post updated"})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
 
 @app.route("/api/generate-images", methods=["POST"])
 def api_generate_images():
