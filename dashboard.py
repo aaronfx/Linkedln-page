@@ -1023,7 +1023,7 @@ DASHBOARD_HTML = """
         </div>
       </div>
       <div class="card">
-        <div class="card-header"><h3>Follower Progress ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ 20K</h3></div>
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;"><h3 style="margin:0;">Follower Progress</h3><button onclick="refreshFollowers()" id="refresh-followers-btn" class="btn btn-secondary" style="font-size:12px;padding:4px 10px;">Refresh Count</button></div>
         <div class="card-body" id="follower-progress">
           <div class="empty-state"><p>Loading follower data...</p></div>
         </div>
@@ -1400,10 +1400,16 @@ function loadHistory() {
 }
 
 function syncPosts() {
-  showToast('Syncing with LinkedIn...', 'info');
+  showToast('Syncing LinkedIn...', 'info');
+  // Fire Apify live-profile refresh in background (non-blocking — takes ~60s)
+  fetch('/api/apify/live-profile', {method:'POST', credentials:'same-origin'})
+    .then(r => r.json())
+    .then(d => { if (d.ok) console.log('Apify profile refreshed: followers=' + d.followers); })
+    .catch(() => {});
+  // Post sync (fast — returns immediately)
   apiCall('/api/sync', 'POST').then(d => {
-    showToast('Synced: ' + (d.new_posts || 0) + ' new, ' + (d.updated || 0) + ' updated', 'success');
-    setTimeout(() => location.reload(), 1500);
+    showToast('Synced: ' + (d.new_posts || 0) + ' new | Follower count refreshing in background...', 'success');
+    setTimeout(() => location.reload(), 2000);
   }).catch(() => showToast('Sync failed', 'error'));
 }
 
@@ -1647,6 +1653,26 @@ function runDebug() {
 }
 
 // --- Engagement Panel ---
+function refreshFollowers() {
+  const btn = document.getElementById('refresh-followers-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Refreshing... (~60s)'; }
+  showToast('Fetching live follower count from LinkedIn via Apify...', 'info');
+  fetch('/api/apify/live-profile', {method:'POST', credentials:'same-origin'})
+    .then(r => r.json())
+    .then(d => {
+      if (d.ok && d.followers) {
+        showToast('Updated! Followers: ' + d.followers.toLocaleString(), 'success');
+        setTimeout(() => location.reload(), 1000);
+      } else {
+        showToast('Refresh failed: ' + (d.error || 'No data'), 'error');
+        if (btn) { btn.disabled = false; btn.textContent = 'Refresh Count'; }
+      }
+    }).catch(e => {
+      showToast('Refresh error: ' + e.message, 'error');
+      if (btn) { btn.disabled = false; btn.textContent = 'Refresh Count'; }
+    });
+}
+
 function loadEngagement() {
   apiCall('/api/engagement-stats').then(d => {
     if (!d.success) return;
