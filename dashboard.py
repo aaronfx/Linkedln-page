@@ -1036,6 +1036,14 @@ DASHBOARD_HTML = """
       </div>
     </div>
     <div class="card" style="margin-top:16px;">
+      <div class="card-header"><h3>Apify Feed Targets</h3></div>
+      <div class="card-body">
+        <div style="font-size:13px;color:#8899aa;margin-bottom:10px;">Posts discovered by Apify — what your scheduled sessions engage with.</div>
+        <div id="apify-feed-targets"><div class="empty-state"><p>Loading targets...</p></div></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
       <div class="card-header"><h3>Post Performance (Scraped)</h3></div>
       <div class="card-body" id="post-performance">
         <div class="empty-state"><p>No scraped metrics yet. Metrics will appear once scheduled tasks start reporting.</p></div>
@@ -1685,26 +1693,69 @@ function loadEngagement() {
       document.getElementById('followerGrowthSub').textContent = (d.followers.growth_7d != null ? ((d.followers.growth_7d>=0?'+':'') + d.followers.growth_7d + ' this week') : 'Target: 20,000');
     }
 
-    // Activity feed
+    // Activity feed — proper CSS avatar, author name, title, topic, comment preview, post link
     let feedHtml = '';
     if (d.recent_entries && d.recent_entries.length) {
       feedHtml = d.recent_entries.map(e => {
-        const icon = e.type === 'reply' ? 'ÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÂ¢ÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÂ©' : e.type === 'like' ? 'ÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÂ¢ÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÂ¥' : 'ÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÂ°ÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÃÂ¬';
         const time = e.timestamp ? new Date(e.timestamp).toLocaleString() : '';
-        return '<div style="padding:12px;background:var(--surface2);border-radius:8px;margin-bottom:8px;">'
-          + '<div style="display:flex;justify-content:space-between;align-items:center;">'
-          + '<span style="font-weight:600;">' + icon + ' ' + (e.author||'Unknown') + '</span>'
-          + '<span class="badge badge-blue">' + (e.session||'') + '</span>'
+        const avLetter = (e.author || 'U').charAt(0).toUpperCase();
+        const typeLabel = e.type === 'reply' ? 'Reply' : e.type === 'like' ? 'Like' : 'Comment';
+        const typeBadgeColor = e.type === 'reply' ? 'badge-green' : e.type === 'like' ? 'badge-red' : 'badge-blue';
+        return '<div style="display:flex;align-items:flex-start;gap:10px;padding:14px;background:var(--surface2);border-radius:8px;margin-bottom:8px;">'
+          + '<div style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#4a9eff,#1d4ed8);color:#fff;font-weight:700;font-size:16px;flex-shrink:0;">' + avLetter + '</div>'
+          + '<div style="flex:1;min-width:0;">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;">'
+          + '<span style="font-weight:700;font-size:14px;color:var(--text1);">' + (e.author || 'Unknown') + '</span>'
+          + '<div style="display:flex;gap:4px;">'
+          + '<span class="badge ' + typeBadgeColor + '">' + typeLabel + '</span>'
+          + '<span class="badge badge-blue">' + (e.session || '') + '</span>'
           + '</div>'
-          + (e.topic ? '<div style="font-size:13px;color:var(--text2);margin-top:4px;">Topic: ' + e.topic + '</div>' : '')
-          + (e.comment_preview ? '<div style="font-size:12px;color:var(--text3);margin-top:4px;font-style:italic;">"' + e.comment_preview + '"</div>' : '')
-          + '<div style="font-size:11px;color:var(--text3);margin-top:4px;">' + time + '</div>'
+          + '</div>'
+          + (e.author_title ? '<div style="font-size:12px;color:var(--text2);margin-top:2px;">' + e.author_title + '</div>' : '')
+          + (e.topic ? '<div style="font-size:13px;color:var(--text2);margin-top:6px;"><strong>Topic:</strong> ' + e.topic + '</div>' : '')
+          + (e.comment_preview ? '<div style="font-size:12px;color:var(--text3);margin-top:5px;font-style:italic;border-left:2px solid var(--accent);padding-left:8px;">"' + e.comment_preview + '"</div>' : '')
+          + (e.post_url ? '<a href="' + e.post_url + '" target="_blank" rel="noopener" style="display:inline-block;font-size:11px;color:var(--accent);margin-top:5px;text-decoration:none;">View post →</a>' : '')
+          + '<div style="font-size:11px;color:var(--text3);margin-top:5px;">' + time + '</div>'
+          + '</div>'
           + '</div>';
       }).join('');
     } else {
       feedHtml = '<div class="empty-state"><p>No engagement logged yet. Activity will appear once scheduled tasks start reporting.</p></div>';
     }
     document.getElementById('engagement-feed').innerHTML = feedHtml;
+
+    // Apify Feed Targets panel
+    const ftContainer = document.getElementById('apify-feed-targets');
+    if (ftContainer) {
+      if (d.feed_targets && d.feed_targets.length) {
+        const scrapedAt = d.feed_targets_scraped_at ? new Date(d.feed_targets_scraped_at).toLocaleString() : '';
+        let ftHtml = '<div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Last scraped: ' + scrapedAt + '</div>';
+        ftHtml += d.feed_targets.map(t => {
+          const avL = (t.author || 'U').charAt(0).toUpperCase();
+          const postedAt = t.posted_at && t.posted_at.date ? new Date(t.posted_at.date).toLocaleDateString() : (t.posted_at || '');
+          return '<div style="display:flex;align-items:flex-start;gap:10px;padding:12px;background:var(--surface2);border-radius:8px;margin-bottom:8px;">'
+            + '<div style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#2ba8b4,#1a6b73);color:#fff;font-weight:700;font-size:14px;flex-shrink:0;">' + avL + '</div>'
+            + '<div style="flex:1;min-width:0;">'
+            + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;">'
+            + '<span style="font-weight:700;font-size:13px;color:var(--text1);">' + (t.author || 'Unknown') + '</span>'
+            + '<div style="display:flex;gap:8px;font-size:12px;color:var(--text2);">'
+            + (t.likes ? '<span>&#9829; ' + t.likes.toLocaleString() + '</span>' : '')
+            + (t.comments ? '<span>&#128172; ' + t.comments.toLocaleString() + '</span>' : '')
+            + '</div>'
+            + '</div>'
+            + '<div style="font-size:12px;color:var(--text3);margin-top:4px;">' + (t.text || '').substring(0, 140) + (t.text && t.text.length > 140 ? '...' : '') + '</div>'
+            + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px;">'
+            + (t.post_url ? '<a href="' + t.post_url + '" target="_blank" rel="noopener" style="font-size:11px;color:var(--accent);text-decoration:none;">View post →</a>' : '<span></span>')
+            + '<span style="font-size:11px;color:var(--text3);">' + postedAt + '</span>'
+            + '</div>'
+            + '</div>'
+            + '</div>';
+        }).join('');
+        ftContainer.innerHTML = ftHtml;
+      } else {
+        ftContainer.innerHTML = '<div class="empty-state"><p>No Apify targets yet. Targets will appear here after a scheduled session runs, or click <strong>Sync LinkedIn</strong> above.</p></div>';
+      }
+    }
 
     // Post performance
     let perfHtml = '';
@@ -2323,13 +2374,7 @@ async function threadsAddPost() {
 <script id="garbled-fix-patch">
 (function(){
   function fixGarbledContent(){
-    // Fix garbled avatar spans in engagement cards (classless span starting with char 195)
-    document.querySelectorAll('#engagement-feed span').forEach(function(sp){
-      if(sp.className==='' && sp.textContent.length>50 && sp.textContent.charCodeAt(0)===195){
-        sp.textContent='U';
-        sp.style.cssText='display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#4a9eff,#1d4ed8);color:#fff;font-weight:700;font-size:15px;flex-shrink:0;margin-right:8px;';
-      }
-    });
+    // Engagement cards now use CSS letter-avatars — no span mutation needed here
     // Fix #brand-score-badge if it contains garbled content
     var bsEl=document.getElementById('brand-score-badge');
     if(bsEl&&bsEl.textContent.length>50&&bsEl.textContent.charCodeAt(0)===195){bsEl.textContent='--';}
@@ -4323,8 +4368,10 @@ def api_engagement_stats():
                 recent_entries.append({
                     "type": entry.get("type", "comment"),
                     "author": entry.get("author", "Unknown"),
+                    "author_title": entry.get("author_title", ""),
                     "topic": entry.get("topic", ""),
                     "comment_preview": (entry.get("comment_text", ""))[:120],
+                    "post_url": entry.get("post_url", ""),
                     "session": record.get("session", ""),
                     "timestamp": record.get("timestamp", ""),
                     "pillar": entry.get("pillar", "")
@@ -4355,8 +4402,23 @@ def api_engagement_stats():
         latest_snapshot = scraped["snapshots"][-1] if scraped["snapshots"] else None
         latest_metrics = latest_snapshot.get("post_metrics", [])[:5] if latest_snapshot else []
 
+        # Apify feed targets (cached)
+        feed_targets = []
+        feed_targets_scraped_at = None
+        try:
+            import json as _pjt
+            _tf = os.path.join(os.path.dirname(POST_HISTORY_FILE), "apify_feed_targets.json")
+            if os.path.exists(_tf):
+                _td = _pjt.load(open(_tf))
+                feed_targets = _td.get("targets", [])[:8]
+                feed_targets_scraped_at = _td.get("scraped_at", "")
+        except Exception:
+            pass
+
         return jsonify({
             "success": True,
+            "feed_targets": feed_targets,
+            "feed_targets_scraped_at": feed_targets_scraped_at,
             "today": {
                 "engagements": today_count,
                 "sessions_completed": today_sessions,
