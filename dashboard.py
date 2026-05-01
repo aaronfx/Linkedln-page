@@ -2420,7 +2420,7 @@ async function threadsAddPost() {
     fixGarbledContent();
   }
   var obs=new MutationObserver(fixGarbledContent);
-  obs.observe(document.documentElement,{childList:true,subtree:true});
+  obs.observe(document.documentElement,{childList:true,subtree:true});  if(typeof loadProfileStats==='function')loadProfileStats();
 })();
 </script>
 </body>
