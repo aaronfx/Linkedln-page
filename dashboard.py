@@ -2470,7 +2470,7 @@ async function threadsAddPost() {
         });
     }
 
-    function approvePending(id,btn) {
+    window.approvePending = function(id,btn) {
       if(btn){btn.textContent='Moving...';btn.disabled=true;}
       fetch('/api/pending-posts/'+id+'/approve',{method:'POST'})
         .then(function(r){return r.json();})
