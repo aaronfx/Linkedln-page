@@ -2423,9 +2423,10 @@ async function threadsAddPost() {
   
 
     // Pending Posts / Weekly Draft
-    window._escHtml = function(str) {
-      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
+
+    window._escHtml = function(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    };
 
     window.loadPendingPosts = function() {
       fetch('/api/pending-posts')
@@ -2433,42 +2434,35 @@ async function threadsAddPost() {
         .then(function(data) {
           var container=document.getElementById('pendingPostsContainer'),
               badge=document.getElementById('pendingBadge'),
-              approveAll=document.getElementById('approveAllBtn');
-          if (!container) return;
-          var posts = data.posts || [];
-          if (badge) { badge.textContent=posts.length; badge.style.display=posts.length>0?'inline':'none'; }
-          if (approveAll) { approveAll.style.display=posts.length>0?'inline-block':'none'; }
-          if (!posts.length) {
+              aaBtn=document.getElementById('approveAllBtn');
+          if(!container) return;
+          var posts=data.posts||[];
+          if(badge){badge.textContent=posts.length;badge.style.display=posts.length>0?'inline':'none';}
+          if(aaBtn){aaBtn.style.display=posts.length>0?'inline-block':'none';}
+          if(!posts.length){
             container.innerHTML='<p style="color:#475569;text-align:center;padding:24px;margin:0;font-size:13px;">No posts waiting for review.<br>Posts from the Saturday automation will appear here.</p>';
             return;
           }
           var PC={'Education':'#3b82f6','Insight':'#8b5cf6','Student Story':'#f59e0b','Community':'#10b981','Thought Leadership':'#ec4899'};
-          container.innerHTML = posts.map(function(p) {
-            var pc=PC[p.pillar]||'#6366f1', content=p.content||'',
+          container.innerHTML=posts.map(function(p){
+            var pc=PC[p.pillar]||'#6366f1',content=p.content||'',
                 preview=content.length>220?content.substring(0,220)+'...':content;
-            return '<div id="pcard-'+p.id+'" style="background:#1e293b;border-radius:10px;padding:14px 16px;margin-bottom:10px;border-left:3px solid '+pc+';">'+
-              '<div style="display:flex;align-items:center;gap:7px;margin-bottom:10px;flex-wrap:wrap;">'+
-                '<span style="background:'+pc+'22;color:'+pc+';font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">'+_escHtml(p.pillar||'General')+'</span>'+
-                '<span style="background:#334155;color:#94a3b8;font-size:11px;padding:2px 8px;border-radius:4px;">&#x1F4C5; '+_escHtml(p.scheduled_date||'-')+' @ '+_escHtml(p.scheduled_time||'09:00')+' WAT</span>'+
-                (p.africa_lens?'<span style="background:#05966922;color:#059669;font-size:11px;padding:2px 8px;border-radius:4px;">&#x1F30D; Africa lens</span>':'')+
-                (p.hook_type?'<span style="background:#7c3aed22;color:#a78bfa;font-size:11px;padding:2px 8px;border-radius:4px;">'+_escHtml(p.hook_type)+'</span>':'')+
-              '</div>'+
-              '<p id="ppreview-'+p.id+'" style="color:#cbd5e1;font-size:13px;line-height:1.65;margin:0 0 12px;white-space:pre-wrap;">'+_escHtml(preview)+'</p>'+
-              '<textarea id="pedit-'+p.id+'" style="display:none;width:100%;background:#0f172a;border:1px solid #475569;color:#e2e8f0;border-radius:6px;padding:10px;font-size:13px;line-height:1.65;resize:vertical;min-height:160px;box-sizing:border-box;">'+_escHtml(content)+'</textarea>'+
-              '<div style="display:flex;gap:6px;flex-wrap:wrap;">'+
-                '<button onclick="approvePending(''+p.id+'',this)" style="background:#10b981;border:none;color:white;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;">&#x2705; Approve to Queue</button>'+
-                '<button id="pbtn-edit-'+p.id+'" onclick="editPending(''+p.id+'')" style="background:#1e293b;border:1px solid #475569;color:#94a3b8;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;">&#x270F; Edit</button>'+
-                '<button id="pbtn-save-'+p.id+'" onclick="savePendingEdit(''+p.id+'')" style="display:none;background:#3b82f6;border:none;color:white;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;">&#x1F4BE; Save</button>'+
-                '<button onclick="deletePending(''+p.id+'')" style="background:#1e293b;border:1px solid #ef4444;color:#ef4444;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;">&#x1F5D1; Remove</button>'+
-              '</div>'+
-            '</div>';
+            return '<div class="pdraft-card" data-pid="'+window._escHtml(p.id)+'" style="background:#1e293b;border-radius:10px;padding:14px 16px;margin-bottom:10px;border-left:3px solid '+pc+';"><div style="display:flex;align-items:center;gap:7px;margin-bottom:10px;flex-wrap:wrap;"><span style="background:'+pc+'22;color:'+pc+';font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">'+window._escHtml(p.pillar||'General')+'</span><span style="background:#334155;color:#94a3b8;font-size:11px;padding:2px 8px;border-radius:4px;">&#x1F4C5; '+window._escHtml(p.scheduled_date||'-')+' @ '+window._escHtml(p.scheduled_time||'09:00')+' WAT</span>'+(p.africa_lens?'<span style="background:#05966922;color:#059669;font-size:11px;padding:2px 8px;border-radius:4px;">&#x1F30D; Africa lens</span>':'')+(p.hook_type?'<span style="background:#7c3aed22;color:#a78bfa;font-size:11px;padding:2px 8px;border-radius:4px;">'+window._escHtml(p.hook_type)+'</span>':'')+'</div><p class="pdraft-preview" style="color:#cbd5e1;font-size:13px;line-height:1.65;margin:0 0 12px;white-space:pre-wrap;">'+window._escHtml(preview)+'</p><textarea class="pdraft-edit" style="display:none;width:100%;background:#0f172a;border:1px solid #475569;color:#e2e8f0;border-radius:6px;padding:10px;font-size:13px;line-height:1.65;resize:vertical;min-height:160px;box-sizing:border-box;">'+window._escHtml(content)+'</textarea><div style="display:flex;gap:6px;flex-wrap:wrap;"><button class="pdraft-approve-btn" style="background:#10b981;border:none;color:white;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;">&#x2705; Approve to Queue</button><button class="pdraft-edit-btn" style="background:#1e293b;border:1px solid #475569;color:#94a3b8;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;">&#x270F; Edit</button><button class="pdraft-save-btn" style="display:none;background:#3b82f6;border:none;color:white;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;">&#x1F4BE; Save</button><button class="pdraft-delete-btn" style="background:#1e293b;border:1px solid #ef4444;color:#ef4444;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;">&#x1F5D1; Remove</button></div></div>';
           }).join('');
+          // Attach event listeners (avoids inline onclick quoting)
+          container.querySelectorAll('.pdraft-card').forEach(function(card){
+            var pid=card.dataset.pid;
+            card.querySelector('.pdraft-approve-btn').addEventListener('click',function(){window.approvePending(pid,this);});
+            card.querySelector('.pdraft-edit-btn').addEventListener('click',function(){window.editPending(pid);});
+            card.querySelector('.pdraft-save-btn').addEventListener('click',function(){window.savePendingEdit(pid);});
+            card.querySelector('.pdraft-delete-btn').addEventListener('click',function(){window.deletePending(pid);});
+          });
         })
         .catch(function(err){
           var c=document.getElementById('pendingPostsContainer');
           if(c) c.innerHTML='<p style="color:#ef4444;text-align:center;padding:20px;">Error: '+err.message+'</p>';
         });
-    }
+    };
 
     window.approvePending = function(id,btn) {
       if(btn){btn.textContent='Moving...';btn.disabled=true;}
@@ -2476,16 +2470,13 @@ async function threadsAddPost() {
         .then(function(r){return r.json();})
         .then(function(d){
           if(d.ok){
-            var card=document.getElementById('pcard-'+id);
-            if(card){card.style.transition='opacity 0.3s';card.style.opacity='0';setTimeout(function(){card.remove();loadPendingPosts();},320);}
+            var card=document.querySelector('.pdraft-card[data-pid="'+id+'"]');
+            if(card){card.style.transition='opacity 0.3s';card.style.opacity='0';setTimeout(function(){card.remove();window.loadPendingPosts();},320);}
             if(typeof loadQueue==='function') setTimeout(loadQueue,400);
-          } else {
-            if(btn){btn.textContent='&#x2705; Approve to Queue';btn.disabled=false;}
-            alert('Error: '+(d.error||'Unknown'));
-          }
+          } else {if(btn){btn.textContent='&#x2705; Approve to Queue';btn.disabled=false;}alert('Error: '+(d.error||'Unknown'));}
         })
         .catch(function(e){if(btn){btn.textContent='&#x2705; Approve to Queue';btn.disabled=false;}alert('Network error: '+e.message);});
-    }
+    };
 
     window.approveAllPending = function() {
       var btn=document.getElementById('approveAllBtn'),badge=document.getElementById('pendingBadge'),n=badge?badge.textContent:'all';
@@ -2494,61 +2485,64 @@ async function threadsAddPost() {
       fetch('/api/pending-posts/approve-all',{method:'POST'})
         .then(function(r){return r.json();})
         .then(function(d){
-          if(d.ok){loadPendingPosts();if(typeof loadQueue==='function') setTimeout(loadQueue,400);}
+          if(d.ok){window.loadPendingPosts();if(typeof loadQueue==='function') setTimeout(loadQueue,400);}
           else{alert('Error: '+(d.error||'Unknown'));}
           if(btn){btn.textContent='&#x2705; Approve All';btn.disabled=false;}
         })
         .catch(function(e){alert('Network error: '+e.message);if(btn){btn.textContent='&#x2705; Approve All';btn.disabled=false;}});
-    }
+    };
 
     window.editPending = function(id) {
-      var preview=document.getElementById('ppreview-'+id),editArea=document.getElementById('pedit-'+id),
-          editBtn=document.getElementById('pbtn-edit-'+id),saveBtn=document.getElementById('pbtn-save-'+id);
-      if(!preview||!editArea) return;
-      preview.style.display='none';editArea.style.display='block';
-      if(editBtn) editBtn.style.display='none';
-      if(saveBtn) saveBtn.style.display='inline-block';
-      editArea.focus();
-    }
+      var card=document.querySelector('.pdraft-card[data-pid="'+id+'"]');
+      if(!card) return;
+      card.querySelector('.pdraft-preview').style.display='none';
+      card.querySelector('.pdraft-edit').style.display='block';
+      card.querySelector('.pdraft-edit-btn').style.display='none';
+      card.querySelector('.pdraft-save-btn').style.display='inline-block';
+      card.querySelector('.pdraft-edit').focus();
+    };
 
     window.savePendingEdit = function(id) {
-      var editArea=document.getElementById('pedit-'+id),preview=document.getElementById('ppreview-'+id),
-          editBtn=document.getElementById('pbtn-edit-'+id),saveBtn=document.getElementById('pbtn-save-'+id);
-      if(!editArea) return;
-      var nc=editArea.value.trim();
+      var card=document.querySelector('.pdraft-card[data-pid="'+id+'"]');
+      if(!card) return;
+      var editArea=card.querySelector('.pdraft-edit'),nc=editArea.value.trim();
       if(!nc){alert('Content cannot be empty');return;}
       fetch('/api/pending-posts/'+id+'/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:nc})})
         .then(function(r){return r.json();})
         .then(function(d){
           if(d.ok){
-            if(preview){preview.textContent=nc.length>220?nc.substring(0,220)+'...':nc;preview.style.display='block';}
+            var preview=card.querySelector('.pdraft-preview');
+            preview.textContent=nc.length>220?nc.substring(0,220)+'...':nc;
+            preview.style.display='block';
             editArea.style.display='none';
-            if(editBtn) editBtn.style.display='inline-block';
-            if(saveBtn) saveBtn.style.display='none';
+            card.querySelector('.pdraft-edit-btn').style.display='inline-block';
+            card.querySelector('.pdraft-save-btn').style.display='none';
           } else {alert('Save failed: '+(d.error||'Unknown'));}
         })
         .catch(function(e){alert('Network error: '+e.message);});
-    }
+    };
 
     window.deletePending = function(id) {
       if(!confirm('Remove this draft post?')) return;
       fetch('/api/pending-posts/'+id+'/delete',{method:'POST'})
         .then(function(r){return r.json();})
         .then(function(d){
-          if(d.ok){var card=document.getElementById('pcard-'+id);if(card){card.style.transition='opacity 0.3s';card.style.opacity='0';setTimeout(function(){card.remove();loadPendingPosts();},320);}}
-          else{alert('Error: '+(d.error||'Unknown'));}
+          if(d.ok){
+            var card=document.querySelector('.pdraft-card[data-pid="'+id+'"]');
+            if(card){card.style.transition='opacity 0.3s';card.style.opacity='0';setTimeout(function(){card.remove();window.loadPendingPosts();},320);}
+          } else {alert('Error: '+(d.error||'Unknown'));}
         })
         .catch(function(e){alert('Network error: '+e.message);});
-    }
+    };
 
+    // Auto-load pending posts whenever Queue panel becomes visible
     document.addEventListener('DOMContentLoaded', function() {
       var _orig=window.switchTab;
       if(typeof _orig==='function'){
-        window.switchTab=function(tab){_orig(tab);if(tab==='queue') setTimeout(loadPendingPosts,150);};
+        window.switchTab=function(tab){_orig(tab);if(tab==='queue'||tab==='panel-queue') setTimeout(window.loadPendingPosts,150);};
       }
-      loadPendingPosts();
+      window.loadPendingPosts();
     });
-
 
     obs.observe(document.documentElement,{childList:true,subtree:true});  if(typeof loadProfileStats==='function')loadProfileStats();
 })();
