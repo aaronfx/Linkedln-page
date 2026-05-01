@@ -2323,43 +2323,33 @@ async function threadsAddPost() {
 <script id="garbled-fix-patch">
 (function(){
   function fixGarbledContent(){
-    // Fix garbled avatar spans in engagement cards
+    // Fix garbled avatar spans in engagement cards (classless span starting with char 195)
     document.querySelectorAll('#engagement-feed span').forEach(function(sp){
-      if(sp.className==='' && sp.textContent.length > 50 && sp.textContent.charCodeAt(0)===195){
-        var author = '';
-        var card = sp.closest('.card, div[style]');
-        if(card){
-          var divs = card.querySelectorAll('div');
-          for(var i=0;i<divs.length;i++){
-            var t=divs[i].textContent.trim();
-            if(t && t.length<60 && !t.startsWith('Topic:') && !t.startsWith('"') && /[A-Z]/.test(t[0])){
-              author=t[0].toUpperCase(); break;
-            }
-          }
-        }
-        if(!author) author='U';
-        sp.textContent=author;
+      if(sp.className==='' && sp.textContent.length>50 && sp.textContent.charCodeAt(0)===195){
+        sp.textContent='U';
         sp.style.cssText='display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#4a9eff,#1d4ed8);color:#fff;font-weight:700;font-size:15px;flex-shrink:0;margin-right:8px;';
       }
     });
-    // Fix garbled brand-score-badge
+    // Fix #brand-score-badge if it contains garbled content
     var bsEl=document.getElementById('brand-score-badge');
     if(bsEl&&bsEl.textContent.length>50&&bsEl.textContent.charCodeAt(0)===195){bsEl.textContent='--';}
-    // also catch any static garbled text nodes on page load
-    document.querySelectorAll('span,div,p').forEach(function(el){
-      if(el.children.length===0&&el.textContent.length>100&&el.textContent.charCodeAt(0)===195&&el.id!=='engagement-feed'){
-        if(/brand|score|badge/.test(el.id+el.className)) el.textContent='--';
+    // Fix any heading/span/p with garbled suffix: clean text + long non-ASCII garbage appended
+    document.querySelectorAll('h1,h2,h3,h4,h5,h6,span,p').forEach(function(el){
+      if(el.children.length===0&&el.textContent.length>30){
+        var txt=el.textContent;
+        var idx=txt.search(/[\x80-\xFF]{20,}/);
+        if(idx>0){el.textContent=txt.slice(0,idx).trim();}
+        else if(idx===0&&txt.length>50){el.textContent='';}
       }
     });
   }
-  // Run once DOM ready, then watch for dynamic updates
   if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded', fixGarbledContent);
-  } else {
+    document.addEventListener('DOMContentLoaded',fixGarbledContent);
+  }else{
     fixGarbledContent();
   }
-  var obs = new MutationObserver(fixGarbledContent);
-  obs.observe(document.documentElement, {childList:true, subtree:true});
+  var obs=new MutationObserver(fixGarbledContent);
+  obs.observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
 </body>
