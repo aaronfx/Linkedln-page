@@ -2343,8 +2343,13 @@ async function threadsAddPost() {
       }
     });
     // Fix garbled brand-score-badge
-    document.querySelectorAll('.brand-score-badge').forEach(function(el){
-      if(el.textContent.length > 50 && el.textContent.charCodeAt(0)===195) el.textContent='--';
+    var bsEl=document.getElementById('brand-score-badge');
+    if(bsEl&&bsEl.textContent.length>50&&bsEl.textContent.charCodeAt(0)===195){bsEl.textContent='--';}
+    // also catch any static garbled text nodes on page load
+    document.querySelectorAll('span,div,p').forEach(function(el){
+      if(el.children.length===0&&el.textContent.length>100&&el.textContent.charCodeAt(0)===195&&el.id!=='engagement-feed'){
+        if(/brand|score|badge/.test(el.id+el.className)) el.textContent='--';
+      }
     });
   }
   // Run once DOM ready, then watch for dynamic updates
