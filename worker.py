@@ -40,6 +40,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
 )
+import saturday_loop  # Saturday automation loop
 logger = logging.getLogger("worker")
 
 # Thread-safe lock for JSON file operations
@@ -615,7 +616,21 @@ def run_scheduler():
     sched_lib.every(1).hours.do(refill_queue)
 
     logger.info("All platform schedulers active. Running loop...")
-    while not _shutdown_event.is_set():
+    
+def _run_saturday_loop():
+    """Saturday 7am WAT (06:00 UTC): pull -> score -> generate -> pending panel."""
+    logger.info("worker: saturday_loop starting")
+    try:
+        result = saturday_loop.run()
+        logger.info(f"worker: saturday_loop done: {result}")
+    except Exception as e:
+        logger.error(f"worker: saturday_loop error: {e}")
+
+# Saturday 7am WAT = 06:00 UTC
+sched_lib.every().saturday.at("06:00").do(_run_saturday_loop)
+logger.info("Saturday loop scheduled: 06:00 UTC")
+
+while not _shutdown_event.is_set():
         sched_lib.run_pending()
         time.sleep(30)
 
