@@ -2423,11 +2423,11 @@ async function threadsAddPost() {
   
 
     // Pending Posts / Weekly Draft
-    function _escHtml(str) {
+    window._escHtml = function(str) {
       return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
-    function loadPendingPosts() {
+    window.loadPendingPosts = function() {
       fetch('/api/pending-posts')
         .then(function(r){return r.json();})
         .then(function(data) {
@@ -2487,7 +2487,7 @@ async function threadsAddPost() {
         .catch(function(e){if(btn){btn.textContent='&#x2705; Approve to Queue';btn.disabled=false;}alert('Network error: '+e.message);});
     }
 
-    function approveAllPending() {
+    window.approveAllPending = function() {
       var btn=document.getElementById('approveAllBtn'),badge=document.getElementById('pendingBadge'),n=badge?badge.textContent:'all';
       if(!confirm('Move '+n+' draft posts to the live queue?')) return;
       if(btn){btn.textContent='Approving...';btn.disabled=true;}
@@ -2501,7 +2501,7 @@ async function threadsAddPost() {
         .catch(function(e){alert('Network error: '+e.message);if(btn){btn.textContent='&#x2705; Approve All';btn.disabled=false;}});
     }
 
-    function editPending(id) {
+    window.editPending = function(id) {
       var preview=document.getElementById('ppreview-'+id),editArea=document.getElementById('pedit-'+id),
           editBtn=document.getElementById('pbtn-edit-'+id),saveBtn=document.getElementById('pbtn-save-'+id);
       if(!preview||!editArea) return;
@@ -2511,7 +2511,7 @@ async function threadsAddPost() {
       editArea.focus();
     }
 
-    function savePendingEdit(id) {
+    window.savePendingEdit = function(id) {
       var editArea=document.getElementById('pedit-'+id),preview=document.getElementById('ppreview-'+id),
           editBtn=document.getElementById('pbtn-edit-'+id),saveBtn=document.getElementById('pbtn-save-'+id);
       if(!editArea) return;
@@ -2530,7 +2530,7 @@ async function threadsAddPost() {
         .catch(function(e){alert('Network error: '+e.message);});
     }
 
-    function deletePending(id) {
+    window.deletePending = function(id) {
       if(!confirm('Remove this draft post?')) return;
       fetch('/api/pending-posts/'+id+'/delete',{method:'POST'})
         .then(function(r){return r.json();})
@@ -2546,8 +2546,7 @@ async function threadsAddPost() {
       if(typeof _orig==='function'){
         window.switchTab=function(tab){_orig(tab);if(tab==='queue') setTimeout(loadPendingPosts,150);};
       }
-      var qp=document.getElementById('tab-queue');
-      if(qp && qp.style.display!=='none') loadPendingPosts();
+      loadPendingPosts();
     });
 
 
