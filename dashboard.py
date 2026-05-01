@@ -2558,7 +2558,8 @@ async function threadsAddPost() {
         </div>
         <div style="display:flex;gap:8px;">
           <button onclick="loadPendingPosts()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#e2e8f0;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;">&#x1F504; Refresh</button>
-          <button id="approveAllBtn" onclick="approveAllPending()" style="background:#10b981;border:none;color:white;padding:5px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;display:none;">&#x2705; Approve All</button>
+          <button id="satRunBtn" onclick="window.triggerSaturdayLoop&&window.triggerSaturdayLoop()" style="background:#7c3aed;border:none;color:white;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;margin-right:6px;">&#9889; Run Now</button>
+                  <button id="approveAllBtn" onclick="approveAllPending()" style="background:#10b981;border:none;color:white;padding:5px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;display:none;">&#x2705; Approve All</button>
         </div>
       </div>
       <div id="pendingPostsContainer" style="padding:16px;background:#0f172a;min-height:70px;">
@@ -3888,6 +3889,16 @@ def api_apify_post_metrics():
 
 
 # ─── Pending Posts (Weekly Draft Review) ─────────────────────────────────────
+
+@app.route("/api/saturday-run", methods=["POST"])
+def api_saturday_run():
+    body    = request.get_json(force=True, silent=True) or {}
+    dry_run = bool(body.get("dry_run", False))
+    try:
+        import saturday_loop as _sl
+        return jsonify(_sl.run(dry_run=dry_run))
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
 
 @app.route("/api/pending-posts", methods=["GET"])
 def api_pending_posts_get():
