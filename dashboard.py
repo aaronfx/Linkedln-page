@@ -2319,6 +2319,44 @@ async function threadsAddPost() {
       </div>
     </div>
   </div>
+
+<script id="garbled-fix-patch">
+(function(){
+  function fixGarbledContent(){
+    // Fix garbled avatar spans in engagement cards
+    document.querySelectorAll('#engagement-feed span').forEach(function(sp){
+      if(sp.className==='' && sp.textContent.length > 50 && sp.textContent.charCodeAt(0)===195){
+        var author = '';
+        var card = sp.closest('.card, div[style]');
+        if(card){
+          var divs = card.querySelectorAll('div');
+          for(var i=0;i<divs.length;i++){
+            var t=divs[i].textContent.trim();
+            if(t && t.length<60 && !t.startsWith('Topic:') && !t.startsWith('"') && /[A-Z]/.test(t[0])){
+              author=t[0].toUpperCase(); break;
+            }
+          }
+        }
+        if(!author) author='U';
+        sp.textContent=author;
+        sp.style.cssText='display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#4a9eff,#1d4ed8);color:#fff;font-weight:700;font-size:15px;flex-shrink:0;margin-right:8px;';
+      }
+    });
+    // Fix garbled brand-score-badge
+    document.querySelectorAll('.brand-score-badge').forEach(function(el){
+      if(el.textContent.length > 50 && el.textContent.charCodeAt(0)===195) el.textContent='--';
+    });
+  }
+  // Run once DOM ready, then watch for dynamic updates
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded', fixGarbledContent);
+  } else {
+    fixGarbledContent();
+  }
+  var obs = new MutationObserver(fixGarbledContent);
+  obs.observe(document.documentElement, {childList:true, subtree:true});
+})();
+</script>
 </body>
 </html>
 """
