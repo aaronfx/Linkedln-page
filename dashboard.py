@@ -3587,6 +3587,91 @@ def api_trigger_apify_sync():
     t.start()
     return jsonify({"status": "started", "message": "Apify sync triggered in background"})
 
+@app.route("/api/apify/test", methods=["GET"])
+def api_apify_test():
+    """Quick Apify API key connectivity check (no actor run)."""
+    api_key = os.environ.get("APIFY_API_KEY", "")
+    if not api_key:
+        return jsonify({"ok": False, "error": "APIFY_API_KEY not set in environment"})
+    try:
+        import requests as _rq
+        resp = _rq.get("https://api.apify.com/v2/users/me", params={"token": api_key}, timeout=10)
+        if resp.ok:
+            u = resp.json().get("data", {})
+            return jsonify({"ok": True, "username": u.get("username", ""), "plan": u.get("plan", {}).get("id", "")})
+        return jsonify({"ok": False, "status": resp.status_code, "error": resp.text[:200]})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)})
+
+
+@app.route("/api/apify/live-profile", methods=["GET", "POST"])
+def api_apify_live_profile():
+    """Live call to Apify for current LinkedIn profile stats. Caches to linkedin_profile_stats.json."""
+    profile_url = os.environ.get("LINKEDIN_PROFILE_URL", "")
+    if not profile_url:
+        return jsonify({"ok": False, "error": "LINKEDIN_PROFILE_URL not set", "followers": 0}), 400
+    try:
+        from apify_engine import get_profile_stats
+        stats = get_profile_stats(profile_url)
+        if stats:
+            import json as _pj
+            pfile = os.path.join(os.path.dirname(POST_HISTORY_FILE), "linkedin_profile_stats.json")
+            with open(pfile, "w") as _f:
+                _pj.dump(stats, _f)
+            logger.info(f"Apify live-profile: followers={stats.get('followers')}")
+            return jsonify({"ok": True, **stats})
+        return jsonify({"ok": False, "error": "Apify returned no data", "followers": 0})
+    except Exception as e:
+        logger.error(f"Apify live-profile error: {e}")
+        return jsonify({"ok": False, "error": str(e), "followers": 0}), 500
+
+
+@app.route("/api/apify/feed-targets", methods=["GET", "POST"])
+def api_apify_feed_targets():
+    """GET cached targets; POST triggers fresh Apify scrape. Body: {profiles, max_posts, time_limit}"""
+    targets_file = os.path.join(os.path.dirname(POST_HISTORY_FILE), "apify_feed_targets.json")
+    if request.method == "GET":
+        try:
+            import json as _pj
+            if os.path.exists(targets_file):
+                with open(targets_file) as _f:
+                    return jsonify({"ok": True, "source": "cache", **_pj.load(_f)})
+            return jsonify({"ok": True, "source": "empty", "targets": [], "scraped_at": None, "count": 0})
+        except Exception as e:
+            return jsonify({"ok": False, "error": str(e)}), 500
+    try:
+        body = request.get_json(force=True, silent=True) or {}
+        profiles = body.get("profiles") or [p for p in [os.environ.get("LINKEDIN_PROFILE_URL", "")] if p]
+        if not profiles:
+            return jsonify({"ok": False, "error": "No target profiles provided"}), 400
+        from apify_engine import get_feed_targets
+        import json as _pj, datetime as _dt
+        targets = get_feed_targets(profiles, max_posts=int(body.get("max_posts", 5)), time_limit=body.get("time_limit", "24h"))
+        result = {"targets": targets, "scraped_at": _dt.datetime.utcnow().isoformat() + "Z", "profiles_scraped": profiles, "count": len(targets)}
+        with open(targets_file, "w") as _f:
+            _pj.dump(result, _f, indent=2)
+        logger.info(f"Apify feed-targets: {len(targets)} posts from {len(profiles)} profiles")
+        return jsonify({"ok": True, "source": "live", **result})
+    except Exception as e:
+        logger.error(f"Apify feed-targets error: {e}")
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
+@app.route("/api/apify/post-metrics", methods=["POST"])
+def api_apify_post_metrics():
+    """Live engagement metrics for specific post URNs. Body: {"urns": [...]}"""
+    try:
+        body = request.get_json(force=True, silent=True) or {}
+        urns = body.get("urns", [])[:10]
+        if not urns:
+            return jsonify({"ok": False, "error": "No URNs provided"}), 400
+        from apify_engine import get_post_stats
+        return jsonify({"ok": True, "metrics": get_post_stats(urns)})
+    except Exception as e:
+        logger.error(f"Apify post-metrics error: {e}")
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
 @app.route("/api/generate-images", methods=["POST"])
 def api_generate_images():
     """Generate DALL-E images for all queued posts that don't have images yet."""
@@ -4247,9 +4332,18 @@ def api_engagement_stats():
         recent_entries = recent_entries[-10:]
         recent_entries.reverse()
 
-        # Follower tracking
+        # Follower tracking — prefer scraped history, fall back to Apify profile cache
         follower_history = scraped.get("follower_history", [])
         current_followers = follower_history[-1]["count"] if follower_history else None
+        if current_followers is None:
+            try:
+                import json as _pj
+                _pf = os.path.join(os.path.dirname(POST_HISTORY_FILE), "linkedin_profile_stats.json")
+                if os.path.exists(_pf):
+                    _pd = _pj.load(open(_pf))
+                    current_followers = _pd.get("followers") or None
+            except Exception:
+                pass
         follower_7d_ago = None
         for f in reversed(follower_history):
             if f.get("date", "") <= week_ago:
