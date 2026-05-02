@@ -564,7 +564,7 @@ def run_scheduler():
     for day, config in POSTING_SCHEDULE.items():
         utc_time = wat_to_utc(config["time"])
         pillar = config["pillar_preference"]
-        getattr(sched_lib.every(), day).at(utc_time).do(create_and_post, pillar=pillar)
+        getattr(sched_lib.every(), day).at(utc_time).do(create_and_post_linkedin, pillar=pillar)
         logger.info(f"[LinkedIn] {day} {config['time']} WAT -> {utc_time} UTC | {pillar}")
 
     # ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Instagram ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Gopipways company brand ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ
@@ -720,6 +720,89 @@ def _is_due(entry, buffer_minutes=10):
         return True
 
 # ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Instagram Posting ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ
+
+
+
+# ─── LinkedIn Posting (fixed — content field + image support) ─────────────────
+
+def create_and_post_linkedin(pillar=None):
+    """
+    Fixed LinkedIn posting.
+    Primary bug: old create_and_post() did entry['text'] but queue uses
+    entry['content'] -> silent KeyError on every LinkedIn scheduled run.
+    Also adds full 3-step image upload support.
+    """
+    entry = {}
+    try:
+        from config import CONTENT_QUEUE_FILE, POST_HISTORY_FILE, DEAD_LETTER_FILE
+        from linkedin_api import LinkedInAPI
+
+        queue = _safe_read_json(CONTENT_QUEUE_FILE)
+        if not queue:
+            from content_engine import generate_post
+            history = _safe_read_json(POST_HISTORY_FILE)
+            post_data = generate_post(
+                pillar=pillar,
+                post_history=history[-20:] if history else [],
+            )
+            queue = [post_data]
+
+        entry = queue[0]
+        # Queue stores text under 'content' key (confirmed from live queue inspection)
+        text = entry.get("content", entry.get("text", entry.get("caption", entry.get("message", ""))))
+
+        if not text:
+            logger.warning("LinkedIn: empty text in queue entry, skipping")
+            return
+
+        api = LinkedInAPI()
+        image_url = entry.get("image_url", "")
+        result = None
+
+        if image_url:
+            try:
+                asset_urn = api.upload_image(image_url)
+                result = api.create_image_post_with_asset(text, asset_urn)
+                logger.info(f"LinkedIn image post submitted with asset: {asset_urn}")
+            except Exception as img_err:
+                logger.warning(f"LinkedIn image upload failed ({img_err}), falling back to text-only")
+                result = None
+
+        if result is None:
+            result = api.create_text_post(text)
+
+        post_id = result.get("id", "") if result else ""
+        if post_id or (result and result.get("success")):
+            queue.pop(0)
+            _safe_write_json(CONTENT_QUEUE_FILE, queue)
+            history = _safe_read_json(POST_HISTORY_FILE)
+            history.append({
+                **entry,
+                "post_id": post_id,
+                "posted_at": datetime.now(timezone.utc).isoformat(),
+                "platform": "linkedin",
+            })
+            _safe_write_json(POST_HISTORY_FILE, history)
+            _health["last_post"] = datetime.now(timezone.utc).isoformat()
+            logger.info(f"LinkedIn post successful: {post_id or 'ok'}")
+        else:
+            raise ValueError(f"LinkedIn API returned no ID: {result}")
+
+    except Exception as e:
+        logger.error(f"LinkedIn posting error: {e}", exc_info=True)
+        try:
+            from config import DEAD_LETTER_FILE
+            dead = _safe_read_json(DEAD_LETTER_FILE)
+            dead.append({
+                "error": str(e),
+                "entry": entry,
+                "failed_at": datetime.now(timezone.utc).isoformat(),
+                "platform": "linkedin",
+            })
+            _safe_write_json(DEAD_LETTER_FILE, dead)
+        except Exception:
+            pass
+
 
 def create_and_post_instagram(pillar=None):
     """Queue-first Instagram posting using generate_company_post()."""
