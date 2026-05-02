@@ -355,6 +355,75 @@ class LinkedInAPI:
 
     # --- Posting (Community Management API) ---
 
+
+    def create_image_post_with_asset(self, text: str, asset_urn: str) -> dict:
+        """Create a LinkedIn post with a pre-uploaded image asset URN."""
+        payload = {
+            "author": self.person_urn,
+            "lifecycleState": "PUBLISHED",
+            "specificContent": {
+                "com.linkedin.ugc.ShareContent": {
+                    "shareCommentary": {"text": text},
+                    "shareMediaCategory": "IMAGE",
+                    "media": [{
+                        "status": "READY",
+                        "description": {"text": ""},
+                        "media": asset_urn,
+                        "title": {"text": ""}
+                    }]
+                }
+            },
+            "visibility": {
+                "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
+            }
+        }
+        r = self.session.post(f"{self.base_url}/ugcPosts", json=payload, timeout=15)
+        r.raise_for_status()
+        data = r.json()
+        post_id = data.get("id", r.headers.get("x-restli-id", ""))
+        logger.info(f"LinkedIn image post created: {post_id}")
+        return {"id": post_id, "success": bool(post_id)}
+
+    def upload_image(self, image_url: str) -> str:
+        """
+        Upload an image to LinkedIn via 3-step flow:
+          1. Register upload -> get uploadUrl + asset URN
+          2. PUT image binary -> upload the actual image bytes
+          3. Return asset URN -> used in the post payload
+        """
+        import requests as _req
+        register_payload = {
+            "registerUploadRequest": {
+                "recipes": ["urn:li:digitalmediaRecipe:feedshare-image"],
+                "owner": self.person_urn,
+                "serviceRelationships": [{
+                    "relationshipType": "OWNER",
+                    "identifier": "urn:li:userGeneratedContent"
+                }]
+            }
+        }
+        r1 = self.session.post(
+            f"{self.base_url}/assets?action=registerUpload",
+            json=register_payload,
+            timeout=15
+        )
+        r1.raise_for_status()
+        r1_data = r1.json()
+        upload_url = r1_data["value"]["uploadMechanism"]["com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest"]["uploadUrl"]
+        asset_urn = r1_data["value"]["asset"]
+        img_response = _req.get(image_url, timeout=30)
+        img_response.raise_for_status()
+        r2 = _req.put(
+            upload_url,
+            data=img_response.content,
+            headers={"Authorization": f"Bearer {self.access_token}"},
+            timeout=30
+        )
+        r2.raise_for_status()
+        logger.info(f"LinkedIn image uploaded: {asset_urn}")
+        return asset_urn
+
+
     def create_text_post(self, text: str) -> dict:
         """Create a text-only post using the rest/posts API."""
         payload = {
