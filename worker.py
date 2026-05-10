@@ -844,16 +844,8 @@ def create_and_post_instagram(pillar=None):
         if not image_url:
             logger.warning(
                 f"Instagram: no image_url on queue entry (id={entry.get('id','?')}) "
-                f"Ã¢ÂÂ moving to dead letter. Add image_url before requeuing."
+                f"— skipping this cycle. Add image_url to enable posting."
             )
-            dead = _safe_read_json(IG_DEAD_LETTER_FILE)
-            dead.append({**entry,
-                         "error": "no_image_url",
-                         "failed_at": datetime.now(timezone.utc).isoformat()})
-            _safe_write_json(IG_DEAD_LETTER_FILE, dead)
-            # Remove from queue so we don't retry the same broken entry forever
-            queue.pop(0)
-            _safe_write_json(IG_QUEUE_FILE, queue)
             return
 
         api = InstagramAPI()
