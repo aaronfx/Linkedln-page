@@ -549,8 +549,8 @@ class LinkedInAPI:
         try:
             resp = self._make_request(
                 "get",
-                f"{REST_BASE}/socialActions/{post_urn}/comments",
-                params={"count": 50},
+                f"{BASE_URL}/socialActions/{post_urn}/comments",
+                params={"q": "socialEntity", "count": 50},
             )
             if resp.status_code == 200:
                 return resp.json().get("elements", [])
@@ -575,7 +575,7 @@ class LinkedInAPI:
         }
         resp = self._make_request(
             "post",
-            f"{REST_BASE}/socialActions/{post_urn}/comments",
+            f"{BASE_URL}/socialActions/{post_urn}/comments",
             json=payload,
         )
         resp.raise_for_status()
