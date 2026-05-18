@@ -25,16 +25,28 @@ PILLARS = ["Education","Insight","Student Story","Community","Thought Leadership
 HOOKS   = ["Unpopular opinion","Story hook","Question hook","Stat hook","Mistake hook","Contradiction hook","Listicle hook"]
 
 def pull_own_posts(max_posts=20):
+    """Pull recent posts from LinkedIn API directly (no Apify dependency)."""
     try:
-        from config import LINKEDIN_PROFILE_URL
-    except: LINKEDIN_PROFILE_URL = os.environ.get("LINKEDIN_PROFILE_URL","")
-    if not LINKEDIN_PROFILE_URL: return []
-    try:
-        from apify_engine import get_feed_targets
-        posts = get_feed_targets([LINKEDIN_PROFILE_URL], max_posts=max_posts, time_limit="week")
-        logger.info(f"saturday_loop: Apify {len(posts)} posts"); return posts
+        from linkedin_api import LinkedInAPI
+        li = LinkedInAPI()
+        raw = li.get_all_posts() or []
+        posts = []
+        for p in raw[:max_posts]:
+            posts.append({
+                "text": p.get("text", p.get("content", "")),
+                "likes": p.get("likes", 0),
+                "comments": p.get("comments", 0),
+                "shares": p.get("shares", 0),
+                "pillar": p.get("pillar", ""),
+                "hook_type": p.get("hook_type", ""),
+                "africa_lens": p.get("africa_lens", False),
+                "posted_at": p.get("created_at", ""),
+            })
+        logger.info(f"saturday_loop: LinkedIn API returned {len(posts)} posts")
+        return posts
     except Exception as e:
-        logger.error(f"saturday_loop: Apify failed: {e}"); return []
+        logger.error(f"saturday_loop: LinkedIn API pull failed: {e}")
+        return []
 
 def score_posts(posts):
     scored = []
@@ -122,10 +134,10 @@ def load_to_pending(drafts):
 
 def run(dry_run=False):
     logger.info("saturday_loop: start")
-    result = {"ok":True,"apify_posts":0,"model_updated":False,"drafts_generated":0,"drafts_loaded":0,"errors":[]}
+    result = {"ok":True,"linkedin_posts":0,"model_updated":False,"drafts_generated":0,"drafts_loaded":0,"errors":[]}
     try:
         posts = pull_own_posts()
-        result["apify_posts"] = len(posts)
+        result["linkedin_posts"] = len(posts)
         if not posts:
             history = _load("post_history.json",[])
             posts = [{"text":h.get("content",""),"likes":h.get("likes",0),"comments":h.get("comments",0),
