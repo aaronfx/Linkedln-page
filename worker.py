@@ -326,100 +326,84 @@ def collect_metrics():
         _learning.add_alert("metrics_failure", str(e)[:200])
 
 
-def apify_sync_linkedin():
+def sync_linkedin_direct():
     """
-    Sync LinkedIn post comments and stats via Apify (every 12h).
-    Updates post history with real engagement data and triggers auto-replies.
+    Sync LinkedIn post comments and stats via LinkedIn API directly (every 12h).
+    Replaces Apify-based sync. Uses v2 socialActions endpoint with w_member_social scope.
     """
     try:
-        from apify_engine import sync_all_post_data, urn_to_url
         from linkedin_api import LinkedInAPI
+        from content_engine import ContentEngine
+
+        li = LinkedInAPI()
+        ce = ContentEngine()
 
         # Load recent post history (last 30 days)
         cutoff = datetime.now(timezone.utc) - timedelta(days=30)
         history = _safe_read_json(POST_HISTORY_FILE) or []
-        recent_urns = []
+        recent_posts = []
         for post in history:
             try:
                 ts = post.get("created_at", "")
                 if ts:
                     dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
                     if dt >= cutoff and post.get("id"):
-                        recent_urns.append(post["id"])
+                        recent_posts.append(post)
             except Exception:
                 pass
 
-        if not recent_urns:
-            logger.info("Apify sync: no recent posts to sync")
+        if not recent_posts:
+            logger.info("LinkedIn sync: no recent posts to sync")
             return
 
-        logger.info(f"Apify sync: fetching data for {len(recent_urns)} posts")
-        data = sync_all_post_data(recent_urns[:20], limit_comments=30)  # cap at 20 posts
+        logger.info(f"LinkedIn sync: checking {len(recent_posts)} recent posts")
 
-        # Update post history with fresh stats
         updated = 0
-        for post in history:
-            pid = post.get("id", "")
-            if pid in data:
-                s = data[pid].get("stats", {})
-                if s:
-                    post["likes"]    = s.get("likes",    post.get("likes",    0))
-                    post["comments"] = s.get("comments", post.get("comments", 0))
-                    post["shares"]   = s.get("shares",   post.get("shares",   0))
-                    post["views"]    = s.get("views",    post.get("views",    0))
+        for post in recent_posts:
+            urn = post.get("id", "")
+            if not urn:
+                continue
+
+            # Update post stats
+            try:
+                stats = li.get_post_stats(urn)
+                if stats:
+                    post["likes"]    = stats.get("likes",    post.get("likes",    0))
+                    post["comments"] = stats.get("comments", post.get("comments", 0))
+                    post["shares"]   = stats.get("shares",   post.get("shares",   0))
+                    post["views"]    = stats.get("views",    post.get("views",    0))
                     updated += 1
+            except Exception as se:
+                logger.warning(f"Stats update failed for {urn}: {se}")
 
-        if updated:
-            _safe_write_json(POST_HISTORY_FILE, history)
-            logger.info(f"Apify sync: updated stats for {updated} posts")
-
-        # Auto-reply to new comments using Claude
-        try:
-            from content_engine import ContentEngine
-            from linkedin_api import LinkedInAPI
-            ce = ContentEngine()
-            li = LinkedInAPI()
-
-            for urn, pdata in data.items():
-                for comment in pdata.get("comments", []):
-                    ctext = comment.get("text", "").strip()
-                    cid   = comment.get("id", "")
-                    if not ctext or not cid:
+            # Auto-reply to new comments
+            try:
+                comments = li.get_post_comments(urn)
+                replied_ids = {r.get("comment_urn", "") for r in (li.comment_log or [])}
+                for comment in (comments or []):
+                    cid   = comment.get("$URN", comment.get("id", ""))
+                    ctext = (comment.get("message") or {}).get("text", "").strip()
+                    if not cid or not ctext or len(ctext) < 10:
                         continue
-                    # Skip spam / very short comments
-                    if len(ctext) < 10:
+                    if cid in replied_ids:
                         continue
-                    # Generate reply
                     try:
                         reply = ce.generate_comment_reply(ctext, platform="linkedin")
                         if reply:
                             li.reply_to_comment(urn, cid, reply)
-                            logger.info(f"Apify auto-reply sent for comment {cid}")
+                            logger.info(f"LinkedIn direct reply sent for comment {cid}")
                     except Exception as re:
                         logger.warning(f"Auto-reply failed for {cid}: {re}")
+            except Exception as ce_err:
+                logger.warning(f"Comment check failed for {urn}: {ce_err}")
 
-        except Exception as e:
-            logger.warning(f"Apify auto-reply phase error: {e}")
-
-
-        # -- Follower count: try from posts-scraper author data first (free)
-        try:
-            _first_urn = recent_urns[0] if recent_urns else None
-            if _first_urn:
-                _fs = data.get(_first_urn, {}).get("stats", {})
-                _af = _fs.get("author_followers", 0)
-                if _af:
-                    import os as _os2, datetime as _dt2
-                    _pfile = _os2.path.join(_os2.path.dirname(POST_HISTORY_FILE), "linkedin_profile_stats.json")
-                    _safe_write_json(_pfile, {"followers": _af, "synced_at": _dt2.datetime.utcnow().isoformat()+"Z", "source":"posts_scraper"})
-                    logger.info(f"Apify sync: {_af} LinkedIn followers captured from posts data")
-        except Exception as e:
-            logger.warning(f"Apify follower capture error: {e}")
+        if updated:
+            _safe_write_json(POST_HISTORY_FILE, history)
+            logger.info(f"LinkedIn sync: updated stats for {updated} posts")
 
     except Exception as e:
-        logger.error(f"apify_sync_linkedin error: {e}")
-        _learning.add_alert("apify_sync_failure", str(e)[:200])
-
+        logger.error(f"sync_linkedin_direct error: {e}")
+        _learning.add_alert("linkedin_sync_failure", str(e)[:200])
 
 def weekly_report():
     """Generate weekly performance report."""
@@ -590,7 +574,7 @@ def run_scheduler():
 
     # ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Comment monitoring ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ all platforms every 2 hours ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ
     sched_lib.every(2).hours.do(check_comments)
-    sched_lib.every(12).hours.do(apify_sync_linkedin)
+    sched_lib.every(12).hours.do(sync_linkedin_direct)
     sched_lib.every(2).hours.do(check_comments_instagram)
     sched_lib.every(2).hours.do(check_comments_facebook)
     sched_lib.every(2).hours.do(check_comments_threads)
