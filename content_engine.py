@@ -1665,14 +1665,33 @@ def generate_company_post(
         "'We are proud to...', 'Exciting news!', 'We are thrilled...', 'Join our community', "
         "'Do not miss out', 'financial freedom' without specific figures, "
         "any opener that leads with Gopipways before the trader's pain.\n\n"
-        "=== CTA ===\n"
-        "Always www.gopipways.com Ã¢ÂÂ never just gopipways.com (the bare domain has issues).\n\n"
+        "=== PER-PLATFORM CTA & FORMAT RULES ===\n"
+        "\n"
+        "INSTAGRAM:\n"
+        "- Emojis: YES — use 3-5 relevant emojis throughout the caption\n"
+        "- URL: NEVER put a URL in the caption (links are not clickable on Instagram)\n"
+        "- CTA: end with 'Link in bio' — never include a URL in the caption\n"
+        "- Length: 150-300 chars. Hook on line 1. Hashtags on last line.\n"
+        "- Hashtags: 5-8 hashtags, mix broad and niche\n\n"
+        "FACEBOOK:\n"
+        "- Emojis: ZERO — algorithm suppresses emoji-heavy posts on brand pages\n"
+        "- URL: NEVER put any URL in the post body — external links kill organic reach\n"
+        "- The URL goes in the 'first_comment' field (auto-posted as first comment after publish)\n"
+        "- CTA: end the post with a question to drive comments\n"
+        "- Length: 200-400 chars. Conversational, community tone.\n"
+        "- Hashtags: 1-2 only\n\n"
+        "THREADS:\n"
+        "- Emojis: YES — use 2-4 emojis\n"
+        "- URL: include www.gopipways.com in the post body (links ARE clickable on Threads)\n"
+        "- CTA: end with a question AND the URL\n"
+        "- Length: 280-500 chars. Conversational, punchy.\n"
+        "- Hashtags: 2-3 only\n\n"
         "=== OUTPUT FORMAT ===\n"
         "Return ONLY valid JSON (no markdown, no explanation). Structure:\n"
         "{\n"
-        "  \"instagram\": {\"caption\": \"150-300 char punchy caption. Hook on line 1. Hashtags on last line.\", \"hashtags\": [\"#tag1\", \"#tag2\", \"#tag3\"]},\n"
-        "  \"facebook\": {\"text\": \"200-500 char community-tone post. Question at end.\", \"hashtags\": [\"#tag1\", \"#tag2\"]},\n"
-        "  \"threads\": {\"text\": \"280-500 char conversational post. MUST end with a question.\", \"hashtags\": [\"#tag1\", \"#tag2\"]},\n"
+        "  \"instagram\": {\"caption\": \"150-300 char caption WITH emojis. Hook line 1. End: Link in bio. Hashtags last line.\", \"hashtags\": [\"#tag1\", \"#tag2\", \"#tag3\"]},\n"
+        "  \"facebook\": {\"text\": \"200-400 char post. ZERO emojis. ZERO URLs in body. Question at end.\", \"first_comment\": \"www.gopipways.com — [one-line value prop]\", \"hashtags\": [\"#tag1\"]},\n"
+        "  \"threads\": {\"text\": \"280-500 char post WITH emojis AND www.gopipways.com in the text. Question at end.\", \"hashtags\": [\"#tag1\", \"#tag2\"]},\n"
         "  \"core_hook\": \"the opening pain line used across all three posts\"\n"
         "}"
     )
@@ -1719,6 +1738,7 @@ def generate_company_post(
             },
             "facebook": {
                 "text": fb_text,
+                "first_comment": fb.get("first_comment", ""),
                 "hashtags": fb.get("hashtags", []),
                 "char_count": len(fb_text),
                 "platform": "facebook",
