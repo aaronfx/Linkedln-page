@@ -76,7 +76,7 @@ class FacebookAPI:
 
     # Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Posting Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
-    def create_text_post(self, message: str) -> dict:
+    def create_text_post(self, message: str, first_comment: str = "") -> dict:
         """
         Publish a text-only post to the Facebook Page.
 
@@ -105,6 +105,23 @@ class FacebookAPI:
             "platform": "facebook",
         })
         self._save_post_history()
+
+        # Post URL as first comment (avoids link-penalty on the main post)
+        if first_comment and post_id:
+            try:
+                comment_url = f"https://graph.facebook.com/v25.0/{post_id}/comments"
+                comment_payload = {
+                    "message": first_comment,
+                    "access_token": self.page_access_token,
+                }
+                import requests as _req
+                c_resp = _req.post(comment_url, data=comment_payload, timeout=30)
+                if c_resp.ok:
+                    logger.info(f"First comment posted on {post_id}: {first_comment}")
+                else:
+                    logger.warning(f"First comment failed ({c_resp.status_code}): {c_resp.text}")
+            except Exception as e:
+                logger.warning(f"First comment exception: {e}")
 
         return result
 
