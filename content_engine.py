@@ -33,6 +33,8 @@ from knowledge_base import (
     PILLAR_TOPIC_SUGGESTIONS, WEEKLY_POST_TYPES, EMERGENCY_CONTENT_IDEAS
 )
 from pathlib import Path
+from content_scorer import score_post, SCORE_THRESHOLD
+from content_rewriter import rewrite_post
 
 logger = logging.getLogger("content_engine")
 
@@ -119,7 +121,92 @@ def validate_post_content(post_data: dict) -> dict:
 
     if issues:
         logger.warning(f"Content validation issues: {issues}")
-    
+
+    return post_data
+
+
+# ── Adlytics-powered quality gate ───────────────────────────────────────
+
+MAX_REWRITE_ATTEMPTS = 2  # max auto-rewrites before accepting best-effort
+
+def score_gate(post_data: dict, platform: str = "linkedin", pillar: str = "") -> dict:
+    """
+    Run the Adlytics scoring engine on a generated post.
+    If the post scores below SCORE_THRESHOLD (70), auto-rewrite and re-score.
+    Attaches scoring metadata to post_data["quality_score"].
+
+    Returns the (possibly rewritten) post_data.
+    """
+    text = post_data.get("text", "")
+    if not text.strip():
+        logger.warning("score_gate: empty text, skipping")
+        return post_data
+
+    pillar = pillar or post_data.get("pillar", "")
+    best_text = text
+    best_score = 0
+    best_result = None
+
+    for attempt in range(1 + MAX_REWRITE_ATTEMPTS):
+        try:
+            result = score_post(
+                content=best_text,
+                platform=platform,
+                audience_country="nigeria",
+                audience_age="25-34",
+                audience_income="middle",
+                audience_occupation="trader",
+            )
+        except Exception as e:
+            logger.error(f"score_gate: scoring failed on attempt {attempt + 1}: {e}")
+            break
+
+        overall = result["scores"].get("overall", 0)
+        logger.info(
+            f"score_gate attempt {attempt + 1}: {overall}/100 "
+            f"(threshold={SCORE_THRESHOLD})"
+        )
+
+        if overall > best_score:
+            best_score = overall
+            best_text = best_text  # keep current text as best
+            best_result = result
+
+        if result["passed"]:
+            logger.info(f"score_gate PASSED on attempt {attempt + 1}")
+            break
+
+        # Below threshold — try rewriting (unless we've exhausted attempts)
+        if attempt < MAX_REWRITE_ATTEMPTS:
+            logger.info(f"score_gate: below threshold, rewriting (attempt {attempt + 2})...")
+            try:
+                rw = rewrite_post(
+                    original_text=best_text,
+                    score_result=result,
+                    platform=platform,
+                    pillar=pillar,
+                )
+                best_text = rw["rewritten_text"]
+                logger.info(f"score_gate: rewrite applied | mode={rw['mode_used']}")
+            except Exception as e:
+                logger.error(f"score_gate: rewrite failed: {e}")
+                break
+        else:
+            logger.warning(
+                f"score_gate: exhausted {MAX_REWRITE_ATTEMPTS} rewrites, "
+                f"accepting best score {best_score}/100"
+            )
+
+    # Attach metadata and (possibly) replace text
+    post_data["text"] = best_text
+    post_data["quality_score"] = {
+        "overall": best_score,
+        "passed": best_score >= SCORE_THRESHOLD,
+        "attempts": min(attempt + 1, 1 + MAX_REWRITE_ATTEMPTS),
+        "scores": best_result["scores"] if best_result else {},
+        "weaknesses": (best_result or {}).get("critical_weaknesses", []),
+    }
+
     return post_data
 
 
@@ -794,6 +881,10 @@ Return ONLY valid JSON. No markdown code fences."""
 
     # Validate content quality
     post_data = validate_post_content(post_data)
+
+    # Adlytics quality gate: score → auto-rewrite if below 70
+    post_data = score_gate(post_data, platform="linkedin", pillar=pillar)
+
     return post_data
 
 
@@ -1232,6 +1323,10 @@ def generate_instagram_post(
         f"Instagram post generated | pillar={pillar} | "
         f"caption_len={len(result['caption'])}"
     )
+
+    # Adlytics quality gate
+    result = score_gate(result, platform="instagram", pillar=pillar)
+
     return result
 
 def generate_facebook_post(
@@ -1394,6 +1489,10 @@ def generate_facebook_post(
         f"Facebook post generated | pillar={pillar} | "
         f"length={len(result['message'])}"
     )
+
+    # Adlytics quality gate
+    result = score_gate(result, platform="facebook", pillar=pillar)
+
     return result
 
 
@@ -1547,7 +1646,7 @@ def generate_threads_post(
 
     data = _json.loads(match.group())
 
-    return {
+    result = {
         "platform": "threads",
         "pillar": pillar,
         "text": data.get("text", ""),
@@ -1556,6 +1655,11 @@ def generate_threads_post(
         "visual_direction": data.get("visual_direction", ""),
         "generated_at": datetime.now(timezone.utc).isoformat(),
     }
+
+    # Adlytics quality gate
+    result = score_gate(result, platform="threads", pillar=pillar)
+
+    return result
 
 
 # Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
@@ -1727,32 +1831,42 @@ def generate_company_post(
         fb_text = fb.get("text", "")
         th_text = th.get("text", "")
 
+        ig_post = {
+            "caption": ig_caption,
+            "text": ig_caption,  # score_gate uses "text" key
+            "hashtags": ig.get("hashtags", []),
+            "char_count": len(ig_caption),
+            "platform": "instagram",
+            "pillar": pillar,
+            "type": "company",
+        }
+        fb_post = {
+            "text": fb_text,
+            "first_comment": fb.get("first_comment", ""),
+            "hashtags": fb.get("hashtags", []),
+            "char_count": len(fb_text),
+            "platform": "facebook",
+            "pillar": pillar,
+            "type": "company",
+        }
+        th_post = {
+            "text": th_text,
+            "hashtags": th.get("hashtags", []),
+            "char_count": len(th_text),
+            "platform": "threads",
+            "pillar": pillar,
+            "type": "company",
+        }
+
+        # Adlytics quality gate on each platform variant
+        ig_post = score_gate(ig_post, platform="instagram", pillar=pillar)
+        fb_post = score_gate(fb_post, platform="facebook", pillar=pillar)
+        th_post = score_gate(th_post, platform="threads", pillar=pillar)
+
         return {
-            "instagram": {
-                "caption": ig_caption,
-                "hashtags": ig.get("hashtags", []),
-                "char_count": len(ig_caption),
-                "platform": "instagram",
-                "pillar": pillar,
-                "type": "company",
-            },
-            "facebook": {
-                "text": fb_text,
-                "first_comment": fb.get("first_comment", ""),
-                "hashtags": fb.get("hashtags", []),
-                "char_count": len(fb_text),
-                "platform": "facebook",
-                "pillar": pillar,
-                "type": "company",
-            },
-            "threads": {
-                "text": th_text,
-                "hashtags": th.get("hashtags", []),
-                "char_count": len(th_text),
-                "platform": "threads",
-                "pillar": pillar,
-                "type": "company",
-            },
+            "instagram": ig_post,
+            "facebook": fb_post,
+            "threads": th_post,
             "core_hook": result.get("core_hook", ""),
             "pillar": pillar,
             "platform": "company",

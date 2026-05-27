@@ -488,6 +488,14 @@ Hashtags should be 3-5 relevant tags for WhatsApp.
         }
 
         logger.info(f"Successfully generated WhatsApp Status for pillar: {pillar}")
+
+        # Adlytics quality gate
+        try:
+            from content_engine import score_gate
+            result = score_gate(result, platform="whatsapp", pillar=pillar)
+        except ImportError:
+            logger.warning("score_gate not available — skipping quality check")
+
         return result
 
     except json.JSONDecodeError as e:
