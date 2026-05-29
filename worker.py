@@ -722,6 +722,9 @@ def create_and_post_linkedin(pillar=None):
         from linkedin_api import LinkedInAPI
 
         queue = _safe_read_json(CONTENT_QUEUE_FILE)
+        # ── Step 0: purge stale entries ──
+        queue = _purge_expired_queue(queue, CONTENT_QUEUE_FILE)
+
         if not queue:
             from content_engine import generate_post
             history = _safe_read_json(POST_HISTORY_FILE)
@@ -731,13 +734,33 @@ def create_and_post_linkedin(pillar=None):
             )
             queue = [post_data]
 
-        entry = queue[0]
+        # ── Step 1: skip entries already published via Post-Now ──
+        while queue and queue[0].get("published"):
+            logger.info("Queue[0] already published — removing and skipping")
+            queue.pop(0)
+            _safe_write_json(CONTENT_QUEUE_FILE, queue)
+        if not queue:
+            logger.info("LinkedIn: nothing left in queue after published-skip")
+            return
+
+        # ── Step 2: _is_due guard — only post when scheduled time has arrived ──
+        due_entry = next((e for e in queue if not e.get("published") and _is_due(e)), None)
+        if due_entry is None:
+            next_time = queue[0].get("scheduled_datetime") or queue[0].get("scheduled_date", "unknown")
+            logger.info(f"LinkedIn: no entries due yet (next: {next_time}) — skipping")
+            return
+        entry = due_entry
+
         # Queue stores text under 'content' key (confirmed from live queue inspection)
         text = entry.get("content", entry.get("text", entry.get("caption", entry.get("message", ""))))
 
         if not text:
             logger.warning("LinkedIn: empty text in queue entry, skipping")
             return
+
+        # ── Step 3: sanitize text BEFORE posting (fixes ugcPosts truncation) ──
+        from linkedin_api import sanitize_post_text as _sanitize_text
+        text = _sanitize_text(text)
 
         api = LinkedInAPI()
         image_url = entry.get("image_url", "")
@@ -757,7 +780,11 @@ def create_and_post_linkedin(pillar=None):
 
         post_id = result.get("id", "") if result else ""
         if post_id or (result and result.get("success")):
-            queue.pop(0)
+            # Use remove(entry) not pop(0) — due entry may not be at index 0
+            try:
+                queue.remove(entry)
+            except ValueError:
+                queue = [e for e in queue if e is not entry]
             _safe_write_json(CONTENT_QUEUE_FILE, queue)
             history = _safe_read_json(POST_HISTORY_FILE)
             history.append({
