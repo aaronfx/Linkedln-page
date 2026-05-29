@@ -358,6 +358,8 @@ class LinkedInAPI:
 
     def create_image_post_with_asset(self, text: str, asset_urn: str) -> dict:
         """Create a LinkedIn post with a pre-uploaded image asset URN."""
+        # Sanitize before sending — ugcPosts API silently truncates raw Unicode
+        text = sanitize_post_text(text)
         payload = {
             "author": self.person_urn,
             "lifecycleState": "PUBLISHED",
